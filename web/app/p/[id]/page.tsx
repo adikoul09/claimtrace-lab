@@ -11,6 +11,7 @@ import { TeamView } from "@/components/team/team-view";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 import { CopyId } from "./copy-id";
+import { StageStrip } from "./stage-strip";
 
 // Report first: it opens on the answer (claim verdicts and why), the rest is detail.
 const TABS = ["report", "experiments", "team", "inbox", "live", "notes"] as const;
@@ -70,6 +71,8 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
           </p>
         )}
       </div>
+
+      {project && <StageStrip projectId={id} />}
 
       <nav aria-label="Project views" className="-mx-4 mb-4 overflow-x-auto px-4">
         <ul className="flex gap-1 border-b border-neutral-200 text-sm dark:border-neutral-800">
