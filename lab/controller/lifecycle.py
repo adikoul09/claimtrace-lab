@@ -129,6 +129,8 @@ def refine_triggers(agents: list[dict], tasks: list[dict], feedback: dict[str, s
         if not (a.get("budget") or {}).get("max_tokens"):
             continue  # code-only agent: no prompt to refine
         out_ = t.get("output") or {}
+        if (out_.get("agent_status") == "failed") and t.get("capability") != "run":
+            continue  # no answer: nothing of the agent's to refine (reward.no_answer)
         if out_.get("outcome") == "failed":
             kind = "failed_check"
             reason = f"task {t['id'][:8]} ({t.get('capability')}) failed its acceptance check (run by code)"

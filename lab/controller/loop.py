@@ -143,6 +143,9 @@ class Controller:
                                           .in_("task_id", ids).execute().data)
         todo = [t for t in tasks if t["id"] not in existing
                 or existing[t["id"]]["feedback"] != reward.feedback_value(feedback.get(t["id"]))]
+        for t in [t for t in todo if reward.no_answer(t)]:
+            self._not_scored(t)
+        todo = [t for t in todo if not reward.no_answer(t)]
         if not todo:
             return
         tokens: dict[str, int] = defaultdict(int)
@@ -173,6 +176,19 @@ class Controller:
                  f"{s.reason}; rolling mean {mean:.2f} over its last {len(recent)} scored task(s)",
                  project_id=t.get("project_id"), agent_id=agent_id, task_id=t["id"],
                  data={**s.row, "rolling_mean": round(mean, 4), "rolling_n": len(recent)})
+
+    def _not_scored(self, t: dict) -> None:
+        """One event per task whose agent produced no answer: it is not scored and not refined."""
+        if not self.once(("not_scored", t["id"])):
+            return
+        if self.db.table("events").select("id").eq("task_id", t["id"]).eq("type", "not_scored").limit(1) \
+                .execute().data:
+            return
+        err = str((t.get("output") or {}).get("error") or "no error recorded")
+        emit(self.db, "not_scored", f"{t['capability']} task not scored or refined: the agent produced no answer",
+             f"agent_status failed ({err[:300]}); a code or LLM failure is not the agent's work, so its reward and "
+             f"role prompt stay as they are", project_id=t.get("project_id"), agent_id=t.get("agent_id"),
+             task_id=t["id"], data={"error": err[:1000]})
 
     # ---- lifecycle (SPEC §4) -----------------------------------------------------------------------------------------
     def lifecycle(self, now: datetime) -> None:

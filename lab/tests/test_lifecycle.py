@@ -165,3 +165,20 @@ def test_a_role_is_capped_after_three_refines_in_a_project():
     assert lifecycle.is_capped("p1", "reader-v4", counts)
     assert not lifecycle.is_capped("p2", "reader-v3", counts)
     assert not lifecycle.is_capped("p1", "implementer-v1", counts)
+
+
+# ---- freeze fix: no answer, no refine and no score ----------------------------------------------------------------
+
+def test_no_answer_means_the_agent_never_produced_one():
+    from lab.controller import reward
+    assert reward.no_answer({"capability": "read_paper", "output": {"agent_status": "failed", "outcome": "failed"}})
+    assert not reward.no_answer({"capability": "read_paper", "output": {"agent_status": "finished",
+                                                                       "outcome": "failed"}})
+    assert not reward.no_answer({"capability": "run", "output": {"error_signature": "E"}})   # runs have no agent
+
+
+def test_no_refine_when_the_agent_produced_no_answer_even_with_a_thumbs_down():
+    a = [agent("r", "reader-v7", ["read_paper"])]
+    t = {"id": "t1", "agent_id": "r", "status": "failed", "capability": "read_paper",
+         "output": {"agent_status": "failed", "outcome": "failed", "error": "LLMError: the 4000-token output cap"}}
+    assert lifecycle.refine_triggers(a, [t], {"t1": "down"}, already=set()) == []
