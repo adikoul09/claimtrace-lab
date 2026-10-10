@@ -153,11 +153,13 @@ def test_extract_checks_what_the_model_returns(tmp_path, monkeypatch):
               "settings": [{"key": "temperature", "applies_to": "distilled", "value": "20",
                             "quote": "at a temperature of 20", "page": 4},
                            {"key": "epochs", "applies_to": "all", "value": None, "quote": None, "page": None}]}
-    seen = {}
+    seen = []
 
     def provider(req, model):
-        seen["prompt"], seen["schema"] = req.prompt, req.schema
-        return {"output": answer, "text": json.dumps(answer), "tokens_in": 9000, "tokens_out": 800, "models": [model]}
+        part = list(req.schema["properties"])  # one part per call: claims, then settings
+        seen.append({"prompt": req.prompt, "part": part, "max_output": req.max_output})
+        out = {p: answer[p] for p in part}
+        return {"output": out, "text": json.dumps(out), "tokens_in": 9000, "tokens_out": 800, "models": [model]}
     monkeypatch.setitem(llm_mod.PROVIDERS, "fake", provider)
     db = FakeDB()
     client = LLM(mode="live", provider="fake", cache_dir=tmp_path, db=db, models={"smart": "fake-pro"})
@@ -165,8 +167,12 @@ def test_extract_checks_what_the_model_returns(tmp_path, monkeypatch):
 
     out = paper.extract(paper.render([PAGE3, PAGE4], first=3), llm=client, agent=agent)
 
-    assert "--- page 4 ---" in seen["prompt"] and seen["schema"] == paper.EXTRACT_SCHEMA
+    # Live run: one call for claims and settings ran out of the gateway's output cap (4000 tokens, reasoning
+    # included) before answering; each part now gets its own call at the cap.
+    assert [s["part"] for s in seen] == [["claims"], ["settings"]]
+    assert all(s["max_output"] == paper.READER_MAX_OUTPUT == 4000 for s in seen)
+    assert all("--- page 4 ---" in s["prompt"] for s in seen)
     assert [c["valid"] for c in out["claims"]] == [True, True]
     assert [s["valid"] for s in out["settings"]] == [True, True]
-    assert out["tokens"] == 9800
+    assert out["tokens"] == 2 * 9800
     assert db.rows["llm_calls"][0]["agent_id"] == "ag-reader"

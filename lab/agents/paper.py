@@ -239,6 +239,7 @@ def compare_with_reference(claims: list[dict], reference: dict, suffix: str = "_
 # ---- relevant sections (paper text per request stays under 40 KB; never the whole PDF text) -----------------------
 
 MAX_REQUEST_BYTES = 40_000
+READER_MAX_OUTPUT = 4_000  # the gateway's maximum output (reasoning included); claims and settings each get a call
 SECTION_BUDGET = 20_000  # bytes of paper text per request (measured: keeps all of 1503.02531 section 3)
 CHUNK_BYTES = 3_000
 NAMED_HEADINGS = ("abstract", "introduction", "references", "bibliography", "acknowledgments", "acknowledgements",
@@ -358,15 +359,20 @@ def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "",
     sel, report = select_sections(text)
     prompt = PROMPT.format(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS),
                            text=sel)
-    check_request_size(prompt, agent.get("role_prompt") or "")
-    resp = llm.call(Request(agent=agent["name"], system=agent["role_prompt"], prompt=prompt, schema=EXTRACT_SCHEMA,
-                            model=model), agent_id=agent.get("id"), task_id=task_id)
+    out, tokens, resp = {}, 0, None
+    for part in ("claims", "settings"):  # one call each: both in one answer overran the gateway's output cap
+        p = prompt + f"\n\nThis call: return only the {part}; the {'settings' if part == 'claims' else 'claims'} " \
+                     "are extracted in a separate call."
+        check_request_size(p, agent.get("role_prompt") or "")
+        schema = {"type": "object", "properties": {part: EXTRACT_SCHEMA["properties"][part]}, "required": [part]}
+        resp = llm.call(Request(agent=agent["name"], system=agent["role_prompt"], prompt=p, schema=schema,
+                                model=model, max_output=READER_MAX_OUTPUT), agent_id=agent.get("id"), task_id=task_id)
+        out[part] = (resp.output if isinstance(resp.output, dict) else {}).get(part) or []
+        tokens += resp.tokens_in + resp.tokens_out
     pages = parse_pages(text)
-    out = resp.output if isinstance(resp.output, dict) else {}
-    return {"claims": check_claims(out.get("claims") or [], pages),
-            "settings": [check_setting(s, pages) for s in out.get("settings") or []],
-            "tokens": resp.tokens_in + resp.tokens_out, "model": resp.model, "mode": resp.mode,
-            "cache_key": resp.key, "sections": report}
+    return {"claims": check_claims(out["claims"], pages),
+            "settings": [check_setting(s, pages) for s in out["settings"]],
+            "tokens": tokens, "model": resp.model, "mode": resp.mode, "cache_key": resp.key, "sections": report}
 
 
 # ---- intake -------------------------------------------------------------------------------------------------------
