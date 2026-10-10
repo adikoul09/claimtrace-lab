@@ -3,6 +3,7 @@
   heartbeat   upsert executors row 'controller' (caps ['controller']) so the UI shows the controller is alive
   caps        a queued task with empty required_caps gets them from the capability map (any worker could claim it)
   stale       a running task whose executor's heartbeat is older than STALE_HEARTBEAT_S goes back to 'queued'
+  score       a finished agent task gets its rewards row (SPEC §5); a new 👍/👎 feedback event rescores it
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
   advance     for each running project, the next ready step becomes a task: agent assigned, required_caps set
@@ -12,12 +13,13 @@ from __future__ import annotations
 
 import time
 import traceback
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, planner, progress, routing
+from lab.controller import assign, planner, progress, reward, routing
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
-from lab.controller.rules import RUN_TIMEOUT_FLOOR_S, TICK_S
+from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
 from lab.schemas import PlanStep
 
@@ -61,8 +63,8 @@ class Controller:
 
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
-        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.intake, self.plan_queued,
-                     self.advance):
+        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.intake,
+                     self.plan_queued, self.advance):
             try:
                 step(now)
             except Exception as e:  # one failing step must not stop the loop
@@ -111,6 +113,41 @@ class Controller:
         if moved:
             emit(self.db, "task_requeued", f"{t['capability']} task back in the queue", reason,
                  project_id=t.get("project_id"), agent_id=t.get("agent_id"), task_id=t["id"], data=data)
+
+    # ---- score ------------------------------------------------------------------------------------------------------
+    SCORE_SCAN = 200  # most recently finished tasks looked at per tick
+
+    def score(self, now: datetime) -> None:
+        tasks = self.q("tasks", "id,project_id,agent_id,capability,status,output,tokens,cpu_seconds")             .in_("status", ["done", "failed"]).not_.is_("agent_id", "null")             .order("finished_at", desc=True).limit(self.SCORE_SCAN).execute().data
+        if not tasks:
+            return
+        ids = [t["id"] for t in tasks]
+        existing = {r["task_id"]: r for r in self.db.table("rewards").select("*").in_("task_id", ids).execute().data}
+        feedback = reward.latest_feedback(self.db.table("events").select("task_id,data,ts").eq("type", "feedback")
+                                          .in_("task_id", ids).execute().data)
+        todo = [t for t in tasks if t["id"] not in existing
+                or existing[t["id"]]["feedback"] != reward.feedback_value(feedback.get(t["id"]))]
+        if not todo:
+            return
+        tokens: dict[str, int] = defaultdict(int)
+        for c in self.db.table("llm_calls").select("task_id,tokens_in,tokens_out")                 .in_("task_id", [t["id"] for t in todo]).execute().data:
+            tokens[c["task_id"]] += (c["tokens_in"] or 0) + (c["tokens_out"] or 0)
+        names = {a["id"]: a["name"] for a in self.db.table("agents").select("id,name").execute().data}
+        for t in todo:
+            s = reward.score(t, tokens.get(t["id"], t.get("tokens") or 0), feedback.get(t["id"]))
+            old = existing.get(t["id"])
+            if old:
+                self.db.table("rewards").update({k: s.row[k] for k in ("outcome", "cost_norm", "feedback", "reward")})                     .eq("task_id", t["id"]).execute()
+            else:
+                self.db.table("rewards").insert(s.row).execute()
+            recent = self.db.table("rewards").select("agent_id,reward,ts").eq("agent_id", t["agent_id"])                 .order("ts", desc=True).limit(ROLLING_WINDOW).execute().data
+            mean = reward.rolling_means(recent).get(t["agent_id"])
+            name = names.get(t["agent_id"], "agent")
+            verb = f"rescored {old['reward']:.2f} → {s.row['reward']:.2f}" if old else f"scored {s.row['reward']:.2f}"
+            emit(self.db, "reward_updated" if old else "reward", f"{name} {verb} on {t['capability']}",
+                 f"{s.reason}; rolling mean {mean:.2f} over its last {len(recent)} scored task(s)",
+                 project_id=t.get("project_id"), agent_id=t["agent_id"], task_id=t["id"],
+                 data={**s.row, "rolling_mean": round(mean, 4), "rolling_n": len(recent)})
 
     # ---- intake and plan --------------------------------------------------------------------------------------------
     def intake(self, now: datetime) -> None:
@@ -209,7 +246,7 @@ class Controller:
         step = PlanStep(**steps[i])
         agents = db.table("agents").select("*").eq("status", "active").execute().data
         rewards = db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True).limit(1000).execute().data
-        pick = assign.pick_agent(agents, step.capability, assign.rolling_means(rewards))
+        pick = assign.pick_agent(agents, step.capability, reward.rolling_means(rewards))
         if pick is None:
             self.on_gap(project, plan_task, step, i)
             return

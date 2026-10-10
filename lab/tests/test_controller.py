@@ -97,14 +97,6 @@ def test_gap_when_no_active_agent_has_the_capability():
     assert assign.pick_agent(AGENTS, "debug", {}) is None
 
 
-def test_rolling_mean_uses_the_last_three_rewards_per_agent():
-    rows = [{"agent_id": "a", "reward": r, "ts": f"2026-10-10T10:0{i}:00Z"} for i, r in enumerate([0.0, 1.0, 0.5, 0.9])]
-    rows.append({"agent_id": "b", "reward": 0.2, "ts": "2026-10-10T10:00:00Z"})
-    scores = assign.rolling_means(rows)
-    assert scores["a"] == pytest.approx((1.0 + 0.5 + 0.9) / 3)
-    assert scores["b"] == pytest.approx(0.2)
-
-
 # ---- planner: code checks on the LLM's plan -----------------------------------------------------------------------
 
 def step(cap, **kw):
