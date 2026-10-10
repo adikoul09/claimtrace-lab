@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  agentLabel,
   budgetLabel,
+  eventTypeLabel,
   capabilityLabel,
   groupProjects,
   humanize,
@@ -82,4 +84,17 @@ test("projectTitle shows the paper's title instead of an arXiv id, but keeps tes
     projectTitle({ id: "n", title: "arXiv 2401.00001", arxiv_id: "2401.00001", status: "new" }, titles),
     "arXiv 2401.00001",
   );
+});
+
+test("agents read as role and version, not the raw name", () => {
+  assert.equal(agentLabel({ name: "reader-v13", version: 13 }), "Reader · version 13");
+  assert.equal(agentLabel({ name: "cpu-experiment-designer-v2", version: 2 }), "CPU experiment designer · version 2");
+  assert.equal(agentLabel({ name: "envbuilder-v1", version: 1 }), "Env builder · version 1");
+});
+
+test("event types read as plain words, with the usual spellings", () => {
+  assert.equal(eventTypeLabel("task_requeued"), "Task re-queued");
+  assert.equal(eventTypeLabel("llm_daily_cap"), "LLM daily cap");
+  assert.equal(eventTypeLabel("whatif_waiting"), "What-if waiting");
+  assert.equal(eventTypeLabel("claims_extracted"), "Claims extracted");
 });

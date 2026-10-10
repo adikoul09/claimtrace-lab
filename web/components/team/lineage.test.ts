@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lineageEdges, layoutLineage, rollingReward, scoreboard } from "./lineage.ts";
+import { collapseLineage, lineageEdges, layoutLineage, refineChains, rollingReward, scoreboard } from "./lineage.ts";
 
 type A = {
   id: string;
@@ -93,13 +93,96 @@ test("scoreboard ranks by rolling reward, unscored agents last", () => {
   assert.equal(out[2].rolling, null);
 });
 
-test("layoutLineage wraps a wide generation at 4 columns and starts the next one below it", () => {
+test("layoutLineage wraps a wide generation at 4 columns, parents last, and starts the next one below it", () => {
   const roots = ["r1", "r2", "r3", "r4", "r5"].map((id, i) =>
     ag(id, { created_at: `2026-10-10T10:0${i}:00Z` }),
   );
   const agents = [...roots, ag("child", { parent_id: "r1", created_at: "2026-10-10T11:00:00Z" })];
   const pos = layoutLineage(agents, lineageEdges(agents, {}));
-  assert.deepEqual(pos.r4, { row: 0, col: 3 });
-  assert.deepEqual(pos.r5, { row: 1, col: 0 });
-  assert.equal(pos.child.row, 2);
+  // r1 has a child, so it goes last: on the row nearest its child, with nothing between them.
+  assert.deepEqual(pos.r2, { row: 0, col: 0 });
+  assert.deepEqual(pos.r5, { row: 0, col: 3 });
+  assert.deepEqual(pos.r1, { row: 1, col: 0 });
+  assert.deepEqual(pos.child, { row: 2, col: 0 });
+});
+
+test("layoutLineage on 2 columns orders children by their parent's column, so edges do not cross cards", () => {
+  const roots = ["a", "b", "p", "q", "c"].map((id, i) => ag(id, { created_at: `2026-10-10T10:0${i}:00Z` }));
+  const agents = [
+    ...roots,
+    ag("q1", { parent_id: "q", created_at: "2026-10-10T11:00:00Z" }),
+    ag("p1", { parent_id: "p", created_at: "2026-10-10T11:01:00Z" }),
+  ];
+  const pos = layoutLineage(agents, lineageEdges(agents, {}), 2);
+  // roots: a b / c p / q  (p and q have children, so they come last)
+  assert.deepEqual(pos.p, { row: 1, col: 1 });
+  assert.deepEqual(pos.q, { row: 2, col: 0 });
+  // children follow their parent's column: q1 (parent in col 0) first, then p1 (parent in col 1)
+  assert.deepEqual(pos.q1, { row: 3, col: 0 });
+  assert.deepEqual(pos.p1, { row: 3, col: 1 });
+});
+
+// --- refine chains (A1-TEAM) ------------------------------------------------------------------------------------
+
+type C = A & { origin: string; version: number };
+const ch = (id: string, origin: string, version: number, over: Partial<C> = {}): C => ({
+  ...ag(id, { created_at: `2026-10-10T10:${String(version).padStart(2, "0")}:00Z` }),
+  origin,
+  version,
+  ...over,
+});
+
+test("lineageEdges does not draw a spawn edge for a refined agent (its task only triggered the refine)", () => {
+  const edges = lineageEdges([ch("r1", "seed", 1), ch("r2", "refined", 2, { parent_id: "r1", created_by_task: "t" })], {
+    t: "r1",
+  });
+  assert.deepEqual(
+    edges.map((e) => e.kind),
+    ["parent"],
+  );
+});
+
+test("refineChains groups a refine chain under its root, newest version as head; a spawned root starts its own", () => {
+  const agents = [
+    ch("r1", "seed", 1),
+    ch("r2", "refined", 2, { parent_id: "r1" }),
+    ch("r3", "refined", 3, { parent_id: "r2" }),
+    ch("s1", "spawned", 1, { created_by_task: "t" }),
+    ch("s2", "refined", 2, { parent_id: "s1" }),
+    ch("d1", "seed", 1),
+  ];
+  const { chainOf, chains } = refineChains(agents);
+  assert.equal(chainOf.r3, "r1");
+  assert.deepEqual(chains.r1, { id: "r1", root: "r1", head: "r3", members: ["r1", "r2", "r3"] });
+  assert.deepEqual(chains.s1.members, ["s1", "s2"]);
+  assert.equal(chains.d1.head, "d1");
+});
+
+test("collapseLineage shows one node per chain and moves edges onto the heads", () => {
+  const agents = [
+    ch("r1", "seed", 1),
+    ch("r2", "refined", 2, { parent_id: "r1", created_by_task: "t0" }),
+    ch("r3", "refined", 3, { parent_id: "r2", created_by_task: "t0" }),
+    ch("s1", "spawned", 1, { created_by_task: "t1" }),
+  ];
+  const edges = lineageEdges(agents, { t0: "r1", t1: "r2" }); // spawned by an old version of the reader
+  const collapsed = collapseLineage(agents, edges, new Set());
+  assert.deepEqual(
+    collapsed.visible.map((a) => a.id),
+    ["r3", "s1"],
+  );
+  assert.deepEqual(
+    collapsed.edges.map((e) => [e.kind, e.source, e.target]),
+    [["spawned", "r3", "s1"]],
+  );
+
+  const open = collapseLineage(agents, edges, new Set(["r1"]));
+  assert.deepEqual(
+    open.visible.map((a) => a.id),
+    ["r1", "r2", "r3", "s1"],
+  );
+  assert.deepEqual(
+    open.edges.map((e) => e.kind).sort(),
+    ["parent", "parent", "spawned"],
+  );
 });
