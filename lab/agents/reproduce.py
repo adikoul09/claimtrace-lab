@@ -48,6 +48,10 @@ class StepError(Exception):
     pass
 
 
+class AgentError(StepError):
+    """The agent itself failed (LLM error, budget stop), as opposed to its output failing the code check."""
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -319,7 +323,7 @@ class Pipeline:
                    "; ".join(problems) if problems else f"{res.steps} steps, {res.tokens} tokens",
                    agent_id=agent["id"], task_id=task["id"])
         if not ok:
-            raise StepError(f"{title}: {'; '.join(problems)}")
+            raise (StepError if res.status == "finished" else AgentError)(f"{title}: {'; '.join(problems)}")
         return output, task["id"]
 
     def queue_run(self, title: str, scale: str, caps: list[str], args: str, code: str, requirements: str,
@@ -388,7 +392,7 @@ class Pipeline:
                                 written, model="smart")
                 return path.read_text(encoding="utf-8")
             except StepError as e:
-                if attempt == 2:
+                if attempt == 2 or isinstance(e, AgentError):  # a quota or budget stop is not a code problem
                     raise
                 feedback = f"the code check found: {e}"
         raise AssertionError("unreachable")
