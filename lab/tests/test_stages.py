@@ -198,6 +198,28 @@ def test_setup_env_gets_train_py_from_upstream_and_outputs_requirements(runs, sc
     assert out["outcome"] == "passed" and out["requirements"] == "numpy==1.26.4\n"
 
 
+def test_setup_env_agent_stopped_by_its_budget_after_env_ready_passes_by_the_code_check(runs, scripted):
+    """Live run 42fb4944: make_env reported 'env ready' on step 5, the agent spent step 6 writing validate.py and was
+    stopped by max_steps; the built env was scored as a failure. setup_env lets code decide for a stopped agent;
+    'failed' (an LLM error) still fails, and so does a stopped agent with no env; other stages are unchanged."""
+    db = store()
+    up = with_upstream(db, write_code={"files": {"train.py": GOOD}})
+    env = {"requirements.txt": "torch==2.14.1+cpu\n", "env.json": "{}"}
+    scripted(files=env, status="stopped")
+    out = stages.handle(db, task("setup_env", f"runs/{PID}", upstream=up), executor="laptop-b")
+    assert out["outcome"] == "passed" and out["agent_status"] == "stopped" and out["error"] is None
+    scripted(status="stopped")  # stopped and no env: make_env never reported 'env ready'
+    out = stages.handle(db, task("setup_env", f"runs/{PID}", upstream=up), executor="laptop-b")
+    assert out["outcome"] == "failed" and "env ready" in out["error"]
+    scripted(files=env, status="failed")
+    out = stages.handle(db, task("setup_env", f"runs/{PID}", upstream=up), executor="laptop-b")
+    assert out["outcome"] == "failed" and out["agent_status"] == "failed"
+    up2 = with_upstream(db, design_experiment={"design": DESIGN})
+    scripted(files={"train.py": GOOD}, status="stopped")
+    out = stages.handle(db, task("write_code", f"runs/{PID}", upstream=up2), executor="laptop-b")
+    assert out["outcome"] == "failed"  # only setup_env accepts a stopped agent
+
+
 def test_budget_stage_reads_the_upstream_smoke_run_and_code_clips(runs, scripted):
     db = store()
     smoke = db.table("experiments").insert({"project_id": PID, "label": "smoke", "config": {}}).execute().data[0]
