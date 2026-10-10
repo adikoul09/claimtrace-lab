@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ExperimentsView } from "@/components/exp/experiments-view";
+import { InboxBadge, InboxPanel } from "@/components/inbox/inbox-panel";
 import { EventStream } from "@/components/live/event-stream";
 import { NotesView } from "@/components/report/notes-view";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "@/components/report/precomputed";
@@ -69,6 +70,7 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
                 }`}
               >
                 {LABEL[t]}
+                {t === "inbox" && <InboxBadge projectId={id} />}
               </Link>
             </li>
           ))}
@@ -76,8 +78,7 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
       </nav>
 
       {tab === "inbox" ? (
-        // Placeholder until A1's InboxPanel lands (T31: journal emails forwarded to this project).
-        <p className="text-sm text-neutral-500">The inbox is not connected yet.</p>
+        <InboxPanel projectId={id} />
       ) : tab === "live" ? (
         <EventStream projectId={id} />
       ) : tab === "team" ? (

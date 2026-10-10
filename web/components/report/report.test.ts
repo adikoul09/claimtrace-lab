@@ -455,3 +455,43 @@ test("a why sentence leaves out what the verdict does not say (contract list: no
   });
   assert.equal(d.rows[0].explain, "Not reproduced: ours 96 vs paper 74. 1 seed.");
 });
+
+// docs/CONTRACTS.md §5b: experiments.config.why, as lab/agents/why.py writes it.
+const WHY = {
+  config_log_line: 12,
+  labels: { "scale reduction (budget)": 1, same: 1 },
+  settings_diff: [
+    { key: "epochs", setting_id: "s4", applies_to: "all", paper: "3000 epochs", quote: "trained for 3000 epochs", page: 3,
+      paper_numbers: [3000], our_key: "epochs", ours: 5, our_numbers: [5], label: "scale reduction (budget)",
+      why: "the budget step chose 5 to fit the project's CPU cap", also: [], branch_effects: [] },
+    { key: "architecture", setting_id: "s1", applies_to: "teacher", paper: "2 hidden layers of 1200", quote: "q", page: 4,
+      paper_numbers: [2, 1200], our_key: "teacher.hidden", ours: [1200, 1200], our_numbers: [1200], label: "difference",
+      why: "different numbers", also: ["student.hidden"], branch_effects: [] },
+  ],
+};
+
+test("buildReport reads the settings diff from config.why (CONTRACTS §5b), with our CONFIG line", () => {
+  const d = buildReport({
+    claims: [],
+    experiments: [exp("v2", { config: { why: WHY }, verdicts: { claims: [], settings_diff: [{ key: "old", label: "same" }] } })],
+    metrics: [],
+  });
+  assert.equal(d.settingsDiff?.configLogLine, 12);
+  assert.deepEqual(
+    d.settingsDiff?.rows.map((r) => [r.key, r.label, r.paper, r.ours, r.config_key, r.reason, r.applies_to]),
+    [
+      ["epochs", "scale", "3000 epochs", "5", "epochs", "the budget step chose 5 to fit the project's CPU cap", null],
+      ["architecture", "difference", "2 hidden layers of 1200", "[1200,1200]", "teacher.hidden", "different numbers", "teacher"],
+    ],
+  );
+});
+
+test("buildReport falls back to verdicts.settings_diff when config.why has no rows", () => {
+  const d = buildReport({
+    claims: [],
+    experiments: [exp("v2", { config: { why: { settings_diff: [] } }, verdicts: { claims: [], settings_diff: [{ key: "old", label: "same" }] } })],
+    metrics: [],
+  });
+  assert.deepEqual(d.settingsDiff?.rows.map((r) => r.key), ["old"]);
+  assert.equal(d.settingsDiff?.configLogLine, null);
+});

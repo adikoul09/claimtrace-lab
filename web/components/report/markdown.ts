@@ -122,9 +122,13 @@ export function reportMarkdown(
       table(
         ["Setting", "Paper", "Ours", "Label", "Source"],
         d.settingsDiff.rows.map((s) => [
-          s.key,
+          s.key + (s.applies_to ? ` (for ${s.applies_to})` : ""),
           s.paper ?? "not stated",
-          s.ours ?? "—",
+          s.ours === null
+            ? "—"
+            : d.settingsDiff!.configLogLine !== null
+              ? log(d.settingsDiff!.experimentId, d.settingsDiff!.configLogLine, s.ours)
+              : s.ours,
           (s.label ? DIFF_TEXT[s.label] : s.rawLabel) + (s.reason ? `: ${s.reason}` : ""),
           (s.quote ? `"${s.quote}" (p. ${s.page ?? "?"})` : "") + (s.config_key ? ` · config ${s.config_key}` : ""),
         ]),

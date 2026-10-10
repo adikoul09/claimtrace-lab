@@ -18,7 +18,6 @@ import {
   type GradedExp,
   type ReportData,
   type ReportRow,
-  type SettingsDiffRow,
   type Tone,
 } from "./report";
 
@@ -365,7 +364,7 @@ function WhyItDiffers({ data }: { data: ReportData }) {
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Settings diff</h3>
         <p className="text-xs text-neutral-500">{TEXT.settingsIntro}</p>
-        {data.settingsDiff ? <SettingsTable rows={data.settingsDiff.rows} /> : <Muted>{TEXT.noSettings}</Muted>}
+        {data.settingsDiff ? <SettingsTable diff={data.settingsDiff} /> : <Muted>{TEXT.noSettings}</Muted>}
       </div>
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Branch effects</h3>
@@ -376,7 +375,8 @@ function WhyItDiffers({ data }: { data: ReportData }) {
   );
 }
 
-function SettingsTable({ rows }: { rows: SettingsDiffRow[] }) {
+function SettingsTable({ diff }: { diff: NonNullable<ReportData["settingsDiff"]> }) {
+  const { rows, experimentId, configLogLine } = diff;
   return (
     <Table
       wide
@@ -389,10 +389,11 @@ function SettingsTable({ rows }: { rows: SettingsDiffRow[] }) {
         </>
       }
     >
-      {rows.map((s) => (
-        <tr key={s.key}>
+      {rows.map((s, i) => (
+        <tr key={`${s.key}:${s.config_key}:${i}`}>
           <td className="py-2 pr-2 font-mono text-xs">
             {s.key}
+            {s.applies_to && <div className="text-neutral-500">for {s.applies_to}</div>}
             {s.config_key && <div className="text-neutral-500">config {s.config_key}</div>}
           </td>
           <td className="break-words py-2 pr-2">
@@ -406,7 +407,17 @@ function SettingsTable({ rows }: { rows: SettingsDiffRow[] }) {
               </details>
             )}
           </td>
-          <td className="break-words py-2 pr-2">{s.ours ?? "—"}</td>
+          <td className="break-words py-2 pr-2">
+            {s.ours === null ? (
+              "—"
+            ) : configLogLine !== null ? (
+              <LogLink exp={experimentId} line={configLogLine}>
+                {s.ours}
+              </LogLink>
+            ) : (
+              s.ours
+            )}
+          </td>
           <td className="py-2">
             <Badge tone={s.label ? DIFF_TONE[s.label] : "neutral"}>{s.label ? DIFF_TEXT[s.label] : s.rawLabel}</Badge>
             {s.reason && <p className="mt-1 break-words text-xs text-neutral-500">{s.reason}</p>}

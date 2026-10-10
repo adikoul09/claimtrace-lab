@@ -90,6 +90,8 @@ export type SettingsDiffRow = {
   page: number | null;
   config_key: string | null;
   reason: string | null;
+  /** The model the paper's value is for ("teacher"), null when it applies to all. */
+  applies_to: string | null;
 };
 export type Grade = {
   cards: Map<string, VerdictCard>;
@@ -158,7 +160,9 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
   return json.filter(isObj).flatMap((r) => {
     if (typeof r.key !== "string") return [];
     const raw = str(r.label);
-    const text = (x: unknown) => (x === null || x === undefined ? null : String(x));
+    const text = (x: unknown) =>
+      x === null || x === undefined ? null : typeof x === "object" ? JSON.stringify(x) : String(x);
+    const scope = str(r.applies_to);
     return [
       {
         key: r.key,
@@ -168,8 +172,10 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
         rawLabel: raw,
         quote: typeof r.quote === "string" ? r.quote : null,
         page: num(r.page),
-        config_key: typeof r.config_key === "string" ? r.config_key : null,
-        reason: typeof r.reason === "string" ? r.reason : null,
+        // CONTRACTS §5b (lab/agents/why.py) names them our_key and why; the earlier proposal config_key and reason.
+        config_key: typeof r.our_key === "string" ? r.our_key : typeof r.config_key === "string" ? r.config_key : null,
+        reason: typeof r.why === "string" ? r.why : typeof r.reason === "string" ? r.reason : null,
+        applies_to: scope && scope.toLowerCase() !== "all" ? scope : null,
       },
     ];
   });
@@ -345,7 +351,8 @@ export type ReportData = {
   rows: ReportRow[];
   untested: Claim[];
   graded: GradedExp[];
-  settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[] } | null;
+  /** configLogLine: the run's printed CONFIG line, where our values come from (config.why only). */
+  settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[]; configLogLine: number | null } | null;
   branches: BranchEffect[];
   memory: { current: RunStats; previous: RunStats | null } | null;
 };
@@ -473,7 +480,13 @@ export function buildReport(input: ReportInput): ReportData {
         rules: g.rules,
       });
     }
-    if (g.settingsDiff.length) settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff };
+    // CONTRACTS §5b: experiments.config.why.settings_diff; the older verdicts.settings_diff only when that is empty.
+    const why = isObj(e.config) && isObj(e.config.why) ? e.config.why : null;
+    const whyRows = settingsDiff(why?.settings_diff);
+    if (whyRows.length)
+      settings = { experimentId: e.id, experimentLabel: e.label, rows: whyRows, configLogLine: num(why?.config_log_line) };
+    else if (g.settingsDiff.length)
+      settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff, configLogLine: null };
   }
 
   // Authenticity: each claim's verdict from the latest reproduction experiment that graded it. What-if branches
