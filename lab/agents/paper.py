@@ -368,9 +368,26 @@ def reader_system(agent: dict) -> str:
 
 
 PART_BYTES = 7_000  # paper text per claims call: one answer for the whole excerpt overran the 4000-token output cap
+CLAIMS_PER_PART = 15  # a 44-cell per-row table in one part still ran through the cap
 CLAIMS_PART = ("\n\nThis call: return only the claims stated in THIS part of the paper's text (part {i} of {n}); the "
-               "other parts are read in separate calls. Keep each claim compact: the quote at most 20 words (the "
-               "shortest verbatim span that states the value) and its page number; no other context.")
+               "other parts are read in separate calls. Return at most {cap} claims for this part: the headline "
+               "results first; from a long per-row breakdown table keep only its main rows. Keep each claim compact: "
+               "the quote at most 20 words (the shortest verbatim span that states the value) and its page number; "
+               "no other context.")
+
+
+def halves(part: str) -> list[str]:
+    """A part cut in two at the line nearest its middle byte (for a part whose claims answer overran the cap)."""
+    lines, total, run = part.split("\n"), len(part.encode("utf-8")), 0
+    for k, line in enumerate(lines[:-1], 1):
+        run += len(line.encode("utf-8")) + 1
+        if run >= total / 2:
+            return [p for p in ("\n".join(lines[:k]), "\n".join(lines[k:])) if p.strip()]
+    return [part]
+
+
+def overran(e: Exception) -> bool:
+    return "output cap" in str(e) and "ran out" in str(e)
 
 
 def split_parts(sel: str, limit: int = PART_BYTES) -> list[str]:
@@ -413,7 +430,7 @@ def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "",
     """The model sees only the selected sections; quotes are checked against every page of the full text.
     Claims: one compact call per part of the excerpt (PART_BYTES), merged and de-duplicated by code. Settings: taken
     from the claims answer when the excerpt is one part and that answer carries them, else one compact call."""
-    from lab.llm import Request
+    from lab.llm import LLMError, Request
 
     sel, report = select_sections(text)
     base = dict(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS))
@@ -430,15 +447,35 @@ def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "",
         tokens += resp.tokens_in + resp.tokens_out
         return resp.output if isinstance(resp.output, dict) else {}
 
+    def claims(part_text, label):
+        return call(PROMPT.format(**base, text=part_text)
+                    + CLAIMS_PART.format(i=label, n=len(parts), cap=CLAIMS_PER_PART), "claims")
+
+    skipped, last_err = [], None
     for i, part_text in enumerate(parts, 1):
-        got = call(PROMPT.format(**base, text=part_text) + CLAIMS_PART.format(i=i, n=len(parts)), "claims")
+        try:
+            got = claims(part_text, i)
+        except LLMError as e:  # the answer ran through the output cap: read the part in two halves
+            if not overran(e):
+                raise
+            for label, half in zip(("first half", "second half"), halves(part_text)):
+                try:
+                    batches.append(claims(half, f"{i}, {label}").get("claims") or [])
+                except LLMError as e2:  # still over: skip this half, keep the other parts' claims
+                    if not overran(e2):
+                        raise
+                    last_err = e2
+                    skipped.append({"part": f"{i}, {label}", "bytes": len(half.encode("utf-8")), "error": str(e2)})
+            continue
         batches.append(got.get("claims") or [])
         if len(parts) == 1 and isinstance(got.get("settings"), list):
             settings = got["settings"]  # one part and its answer already has them: no settings call
+    if not batches:
+        raise last_err
     if settings is None:
         settings = call(PROMPT.format(**base, text=sel) + COMPACT_SETTINGS, "settings").get("settings") or []
     pages = parse_pages(text)
-    report = {**report, "parts": len(parts), "part_bytes": [len(p.encode("utf-8")) for p in parts]}
+    report = {**report, "parts": len(parts), "part_bytes": [len(p.encode("utf-8")) for p in parts], "skipped": skipped}
     return {"claims": check_claims(merge_claims(batches), pages),
             "settings": [check_setting(s, pages) for s in settings],
             "tokens": tokens, "model": resp.model, "mode": resp.mode, "cache_key": resp.key, "sections": report}

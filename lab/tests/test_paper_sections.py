@@ -91,3 +91,47 @@ def test_claims_are_read_in_parts_and_merged_without_duplicates():
     assert values.count(74) == 1 and len(values) == 1 + len(claim_calls)
     assert [c["id"] for c in out["claims"]] == [f"c{i}" for i in range(1, len(values) + 1)]
     assert out["tokens"] == 15 * len(calls)
+
+
+def test_a_claims_part_that_overruns_the_output_cap_is_halved_then_skipped_not_fatal():
+    """Live run (42fb4944): one part held a 44-cell per-row table and its claims answer ran through the 4000-token cap,
+    failing the whole read. Each call asks for at most CLAIMS_PER_PART claims; a part that still overruns is read in
+    two halves, and a half that overruns again is skipped and reported, so the other parts' claims survive."""
+    from lab.llm import LLMError
+    body = ("We trained the network for many epochs and measured the test error on the held-out set with care. " * 30)
+    table = "\n".join(f"{i}\n{1000 + i}\n+{i}\n{i}.5%" for i in range(40))
+    text = paper.render([f"Abstract\nA result of 74 test errors.\n3\nExperiments on MNIST\n{body}",
+                         f"4\nResults on speech\n{body}\nDENSE TABLE\n{table}\n{body}"])
+    calls = []
+
+    class FakeLLM:
+        def call(self, req, **kw):
+            calls.append(req)
+            if "settings" in req.schema["properties"]:
+                out = {"settings": []}
+            elif "DENSE TABLE" in req.prompt or "+39" in req.prompt:
+                raise LLMError("the 4000-token output cap (reasoning included) ran out before any answer, request id x")
+            else:
+                out = {"claims": [{"quote": "A result of 74 test errors.", "page": 1, "value": 74, "metric": "test errors",
+                                   "unit": "errors", "direction": "lower_is_better", "whose": "method",
+                                   "table_or_section": "Abstract", "model": "net"}]}
+            return type("R", (), {"output": out, "tokens_in": 10, "tokens_out": 5, "model": "m", "mode": "live",
+                                  "key": "k"})()
+
+    out = paper.extract(text, llm=FakeLLM(), agent={"name": "reader"})
+    claim_calls = [r for r in calls if "claims" in r.schema["properties"]]
+    assert all(f"at most {paper.CLAIMS_PER_PART} claims" in r.prompt for r in claim_calls)
+    assert len(claim_calls) == out["sections"]["parts"] + 2  # every part once, plus the overrun part's two halves
+    assert [c["value"] for c in out["claims"]] == [74]
+    assert len(out["sections"]["skipped"]) >= 1 and "output cap" in out["sections"]["skipped"][0]["error"]
+
+
+def test_every_claims_part_overrunning_still_fails_the_read():
+    from lab.llm import LLMError
+
+    class Overrun:
+        def call(self, req, **kw):
+            raise LLMError("the 4000-token output cap (reasoning included) ran out before any answer, request id x")
+
+    with pytest.raises(LLMError, match="output cap"):
+        paper.extract(paper.render(["Abstract\nA result of 74 test errors."]), llm=Overrun(), agent={"name": "r"})
