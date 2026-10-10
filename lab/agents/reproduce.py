@@ -100,7 +100,7 @@ def check_train_script(code: str, names: list[str]) -> list[str]:
         compile(code, "train.py", "exec")
     except SyntaxError as e:
         return [f"train.py does not compile: {e.msg} at line {e.lineno}"]
-    for flag in ("--data-dir", "--epochs", "--subset"):
+    for flag in ("--data-dir", "--epochs", "--subset", "--set"):
         if flag not in code:
             problems.append(f"missing CLI flag {flag}")
     if "METRIC " not in code:
@@ -219,9 +219,12 @@ def implementer_goal(design: dict, claims: list[dict], settings: list[dict], fee
         "Paper settings (verbatim quotes; 'not stated' means you choose a sensible value and say so in CONFIG):\n"
         + "\n".join(map(_setting_line, settings)) +
         "\n\nContract (code checks it; the run fails otherwise):\n"
-        "- CLI: python train.py --data-dir DIR --epochs N --subset M --seed S\n"
+        "- CLI: python train.py --data-dir DIR --epochs N --subset M --seed S [--set KEY=VALUE ...]\n"
         "  --epochs: epochs for EVERY model; --subset: train on the first M training examples (0 = all); load the "
         "dataset with torchvision.datasets(..., download=True) into --data-dir.\n"
+        "  --set (repeatable): override one hyperparameter of CONFIG; KEY is a CONFIG key, dotted for nested ones "
+        "(e.g. lr.student), VALUE is JSON (0.03, \"adam\", 5). Read every hyperparameter from CONFIG so an override "
+        "really changes the run, and print CONFIG after applying the overrides.\n"
         "- CPU only. Read no files other than the dataset; write nothing outside the current folder.\n"
         "- First print one line: CONFIG <json of every hyperparameter you chose: optimizer, lr, batch size, momentum, "
         "loss weights, temperature, dropout, weight constraints, augmentation, ...>\n"

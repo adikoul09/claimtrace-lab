@@ -59,6 +59,7 @@ GOOD_SCRIPT = '''
 import argparse, json, time
 ap = argparse.ArgumentParser()
 ap.add_argument("--data-dir"); ap.add_argument("--epochs", type=int); ap.add_argument("--subset", type=int)
+ap.add_argument("--set", action="append")
 ap.add_argument("--seed", type=int, default=0)
 a = ap.parse_args()
 print("CONFIG " + json.dumps({"lr": 0.1}))

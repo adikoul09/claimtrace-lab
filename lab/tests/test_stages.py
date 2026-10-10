@@ -140,7 +140,8 @@ def runs(tmp_path, monkeypatch):
 DESIGN = {"experiment": "MNIST", "reason": "fits", "models": [{"name": "teacher", "claim_id": "c7"},
                                                              {"name": "student_hard", "claim_id": "c8"}]}
 GOOD = ('import argparse, json\nap = argparse.ArgumentParser()\nap.add_argument("--data-dir")\n'
-        'ap.add_argument("--epochs")\nap.add_argument("--subset")\nprint("CONFIG " + json.dumps({}))\n'
+        'ap.add_argument("--epochs")\nap.add_argument("--subset")\nap.add_argument("--set")\n'
+        'print("CONFIG " + json.dumps({}))\n'
         'print("METRIC train_examples_full=1 step=0")\nfor n in ["teacher", "student_hard"]:\n'
         '    print(f"METRIC {n}_epoch_s=1 step=1"); print(f"METRIC final_{n}=1 step=0")\n')
 
