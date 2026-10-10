@@ -219,3 +219,21 @@ def test_a_refused_request_that_spent_nothing_writes_no_row(gateway):
     with pytest.raises(LLMQuotaExhausted):
         llm.call(Request(agent="a", prompt="p"))
     assert db.rows.get("llm_calls", []) == []
+
+
+# ---- reasoning_effort ---------------------------------------------------------------------------------------------
+
+def test_reasoning_effort_is_sent_and_dropped_once_if_the_gateway_rejects_it(gateway, monkeypatch, capsys):
+    monkeypatch.setattr(llm_mod, "_NO_REASONING_EFFORT", set())
+    sent, install = gateway
+    rejected = httpx.Response(400, json={"error": {"code": "unsupported_parameter",
+                                                   "message": "Unrecognized request argument supplied: reasoning_effort"}})
+    llm, db = install(rejected, ok("first"), ok("second"))
+    assert llm.call(Request(agent="a", prompt="p1")).output == "first"
+    assert llm.call(Request(agent="a", prompt="p2")).output == "second"
+    bodies = [body(r) for r in sent if not isinstance(r, tuple)]
+    assert bodies[0]["reasoning_effort"] == "low"                   # default sent
+    assert "reasoning_effort" not in bodies[1]                      # retried without it
+    assert "reasoning_effort" not in bodies[2]                      # and not sent again for this model
+    assert capsys.readouterr().out.count("reasoning_effort") == 1   # logged once
+    assert db.rows["llm_calls"][0]["total_tokens"] == 120           # the retried call is logged normally

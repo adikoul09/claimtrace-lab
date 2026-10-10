@@ -11,6 +11,9 @@ Elevate rules: stream=false, text only; a request body over 48 KB is refused bef
 (reasoning included) is 1-4000 tokens, default 3000 for "smart" and 1500 otherwise (gpt-* send it as
 max_completion_tokens, deepseek-v4-pro as max_tokens); 429 waits Retry-After and retries; 403 means the quota is gone
 (event llm_quota_exhausted, no retry); a content-filtered request gets an llm_filtered event and is not retried.
+reasoning_effort (LLM_REASONING_EFFORT, default "low"; "none" or empty sends nothing) is sent on every request; if
+the gateway rejects the field for a model, the request is resent without it and that model never gets it again
+(logged once).
 Live elevate calls stop for the day once llm_calls holds DAILY_TOKEN_CAP live tokens since 05:30 IST (event
 llm_daily_cap).
 
@@ -53,6 +56,8 @@ RETRY_429 = 3
 RETRY_AFTER_MAX_S = 120
 HTTP_TIMEOUT_S = 300
 HTTP_TRANSPORT = None              # tests put an httpx.MockTransport here
+DEFAULT_REASONING_EFFORT = "low"
+_NO_REASONING_EFFORT: set[str] = set()  # models whose gateway route rejected reasoning_effort (this process)
 DAILY_TOKEN_CAP = 700_000
 DAY_START_UTC = timedelta(0)       # 05:30 IST is 00:00 UTC
 
@@ -214,6 +219,9 @@ def _elevate(req: Request, model: str) -> dict:
               OUTPUT_CAP[1])
     payload = {"model": model, "messages": messages, "stream": False,
                ("max_tokens" if model.startswith("deepseek") else "max_completion_tokens"): cap}
+    effort = str(setting("LLM_REASONING_EFFORT", DEFAULT_REASONING_EFFORT) or "").strip().lower()
+    if effort and effort != "none" and model not in _NO_REASONING_EFFORT:
+        payload["reasoning_effort"] = effort
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     if len(data) > MAX_REQUEST_BYTES:
         raise LLMError(f"request is {len(data) / 1000:.1f} KB; the gateway limit is 48 KB, so it was not sent")
@@ -249,6 +257,13 @@ def _elevate(req: Request, model: str) -> dict:
             if r.status_code == 400 and _filtered(body):
                 raise LLMFiltered(f"elevate filtered the request (content filter; not retried), request id {rid}: "
                                   f"{scrub(r.text, key)}")
+            if r.status_code in (400, 422) and "reasoning_effort" in payload and "reasoning_effort" in r.text:
+                _NO_REASONING_EFFORT.add(model)
+                print(f"[llm] the gateway rejected reasoning_effort for {model} (HTTP {r.status_code}); "
+                      f"sending without it from now on", flush=True)
+                del payload["reasoning_effort"]
+                data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+                continue
             if r.status_code in (500, 502, 503, 504) and n5xx < len(RETRY_WAIT_S):
                 time.sleep(RETRY_WAIT_S[n5xx])
                 n5xx += 1
@@ -282,7 +297,8 @@ def _elevate(req: Request, model: str) -> dict:
             raise spent(LLMError(f"elevate returned non-JSON for a schema call: {text[:300]!r}")) from None
     else:
         output = text
-    return {"output": output, "text": text, **usage, "models": [(body or {}).get("model") or model]}
+    return {"output": output, "text": text, **usage, "models": [(body or {}).get("model") or model],
+            "finish_reason": finish, "reasoning_effort": payload.get("reasoning_effort")}
 
 
 PROVIDERS: dict[str, Callable[[Request, str], dict]] = {"gemini": _gemini, "elevate": _elevate}
@@ -402,7 +418,8 @@ class LLM:
                    "response": {"output": r["output"], "text": r["text"], "tokens_in": r["tokens_in"],
                                 "tokens_out": r["tokens_out"], "models": r["models"],
                                 "total_tokens": r.get("total_tokens", r["tokens_in"] + r["tokens_out"]),
-                                "request_id": r.get("request_id"),
+                                "request_id": r.get("request_id"), "finish_reason": r.get("finish_reason"),
+                                "reasoning_effort": r.get("reasoning_effort"),
                                 "wall_seconds": round(time.monotonic() - t0, 1)}}
             self.cache.put(req.agent, key, rec)
         resp = rec["response"]
