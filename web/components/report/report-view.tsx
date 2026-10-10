@@ -154,14 +154,27 @@ export function ReportView({ projectId }: { projectId: string }) {
         ) : (
           <ClaimsTable rows={data.rows} />
         )}
-        {data.graded.map((g) => (
-          <Graded key={g.experimentId} g={g} />
-        ))}
+        <Comparisons graded={data.graded} />
       </div>
 
-      <WhyItDiffers data={data} />
-      <MemoryEffect memory={data.memory} />
-      {hasPaper && data.untested.length > 0 && <UntestedClaims claims={data.untested} />}
+      <div className="space-y-2">
+        {data.graded.map((g) => (
+          <Collapsed key={g.experimentId} title="Grading detail" hint={g.experimentLabel}>
+            <Graded g={g} />
+          </Collapsed>
+        ))}
+        <Collapsed title="Why it differs" hint={whyHint(data)}>
+          <WhyItDiffers data={data} />
+        </Collapsed>
+        <Collapsed title="Memory effect" hint={data.memory?.previous ? "vs the previous run" : "first run of this paper"}>
+          <MemoryEffect memory={data.memory} />
+        </Collapsed>
+        {hasPaper && data.untested.length > 0 && (
+          <Collapsed title="Other claims in the paper" hint={`${data.untested.length}, not run`}>
+            <UntestedClaims claims={data.untested} />
+          </Collapsed>
+        )}
+      </div>
     </section>
   );
 }
@@ -194,7 +207,13 @@ const VerdictCell = ({ r }: { r: ReportRow }) =>
   r.verdict ? (
     <>
       <Badge tone={verdictLabel(r.verdict.verdict).tone}>{r.verdict.label}</Badge>
-      {r.verdict.why && <p className="mt-1 break-words text-xs text-neutral-500">{r.verdict.why}</p>}
+      {r.explain && <p className="mt-1 break-words text-sm">{r.explain}</p>}
+      {r.verdict.why && (
+        <details className="mt-1 text-xs">
+          <summary className="cursor-pointer text-neutral-500">Grading rule</summary>
+          <p className="mt-1 break-words font-mono text-neutral-500">{r.verdict.why}</p>
+        </details>
+      )}
     </>
   ) : (
     <span className="text-xs text-neutral-500">{TEXT.notGraded}</span>
@@ -286,8 +305,8 @@ function ClaimsGrid({ rows }: { rows: ReportRow[] }) {
 
 function Graded({ g }: { g: GradedExp }) {
   return (
-    <div className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
-      <h3 className="break-words text-sm font-semibold">{g.experimentLabel}</h3>
+    <div className="space-y-2">
+      {g.rules && <p className="break-words text-xs text-neutral-500">Rules: {g.rules}</p>}
       {g.relative.length > 0 && (
         <Table
           head={
@@ -343,7 +362,6 @@ function Graded({ g }: { g: GradedExp }) {
 function WhyItDiffers({ data }: { data: ReportData }) {
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-semibold">Why it differs</h2>
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Settings diff</h3>
         <p className="text-xs text-neutral-500">{TEXT.settingsIntro}</p>
@@ -454,7 +472,6 @@ function MemoryEffect({ memory }: { memory: ReportData["memory"] }) {
   const prev = memory?.previous;
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-semibold">Memory effect</h2>
       <p className="text-xs text-neutral-500">{TEXT.memoryIntro}</p>
       {!memory || !prev ? (
         <Muted>{TEXT.noMemory}</Muted>
@@ -487,6 +504,44 @@ function MemoryEffect({ memory }: { memory: ReportData["memory"] }) {
         </ul>
       )}
     </div>
+  );
+}
+
+/** A closed section: its title and a one-line hint stay visible, the detail opens on tap. */
+function Collapsed({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <details className="rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 px-3 py-2">
+        <span className="text-sm font-semibold">{title}</span>
+        {hint && <span className="min-w-0 break-words text-xs text-neutral-500">{hint}</span>}
+      </summary>
+      <div className="border-t border-neutral-200 p-3 dark:border-neutral-800">{children}</div>
+    </details>
+  );
+}
+
+const whyHint = (d: ReportData) =>
+  [
+    d.settingsDiff ? `${d.settingsDiff.rows.length} settings compared` : "settings diff not computed yet",
+    d.branches.length ? `${new Set(d.branches.map((b) => b.branchId)).size} what-if branches` : "no what-if branches yet",
+  ].join(" · ");
+
+/** Relative claims ("c9 beats c8") with their verdict and why, next to the claims they compare. */
+function Comparisons({ graded }: { graded: GradedExp[] }) {
+  const rows = graded.flatMap((g) => g.relative.map((r) => ({ ...r, exp: g.experimentId })));
+  if (!rows.length) return null;
+  return (
+    <ul className="divide-y divide-neutral-200 border-t border-neutral-200 text-sm dark:divide-neutral-800 dark:border-neutral-800">
+      {rows.map((r) => (
+        <li key={`${r.exp}:${r.claim}`} className="space-y-1 py-3">
+          <div className="font-medium">
+            Comparison <span className="font-mono text-xs font-normal text-neutral-500">{r.claim}</span>
+          </div>
+          <Badge tone={verdictLabel(r.verdict).tone}>{r.label}</Badge>
+          {r.explain && <p className="break-words">{r.explain}</p>}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -536,10 +591,7 @@ function Quote({ claim: c }: { claim: Claim }) {
 function UntestedClaims({ claims }: { claims: Claim[] }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold">
-        Other claims in the paper <span className="font-normal text-neutral-500">({claims.length}, not run)</span>
-      </h2>
-      <ul className="mt-2 divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
+      <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
         {claims.map((c) => (
           <li key={c.id} className="py-2">
             <div className="flex flex-wrap items-baseline gap-x-2">

@@ -295,7 +295,7 @@ test("reportMarkdown links each of our numbers to its log line and uses the scre
   assert.match(md, /^# Report: Distillation/);
   assert.ok(md.includes("[80](https://x.test/logs/v2#L186) (Δ +13) ± 10"));
   assert.ok(md.includes("[143](https://x.test/logs/v2#L280) (Δ -3) ± 10"));
-  assert.ok(md.includes("Partially reproduced (1 seed): \\|13\\| > margin 10"));
+  assert.ok(md.includes("| Partially reproduced: ours 80 vs paper 67 (gap 13, over the margin of 10 errors). 1 seed. |"));
   assert.ok(md.includes("(from [L186](https://x.test/logs/v2#L186), [L280](https://x.test/logs/v2#L280))"));
   assert.ok(md.includes(`${TEXT.explanationHidden}: not requested.`));
   assert.ok(md.includes(TEXT.noSettings) && md.includes(TEXT.noBranches) && md.includes(TEXT.noMemory));
@@ -387,4 +387,71 @@ test("reportMarkdown opens with the claim authenticity counts", () => {
   assert.ok(md.indexOf("## Claim authenticity") < md.indexOf("## Claims vs ours"));
   assert.match(md, /\| Partially reproduced \| 2 \(1 seed\) \|/);
   assert.match(md, /3 graded claims \(2 results, 1 comparison\)/);
+});
+
+// The real v2 grading (experiment 3ce597c1): c7 teacher, c8 hard-label student, c9 distilled student.
+const V2 = {
+  seeds: 1,
+  claims: [
+    { claim_id: "c7", ours: 80, paper: 67, delta: 13, margin: 10, unit: "errors", verdict: "Partially reproduced", label: "Partially reproduced (1 seed)", why: "|13| > margin 10; holds: c7 better than c8, c7 better than c9", log_line: 186, model: "teacher_test_errors" },
+    { claim_id: "c8", ours: 143, paper: 146, delta: -3, margin: 10, unit: "errors", verdict: "Reproduced", label: "Reproduced (1 seed)", why: "|-3| <= margin 10", log_line: 280, model: "student_hard_test_errors" },
+    { claim_id: "c9", ours: 96, paper: 74, delta: 22, margin: 10, unit: "errors", verdict: "Partially reproduced", label: "Partially reproduced (1 seed)", why: "|22| > margin 10; holds: c7 better than c9, c9 better than c8", log_line: 374, model: "student_distilled_test_errors" },
+  ],
+  relative: [{ claim: "c9 beats c8", method: "c9", baseline: "c8", paper_gap: 72, ours_gap: 47, verdict: "Partially reproduced", label: "Partially reproduced (gap smaller than reported) (1 seed)", size_note: "gap smaller than reported" }],
+  relations: [
+    { a: "c7", b: "c8", holds: true, relation: "c7 better than c8" },
+    { a: "c7", b: "c9", holds: true, relation: "c7 better than c9" },
+    { a: "c9", b: "c8", holds: true, relation: "c9 better than c8" },
+  ],
+};
+const V2_CLAIMS = [
+  claim("c7", 67, { model: "Large neural net (1200 units/layer)" }),
+  claim("c8", 146, { model: "Small net (800 units/layer)" }),
+  claim("c9", 74, { model: "Distilled small net (800 units/layer)" }),
+];
+const numbers = (s: string) => (s.match(/\d+(\.\d+)?/g) ?? []).map(Number);
+
+test("each partially or not reproduced claim gets a why sentence from the verdict's own numbers", () => {
+  const d = buildReport({ claims: parseClaims(V2_CLAIMS), experiments: [exp("v2", { verdicts: V2 })], metrics: [] });
+  const why = new Map(d.rows.map((r) => [r.claim.id, r.explain]));
+  assert.equal(
+    why.get("c9"),
+    "Partially reproduced: ours 96 vs paper 74 (gap 22, over the margin of 10 errors), but the paper's direction holds (Distilled small net 96 < Small net 143). 1 seed.",
+  );
+  assert.equal(
+    why.get("c7"),
+    "Partially reproduced: ours 80 vs paper 67 (gap 13, over the margin of 10 errors), but the paper's direction holds (Large neural net 80 < Small net 143; Large neural net 80 < Distilled small net 96). 1 seed.",
+  );
+  assert.equal(why.get("c8"), null, "a reproduced claim needs no why");
+  assert.equal(
+    d.graded[0].relative[0].explain,
+    "Partially reproduced: our gap 47 vs the paper's 72 (gap smaller than reported). 1 seed.",
+  );
+});
+
+test("every number in a why sentence appears in the verdict or claim data", () => {
+  const broken = structuredClone(V2);
+  broken.claims[2] = { ...broken.claims[2], ours: 150, delta: 76, verdict: "Not reproduced", label: "Not reproduced (1 seed)" };
+  broken.relations[2] = { ...broken.relations[2], holds: false };
+  for (const verdicts of [V2, broken]) {
+    const d = buildReport({ claims: parseClaims(V2_CLAIMS), experiments: [exp("v2", { verdicts })], metrics: [] });
+    const data = new Set(numbers(JSON.stringify(verdicts) + JSON.stringify(V2_CLAIMS)).map(Math.abs));
+    const sentences = [...d.rows.map((r) => r.explain), ...d.graded.flatMap((g) => g.relative.map((r) => r.explain))];
+    assert.ok(sentences.filter(Boolean).length >= 2);
+    for (const s of sentences) for (const n of numbers(s ?? "")) assert.ok(data.has(n), `${n} in "${s}" is not in the data`);
+  }
+  const d = buildReport({ claims: parseClaims(V2_CLAIMS), experiments: [exp("v2", { verdicts: broken })], metrics: [] });
+  assert.equal(
+    d.rows.find((r) => r.claim.id === "c9")!.explain,
+    "Not reproduced: ours 150 vs paper 74 (gap 76, over the margin of 10 errors), and the paper's direction does not hold (Distilled small net 150 > Small net 143). 1 seed.",
+  );
+});
+
+test("a why sentence leaves out what the verdict does not say (contract list: no relations, no delta)", () => {
+  const d = buildReport({
+    claims: parseClaims(V2_CLAIMS),
+    experiments: [exp("v3", { verdicts: [{ claim_id: "c9", verdict: "not reproduced", ours: 96, paper: 74, margin: 10, note: "(1 seed)", log_line: 374 }] })],
+    metrics: [],
+  });
+  assert.equal(d.rows[0].explain, "Not reproduced: ours 96 vs paper 74. 1 seed.");
 });

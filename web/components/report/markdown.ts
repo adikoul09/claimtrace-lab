@@ -90,7 +90,7 @@ export function reportMarkdown(
           (r.ours.length ? r.ours.map((p) => log(r.experimentId, p.log_line, p.text)).join(", ") : TEXT.notMeasured) +
             (r.delta !== null ? ` (Δ ${r.delta > 0 ? "+" : ""}${r.delta})` : "") +
             (r.margin !== null ? ` ± ${r.margin}` : ""),
-          r.verdict ? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "") : TEXT.notGraded,
+          r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : TEXT.notGraded,
         ]),
       ),
     );
@@ -106,7 +106,7 @@ export function reportMarkdown(
             r.paper_gap === null ? "—" : String(r.paper_gap),
             (r.ours_gap === null ? "—" : String(r.ours_gap)) +
               (r.lines.length ? ` (from ${r.lines.map((l) => log(l.exp, l.line, `L${l.line}`)).join(", ")})` : ""),
-            r.label,
+            r.explain ?? r.label,
           ]),
         ),
       );
