@@ -68,6 +68,9 @@ export function LiveHeader() {
         <Link href="/" className="mr-auto text-sm font-semibold">
           ClaimTrace Lab
         </Link>
+        <Link href="/approvals" className="text-neutral-600 hover:underline dark:text-neutral-400">
+          Approvals
+        </Link>
         <ExecutorDots now={now} />
         <Stamp label="latest event" ts={eventTs} now={now} />
         <Stamp label="latest metric" ts={metricTs} now={now} />
