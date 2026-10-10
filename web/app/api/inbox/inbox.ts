@@ -37,6 +37,14 @@ export function extractPoints(body: string): string[] {
   return points;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** An optional project_id from n8n: a uuid (lower-cased), else null and the arXiv/newest routing applies. */
+function projectIdOf(v: unknown): string | null {
+  const id = typeof v === "string" ? v.trim().toLowerCase() : "";
+  return UUID.test(id) ? id : null;
+}
+
 export type InboxEvent = {
   type: "email_received";
   message: string;
@@ -48,7 +56,7 @@ type Refusal = { ok: false; status: number; error: string };
 
 export function planInboxEvent(
   body: Record<string, unknown>,
-): { ok: true; event: InboxEvent; arxivIds: string[] } | Refusal {
+): { ok: true; event: InboxEvent; arxivIds: string[]; projectId: string | null } | Refusal {
   const { from, subject, body: text, received_at } = body;
   if (typeof from !== "string" || !from.trim()) return { ok: false, status: 400, error: "from is required" };
   if (typeof subject !== "string") return { ok: false, status: 400, error: "subject must be a string" };
@@ -66,6 +74,7 @@ export function planInboxEvent(
   return {
     ok: true,
     arxivIds: findArxivIds(subj, text),
+    projectId: projectIdOf(body.project_id),
     event: {
       type: "email_received",
       message: subj || "(no subject)",
