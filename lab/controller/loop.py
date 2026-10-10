@@ -889,20 +889,22 @@ class Controller:
         return row
 
     def raise_step_floor(self, agent: dict) -> bool:
-        """Raise the agent row's max_steps to its capability's floor (rules.STEP_FLOORS), with an event."""
+        """Raise the agent row's max_steps and max_tokens to its capabilities' floors (rules.STEP_FLOORS,
+        rules.TOKEN_FLOORS), with an event."""
         new = assign.step_floor(agent)
         if new is None:
             return False
         before = dict(agent.get("budget") or {})
         old = before.get("max_steps")
+        floored = [c for c in agent.get("capabilities") or [] if c in assign.STEP_FLOORS or c in assign.TOKEN_FLOORS]
         self.db.table("agents").update({"budget": new}).eq("id", agent["id"]).execute()
         agent["budget"] = new
         emit(self.db, "agent_budget_raised",
              f"{agent['name']}: max_steps {old} → {new.get('max_steps')}, max_tokens {before.get('max_tokens')} → "
              f"{new.get('max_tokens')}",
-             f"agents with {', '.join(c for c in agent.get('capabilities') or [] if c in assign.STEP_FLOORS)} get at "
-             f"least the floor budget (LAB_ENVBUILDER_STEPS, LAB_ENVBUILDER_TOKENS); the old budget ran out in live "
-             f"runs", agent_id=agent["id"], data={"from": before, "to": new})
+             f"agents with {', '.join(floored)} get at least the floor budget (LAB_ENVBUILDER_STEPS, "
+             f"LAB_ENVBUILDER_TOKENS, LAB_DESIGNER_TOKENS); the old budget ran out in live runs",
+             agent_id=agent["id"], data={"from": before, "to": new})
         return True
 
     def apply_step_floors(self) -> list[str]:

@@ -8,6 +8,8 @@ The token guard values (HoO-A, night of 10-11 Oct) can be set in the environment
                           LAB_MAX_ATTEMPTS 2 a spawn can only happen if this is 1)
   LAB_ENVBUILDER_STEPS    the least max_steps an agent with setup_env gets (default 6; the seed had 4)
   LAB_ENVBUILDER_TOKENS   the least max_tokens an agent with setup_env gets (default 40,000; the seed had 10,000)
+  LAB_DESIGNER_TOKENS     the least max_tokens an agent with design_experiment, budget or design_whatif gets
+                          (default 30,000, the seed designer's budget; a refined spawn had inherited 4,000)
 """
 from lab.db import setting
 
@@ -33,4 +35,6 @@ MIN_SCORED = 3               # scored tasks an agent needs before retire or merg
 MAX_REFINES_PER_ROLE = _int("LAB_REFINE_CAP", 1)     # refines of one role per project; then the task stays failed
 BUDGET_HOLD_TOKENS = _int("LAB_BUDGET_HOLD_TOKENS", 600_000)  # live tokens today at which LLM work is held
 STEP_FLOORS = {"setup_env": _int("LAB_ENVBUILDER_STEPS", 6)}  # capability -> least max_steps of its agents
-TOKEN_FLOORS = {"setup_env": _int("LAB_ENVBUILDER_TOKENS", 40_000)}  # capability -> least max_tokens of its agents
+_DESIGNER_TOKENS = _int("LAB_DESIGNER_TOKENS", 30_000)
+TOKEN_FLOORS = {"setup_env": _int("LAB_ENVBUILDER_TOKENS", 40_000),  # capability -> least max_tokens of its agents
+                "design_experiment": _DESIGNER_TOKENS, "budget": _DESIGNER_TOKENS, "design_whatif": _DESIGNER_TOKENS}

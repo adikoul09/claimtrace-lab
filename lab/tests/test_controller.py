@@ -207,7 +207,16 @@ def test_unblock_targets_the_step_the_project_blocked_on():
 
 def test_an_envbuilder_gets_at_least_40k_tokens_and_6_steps():
     from lab.controller.rules import TOKEN_FLOORS
-    assert TOKEN_FLOORS == {"setup_env": 40_000}
+    assert TOKEN_FLOORS == {"setup_env": 40_000, "design_experiment": 30_000, "budget": 30_000,
+                            "design_whatif": 30_000}
     env = {"id": "e", "name": "envbuilder-v2", "capabilities": ["setup_env"],
            "budget": {"max_tokens": 10000, "max_cpu_s": 600, "max_steps": 6}}
     assert assign.step_floor(env) == {"max_tokens": 40_000, "max_cpu_s": 600, "max_steps": 6}
+
+
+
+def test_a_designer_gets_at_least_30k_tokens():
+    # live 42fb4944: cpu-experiment-designer-v2 inherited 4000 tokens and stopped at 5888 on the budget step
+    d = {"id": "d", "name": "cpu-experiment-designer-v2", "capabilities": ["design_experiment", "budget"],
+         "budget": {"max_tokens": 4000, "max_cpu_s": 60, "max_steps": 8}}
+    assert assign.step_floor(d) == {"max_tokens": 30_000, "max_cpu_s": 60, "max_steps": 8}
