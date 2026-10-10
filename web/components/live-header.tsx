@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
 import { ExecutorDots } from "@/components/live/executor-dots";
+import { TokenMeter } from "@/components/live/token-meter";
 
 async function newestTs(table: "events" | "metrics"): Promise<string | null> {
   const { data } = await supabase()
@@ -72,6 +73,7 @@ export function LiveHeader() {
           Approvals
         </Link>
         <ExecutorDots now={now} />
+        <TokenMeter />
         <Stamp label="latest event" ts={eventTs} now={now} />
         <Stamp label="latest metric" ts={metricTs} now={now} />
       </div>
