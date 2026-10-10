@@ -1,24 +1,42 @@
 "use client";
 
-// Notes tab (SPEC §10): the project's research notes in Markdown, written by the Reporter and editable here.
-// Shown as plain text with its line breaks kept (no Markdown renderer in the stack).
+// Notes tab (SPEC §10): the project's research notes in Markdown. An edited copy in Storage (notes/<project id>.md)
+// wins; otherwise the Reporter's latest write_notes output (CONTRACTS.md §4). Shown as plain text with its line
+// breaks kept (no Markdown renderer in the stack).
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { latestNotes } from "./report";
 
-type State = { status: "loading" } | { status: "none" } | { status: "ok"; text: string } | { status: "error"; message: string };
+type State =
+  | { status: "loading" }
+  | { status: "none" }
+  | { status: "ok"; text: string; source: string }
+  | { status: "error"; message: string };
+
+async function loadNotes(projectId: string): Promise<State> {
+  const res = await fetch(`/api/projects/${projectId}/notes`, { cache: "no-store" });
+  if (res.ok) return { status: "ok", text: await res.text(), source: "Edited notes" };
+  if (res.status !== 404) return { status: "error", message: (await res.text()) || `HTTP ${res.status}` };
+  const { data, error } = await supabase()
+    .from("tasks")
+    .select("id,capability,status,finished_at,output")
+    .eq("project_id", projectId)
+    .eq("capability", "write_notes")
+    .eq("status", "done");
+  if (error) return { status: "error", message: error.message };
+  const notes = latestNotes(data ?? []);
+  return notes
+    ? { status: "ok", text: notes.markdown, source: `Written by the Reporter (task ${notes.taskId.slice(0, 8)})` }
+    : { status: "none" };
+}
 
 export function NotesView({ projectId }: { projectId: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/projects/${projectId}/notes`, { cache: "no-store" })
-      .then(async (res) => {
-        const text = await res.text();
-        if (cancelled) return;
-        if (res.status === 404) setState({ status: "none" });
-        else if (!res.ok) setState({ status: "error", message: text || `HTTP ${res.status}` });
-        else setState({ status: "ok", text });
-      })
+    loadNotes(projectId)
+      .then((s) => !cancelled && setState(s))
       .catch((e: Error) => !cancelled && setState({ status: "error", message: e.message }));
     return () => {
       cancelled = true;
@@ -36,9 +54,12 @@ export function NotesView({ projectId }: { projectId: string }) {
       )}
       {state.status === "error" && <p className="text-sm text-red-600">Could not load the notes: {state.message}</p>}
       {state.status === "ok" && (
-        <article className="whitespace-pre-wrap break-words rounded-lg border border-neutral-200 p-3 font-mono text-sm leading-6 dark:border-neutral-800">
-          {state.text}
-        </article>
+        <>
+          <p className="text-xs text-neutral-500">{state.source}</p>
+          <article className="whitespace-pre-wrap break-words rounded-lg border border-neutral-200 p-3 font-mono text-sm leading-6 dark:border-neutral-800">
+            {state.text}
+          </article>
+        </>
       )}
     </section>
   );

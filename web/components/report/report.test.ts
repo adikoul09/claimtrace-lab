@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildReport, diffText, parseClaims, readVerdicts, runStats, verdictLabel, type ExpRow } from "./report.ts";
+import { buildReport, diffText, latestNotes, parseClaims, readVerdicts, runStats, verdictLabel, type ExpRow } from "./report.ts";
 import { reportMarkdown, TEXT } from "./markdown.ts";
 
 const claim = (id: string, value: unknown, extra: Record<string, unknown> = {}) => ({
@@ -314,4 +314,23 @@ test("reportMarkdown escapes pipes so a quote cannot break the table", () => {
   });
   const md = reportMarkdown({ id: "p", title: "t", arxiv_id: null }, d, "");
   assert.ok(md.includes("c1 a\\|b"));
+});
+
+test("latestNotes picks the newest done write_notes task's markdown (CONTRACTS.md §4)", () => {
+  const t = (id: string, capability: string, status: string, finished_at: string | null, output: unknown) => ({
+    id,
+    capability,
+    status,
+    finished_at,
+    output,
+  });
+  const out = latestNotes([
+    t("a", "write_notes", "done", "2026-10-10T10:00:00Z", { markdown: "# old" }),
+    t("b", "write_notes", "done", "2026-10-10T12:00:00Z", { markdown: "# new" }),
+    t("c", "write_notes", "failed", "2026-10-10T13:00:00Z", { markdown: "# broken" }),
+    t("d", "write_report", "done", "2026-10-10T14:00:00Z", { markdown: "# report" }),
+    t("e", "write_notes", "done", "2026-10-10T15:00:00Z", { answer: "no markdown field" }),
+  ]);
+  assert.deepEqual(out, { taskId: "b", markdown: "# new" });
+  assert.equal(latestNotes([]), null);
 });

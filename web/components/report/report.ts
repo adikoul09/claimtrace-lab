@@ -475,3 +475,14 @@ export function buildReport(input: ReportInput): ReportData {
       : null,
   };
 }
+
+/** The Reporter's latest notes: the newest done write_notes task's output.markdown (CONTRACTS.md §4). */
+export function latestNotes(
+  tasks: { id: string; capability: string; status: string; finished_at: string | null; output: unknown }[],
+): { taskId: string; markdown: string } | null {
+  const hit = tasks
+    .filter((t) => t.capability === "write_notes" && t.status === "done" && t.finished_at)
+    .sort((a, b) => ms(b.finished_at!) - ms(a.finished_at!))
+    .find((t) => isObj(t.output) && typeof t.output.markdown === "string" && t.output.markdown);
+  return hit ? { taskId: hit.id, markdown: (hit.output as { markdown: string }).markdown } : null;
+}
