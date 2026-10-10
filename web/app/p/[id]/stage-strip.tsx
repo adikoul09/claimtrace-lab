@@ -152,7 +152,10 @@ export function StageStrip({ projectId }: { projectId: string }) {
       {shown && (
         <div id="stage-reason" role="status" className="mt-2 rounded border border-red-300 p-2 text-sm dark:border-red-900">
           <p>
-            <span className="font-semibold">{shown.label} failed.</span> {shown.reason}
+            <span className="font-semibold">
+              {shown.label} failed{shown.failedStep ? ` at “${shown.failedStep}”` : ""}.
+            </span>{" "}
+            {shown.reason}
           </p>
           {shown.detail && (
             <details className="mt-1 text-xs">
