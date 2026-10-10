@@ -19,6 +19,7 @@ export function EventStream({ projectId }: { projectId: string }) {
   const [agents, setAgents] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const jumped = useRef(false);
 
   // Rows arrive after the first fetch, so a #ev-<id> link (from a lesson's evidence) can't scroll on load; do it here.
@@ -54,6 +55,7 @@ export function EventStream({ projectId }: { projectId: string }) {
       .order("ts", { ascending: false })
       .limit(LIMIT)
       .then(({ data, error }) => {
+        setLoaded(true);
         if (error) setError(error.message);
         else setEvents((cur) => mergeEvents(cur, (data ?? []) as Event[], LIMIT));
       });
@@ -94,7 +96,11 @@ export function EventStream({ projectId }: { projectId: string }) {
       {error && <p className="mb-3 text-sm text-red-600">Could not load events: {error}</p>}
 
       {events.length === 0 ? (
-        <p className="text-sm text-neutral-500">No events yet. New ones appear here as they happen.</p>
+        !loaded ? (
+          <p className="text-sm text-neutral-500">Loading…</p>
+        ) : (
+          !error && <p className="text-sm text-neutral-500">No events yet. New ones appear here as they happen.</p>
+        )
       ) : (
         <ol className="divide-y divide-neutral-200 dark:divide-neutral-800">
           {events.map((e) => (

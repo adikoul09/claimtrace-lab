@@ -5,6 +5,8 @@ import {
   formatDuration,
   groupMetrics,
   latestTaskByExperiment,
+  pickDefault,
+  retry,
   runTime,
   upsertRows,
 } from "./experiments.ts";
@@ -73,6 +75,11 @@ test("groupMetrics keeps NaN values as gaps with their raw text, never as number
   assert.equal(curves[0].points[1].text, "0.3");
 });
 
+test("groupMetrics shows a NULL value (NaN or inf, migration 003) as a non-finite gap", () => {
+  const { curves } = groupMetrics([m("1", "loss", 1, null, 7), m("2", "loss", 2, 0.3, 9)]);
+  assert.deepEqual([curves[0].points[0].value, curves[0].points[0].text], [null, "non-finite"]);
+});
+
 test("upsertRows replaces by id and appends new rows", () => {
   const out = upsertRows([{ id: "a", v: 1 }, { id: "b", v: 1 }], [{ id: "a", v: 2 }, { id: "c", v: 1 }]);
   assert.deepEqual(out, [{ id: "a", v: 2 }, { id: "b", v: 1 }, { id: "c", v: 1 }]);
@@ -114,4 +121,31 @@ test("formatDuration renders seconds, minutes and hours", () => {
   assert.equal(formatDuration(4.7), "4.7 s");
   assert.equal(formatDuration(449), "7 min 29 s");
   assert.equal(formatDuration(5119.3), "1 h 25 min");
+});
+
+test("pickDefault prefers a running experiment, then the newest with metrics, then the newest", () => {
+  const e = (id: string, status: string, created_at: string) => ({ id, status, created_at });
+  const rows = [
+    e("old", "done", "2026-10-10T09:00:00Z"),
+    e("mid", "done", "2026-10-10T10:00:00Z"),
+    e("new", "planned", "2026-10-10T11:00:00Z"),
+  ];
+  const counts = (id: string) => ({ old: 10, mid: 5, new: 0 })[id] ?? 0;
+  assert.equal(pickDefault(rows, counts)?.id, "mid");
+  assert.equal(pickDefault([...rows, e("run", "running", "2026-10-10T08:00:00Z")], counts)?.id, "run");
+  assert.equal(pickDefault(rows, () => 0)?.id, "new");
+  assert.equal(pickDefault([], counts), undefined);
+});
+
+test("retry returns the first success and gives up after the last failure", async () => {
+  let calls = 0;
+  const flaky = async () => {
+    calls += 1;
+    if (calls < 3) throw new Error(`fail ${calls}`);
+    return "ok";
+  };
+  assert.equal(await retry(flaky, 3, 0), "ok");
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(retry(flaky, 2, 0), /fail 2/);
 });

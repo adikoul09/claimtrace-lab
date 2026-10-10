@@ -1,5 +1,6 @@
-// Pure helpers for the Report tab: the paper's claims next to our measured values (SPEC §7.5).
-// The UI computes no verdicts: they come from experiments.verdicts, written by the Analyst (code).
+// Pure helpers for the Report tab (SPEC §7.5, §6, §10). The screen and the Markdown export both render the
+// ReportData built here, so they cannot disagree. The UI computes no verdicts: they come from experiments.verdicts,
+// written by the Analyst (code). The only arithmetic here is differences and sums of stored, logged values.
 import type { Point } from "../exp/experiments";
 
 export type Claim = {
@@ -17,7 +18,9 @@ export type Claim = {
 };
 
 const str = (x: unknown) => (typeof x === "string" ? x : "");
+const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) ? x : null);
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
+const ms = (ts: string) => Date.parse(ts);
 
 /** papers.claims → cards with an id and a numeric value; anything else is dropped. */
 export function parseClaims(json: unknown): Claim[] {
@@ -43,26 +46,197 @@ export function parseClaims(json: unknown): Claim[] {
   );
 }
 
-export type Verdict = { verdict: string; note: string | null };
+// ---- verdicts ------------------------------------------------------------------------------------------------------
+
+/** One graded claim, as lab/agents/analyst.py writes it in experiments.verdicts.claims. */
+export type VerdictCard = {
+  claim_id: string;
+  verdict: string; // normalised: reproduced | partially_reproduced | not_reproduced | not_runnable
+  label: string; // as written, e.g. "Partially reproduced (1 seed)"
+  why: string | null;
+  ours: number | null;
+  delta: number | null;
+  log_line: number | null;
+  metric_name: string | null;
+  model: string | null;
+  margin: number | null;
+  /** "1 seed" when the verdict says it rests on fewer than 3 seeds, else null. */
+  seedNote: string | null;
+};
+export type RelativeVerdict = {
+  claim: string;
+  method: string;
+  baseline: string;
+  paper_gap: number | null;
+  ours_gap: number | null;
+  verdict: string;
+  label: string;
+  seedNote: string | null;
+};
+export type Explanation = { text: string | null; accepted: boolean; problems: string[] };
+export type DiffLabel = "scale" | "omission" | "difference" | "same";
+export type SettingsDiffRow = {
+  key: string;
+  paper: string | null;
+  ours: string | null;
+  label: DiffLabel | null;
+  rawLabel: string;
+  quote: string | null;
+  page: number | null;
+  config_key: string | null;
+  reason: string | null;
+};
+export type Grade = {
+  cards: Map<string, VerdictCard>;
+  relative: RelativeVerdict[];
+  explanation: Explanation | null;
+  marginNote: string | null;
+  seeds: number | null;
+  rules: string | null;
+  settingsDiff: SettingsDiffRow[];
+};
 
 const norm = (v: string) => v.trim().toLowerCase().replace(/[\s-]+/g, "_");
 
-/** experiments.verdicts → claim id → verdict. Accepts [{claim_id|claim, verdict, note|reason}] or
- *  {claim_id: verdict | {verdict, note|reason}}. */
-export function readVerdicts(json: unknown): Map<string, Verdict> {
-  const out = new Map<string, Verdict>();
-  const add = (id: unknown, v: unknown) => {
-    const card = isObj(v) ? v : { verdict: v };
-    if (typeof id !== "string" || typeof card.verdict !== "string") return;
-    const note = card.note ?? card.reason;
-    out.set(id, { verdict: norm(card.verdict), note: typeof note === "string" ? note : null });
+const SEEDS = /^\((\d+ seeds?)\)\s*/;
+const LABEL_SEEDS = /\((\d+ seeds?)\)\s*$/;
+
+function card(id: unknown, v: unknown): VerdictCard | null {
+  const c = isObj(v) ? v : { verdict: v };
+  if (typeof id !== "string" || typeof c.verdict !== "string") return null;
+  const raw = c.why ?? c.note ?? c.reason;
+  let why = typeof raw === "string" ? raw : null;
+  let label = typeof c.label === "string" ? c.label : verdictLabel(norm(c.verdict)).label;
+  // CONTRACTS.md §5: with fewer than 3 seeds the note starts with "(1 seed)"; it belongs with the verdict.
+  const seeds = typeof c.label === "string" || !why ? null : SEEDS.exec(why);
+  const seedNote = seeds?.[1] ?? LABEL_SEEDS.exec(label)?.[1] ?? null;
+  if (seeds && why) {
+    label += ` (${seeds[1]})`;
+    why = why.slice(seeds[0].length) || null;
+  }
+  return {
+    claim_id: id,
+    verdict: norm(c.verdict),
+    label,
+    why,
+    ours: num(c.ours),
+    delta: num(c.delta),
+    log_line: num(c.log_line),
+    metric_name: typeof c.metric_name === "string" ? c.metric_name : null,
+    model: typeof c.model === "string" ? c.model : null,
+    margin: num(c.margin),
+    seedNote,
+  };
+}
+
+export function parseExplanation(e: unknown): Explanation | null {
+  if (!isObj(e)) return null;
+  return {
+    text: typeof e.text === "string" && e.text ? e.text : null,
+    accepted: e.accepted === true,
+    problems: Array.isArray(e.problems) ? e.problems.filter((p): p is string => typeof p === "string") : [],
+  };
+}
+
+const DIFF_LABELS: [RegExp, DiffLabel][] = [
+  [/scale/, "scale"],
+  [/omi(t|ss)/, "omission"],
+  [/diff/, "difference"],
+  [/same/, "same"],
+];
+
+function settingsDiff(json: unknown): SettingsDiffRow[] {
+  if (!Array.isArray(json)) return [];
+  return json.filter(isObj).flatMap((r) => {
+    if (typeof r.key !== "string") return [];
+    const raw = str(r.label);
+    const text = (x: unknown) => (x === null || x === undefined ? null : String(x));
+    return [
+      {
+        key: r.key,
+        paper: text(r.paper),
+        ours: text(r.ours),
+        label: DIFF_LABELS.find(([re]) => re.test(raw.toLowerCase()))?.[1] ?? null,
+        rawLabel: raw,
+        quote: typeof r.quote === "string" ? r.quote : null,
+        page: num(r.page),
+        config_key: typeof r.config_key === "string" ? r.config_key : null,
+        reason: typeof r.reason === "string" ? r.reason : null,
+      },
+    ];
+  });
+}
+
+/** experiments.verdicts → Grade. The contract (docs/CONTRACTS.md §5) is a list, one item per claim, relative claims as
+ *  "<method>_vs_<baseline>" items whose ours/paper are gaps. Still read as fallbacks: the Analyst's object
+ *  {claims: [...], relative, explanation, ...} and the old {claim_id: verdict | {verdict, note}} dict. */
+export function readVerdicts(json: unknown): Grade {
+  const g: Grade = {
+    cards: new Map(),
+    relative: [],
+    explanation: null,
+    marginNote: null,
+    seeds: null,
+    rules: null,
+    settingsDiff: [],
+  };
+  const addAll = (list: unknown[]) => {
+    for (const v of list) if (isObj(v)) {
+      const c = card(v.claim_id ?? v.claim, v);
+      if (!c) continue;
+      const vs = /^(.+)_vs_(.+)$/.exec(c.claim_id);
+      if (vs)
+        g.relative.push({
+          claim: `${vs[1]} beats ${vs[2]}`,
+          method: vs[1],
+          baseline: vs[2],
+          paper_gap: num(v.paper),
+          ours_gap: c.ours,
+          verdict: c.verdict,
+          label: c.label + (c.why ? ` ${c.why}` : ""),
+          seedNote: c.seedNote,
+        });
+      else g.cards.set(c.claim_id, c);
+    }
   };
   if (Array.isArray(json)) {
-    for (const v of json) if (isObj(v)) add(v.claim_id ?? v.claim, v);
+    addAll(json);
+  } else if (isObj(json) && Array.isArray(json.claims)) {
+    addAll(json.claims);
+    g.relative = (Array.isArray(json.relative) ? json.relative : []).filter(isObj).flatMap((r) =>
+      typeof r.verdict === "string"
+        ? [
+            {
+              seedNote: typeof r.label === "string" ? (LABEL_SEEDS.exec(r.label)?.[1] ?? null) : null,
+              claim: str(r.claim),
+              method: str(r.method),
+              baseline: str(r.baseline),
+              paper_gap: num(r.paper_gap),
+              ours_gap: num(r.ours_gap),
+              verdict: norm(r.verdict),
+              label: typeof r.label === "string" ? r.label : r.verdict,
+            },
+          ]
+        : [],
+    );
+    g.explanation = parseExplanation(json.explanation);
+    g.marginNote = typeof json.margin_note === "string" ? json.margin_note : null;
+    g.seeds = num(json.seeds);
+    // The Analyst's object states its seed count once; a verdict on fewer than 3 seeds carries it.
+    if (g.seeds !== null && g.seeds < 3) {
+      const note = `${g.seeds} seed${g.seeds === 1 ? "" : "s"}`;
+      for (const c of g.cards.values()) c.seedNote ??= note;
+      for (const r of g.relative) r.seedNote ??= note;
+    }
+    g.rules = typeof json.rules === "string" ? json.rules : null;
+    g.settingsDiff = settingsDiff(json.settings_diff);
   } else if (isObj(json)) {
-    for (const [id, v] of Object.entries(json)) add(id, v);
+    for (const [id, v] of Object.entries(json)) {
+      const c = card(id, v);
+      if (c) g.cards.set(c.claim_id, c);
+    }
   }
-  return out;
+  return g;
 }
 
 export type Tone = "good" | "warning" | "critical" | "neutral";
@@ -74,57 +248,294 @@ const LABELS: Record<string, { label: string; tone: Tone }> = {
 };
 export const verdictLabel = (v: string) => LABELS[v] ?? { label: v, tone: "neutral" as Tone };
 
-type ExpRow = { id: string; label: string; created_at: string; config: unknown; margin: number | null; verdicts: unknown };
-type MetricRow = { experiment_id: string; name: string; step: number; value: number; log_line: number };
+// ---- the report ----------------------------------------------------------------------------------------------------
+
+export type ExpRow = {
+  id: string;
+  label: string;
+  created_at: string;
+  config: unknown;
+  margin: number | null;
+  verdicts: unknown;
+  parent_id: string | null;
+  changed_key: string | null;
+  status: string;
+  pruned_reason: string | null;
+};
+export type MetricRow = { experiment_id: string; name: string; step: number; value: number | null; log_line: number };
+/** From a `graded` event's data: grading detail lives there under the contract (CONTRACTS.md §5). */
+export type GradedEvent = { experiment_id: string; ts: string; explanation: unknown };
+export type TaskRow = { id: string; capability: string; status: string; created_at: string; finished_at: string | null };
+export type LlmRow = { task_id: string | null; tokens_in: number; tokens_out: number };
+export type EventRow = { id: string; type: string; message: string; ts: string };
+export type ProjectRow = { id: string; title: string; arxiv_id: string | null; created_at: string; status: string };
 
 export type ReportRow = {
   claim: Claim;
   model: string;
+  metricName: string;
   experimentId: string;
   experimentLabel: string;
   margin: number | null;
-  /** Every final_<model> value the run logged (one per seed), in log order. */
+  /** Our logged value(s) for this claim, each with its log line (one per seed). */
   ours: Point[];
-  verdict: Verdict | null;
+  delta: number | null;
+  verdict: VerdictCard | null;
+};
+export type GradedExp = {
+  experimentId: string;
+  experimentLabel: string;
+  relative: (RelativeVerdict & { lines: { exp: string; line: number }[] })[];
+  explanation: Explanation | null;
+  marginNote: string | null;
+  seeds: number | null;
+  rules: string | null;
+};
+export type BranchEffect = {
+  key: string;
+  branchId: string;
+  branchLabel: string;
+  parentId: string;
+  parentLabel: string;
+  status: string;
+  prunedReason: string | null;
+  metric: string;
+  parent: Point | null;
+  branch: Point | null;
+  effect: string | null;
+};
+export type RunStats = {
+  projectId: string;
+  title: string;
+  failedBeforeFirstSuccess: number | null; // null: no successful run yet
+  failedRuns: number;
+  secondsToFirstResult: number | null;
+  llmTokens: number;
+  llmCalls: number;
+  lessonsApplied: EventRow[];
+};
+/** The headline: how many claims each verdict got, counted by code from the Analyst's verdicts. */
+export type Authenticity = {
+  rows: { verdict: string; label: string; tone: Tone; count: number; seeds: string | null }[];
+  total: number;
+  claims: number;
+  comparisons: number;
+  sources: { id: string; label: string }[];
+};
+export type ReportData = {
+  authenticity: Authenticity;
+  rows: ReportRow[];
+  untested: Claim[];
+  graded: GradedExp[];
+  settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[] } | null;
+  branches: BranchEffect[];
+  memory: { current: RunStats; previous: RunStats | null } | null;
 };
 
-/** One row per (experiment, mapped claim), oldest experiment first; claims no experiment targets are untested.
- *  The mapping is experiments.config.claim_map = {model: claim_id}; our value is METRIC final_<model>. */
-export function buildReport(
-  claims: Claim[],
-  experiments: ExpRow[],
-  metrics: MetricRow[],
-): { rows: ReportRow[]; untested: Claim[] } {
+/** NaN or inf in the log is stored as NULL (CONTRACTS.md §5, migration 003). */
+export const valueText = (v: unknown) => (v === null || v === undefined ? "non-finite" : String(v));
+const point = (m: MetricRow): Point => ({
+  step: m.step,
+  value: num(m.value),
+  text: valueText(m.value),
+  log_line: m.log_line,
+});
+const finalName = (model: string) => (model.startsWith("final_") ? model : `final_${model}`);
+
+function lastPoint(metrics: MetricRow[], exp: string, name: string): Point | null {
+  const ps = metrics.filter((m) => m.experiment_id === exp && m.name === name).sort((a, b) => a.log_line - b.log_line);
+  return ps.length ? point(ps[ps.length - 1]) : null;
+}
+
+const decimals = (t: string) => (/\.(\d+)$/.exec(t)?.[1].length ?? 0);
+/** branch − parent, at the precision of the logged values; null if either is not a finite number. */
+export function diffText(parent: Point, branch: Point): string | null {
+  if (parent.value === null || branch.value === null) return null;
+  const d = branch.value - parent.value;
+  const s = d.toFixed(Math.max(decimals(parent.text), decimals(branch.text)));
+  return d > 0 ? `+${s}` : s === "-0" ? "0" : s;
+}
+
+/** Run statistics for the memory effect (SPEC §6, R14), from the project's own rows. */
+export function runStats(project: ProjectRow, tasks: TaskRow[], llm: LlmRow[], events: EventRow[]): RunStats {
+  const runs = tasks
+    .filter((t) => t.capability === "run" && t.finished_at && (t.status === "done" || t.status === "failed"))
+    .sort((a, b) => ms(a.finished_at!) - ms(b.finished_at!));
+  const first = runs.find((t) => t.status === "done");
+  const ids = new Set(tasks.map((t) => t.id));
+  const mine = llm.filter((c) => c.task_id && ids.has(c.task_id));
+  return {
+    projectId: project.id,
+    title: project.title,
+    failedBeforeFirstSuccess: first ? runs.indexOf(first) : null,
+    failedRuns: runs.filter((t) => t.status === "failed").length,
+    secondsToFirstResult: first ? Math.round((ms(first.finished_at!) - ms(project.created_at)) / 1000) : null,
+    llmTokens: mine.reduce((s, c) => s + (c.tokens_in ?? 0) + (c.tokens_out ?? 0), 0),
+    llmCalls: mine.length,
+    lessonsApplied: events.filter((e) => e.type === "lesson_applied"),
+  };
+}
+
+export type ReportInput = {
+  claims: Claim[];
+  experiments: ExpRow[];
+  metrics: MetricRow[];
+  graded?: GradedEvent[];
+  memory?: {
+    project: ProjectRow;
+    tasks: TaskRow[];
+    llm: LlmRow[];
+    events: EventRow[];
+    previous: { project: ProjectRow; tasks: TaskRow[]; llm: LlmRow[]; events: EventRow[] } | null;
+  };
+};
+
+/** Claims vs ours: one row per graded claim card, or per experiments.config.claim_map entry when not graded yet.
+ *  Our value is the card's (with its log line) or else the final_<model> METRIC line(s). */
+export function buildReport(input: ReportInput): ReportData {
+  const { claims, experiments, metrics } = input;
   const byId = new Map(claims.map((c) => [c.id, c]));
+  const sorted = [...experiments].sort((a, b) => ms(a.created_at) - ms(b.created_at));
+  const expById = new Map(sorted.map((e) => [e.id, e]));
   const rows: ReportRow[] = [];
-  const sorted = [...experiments].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const graded: GradedExp[] = [];
+  let settings: ReportData["settingsDiff"] = null;
+
   for (const e of sorted) {
-    const map = isObj(e.config) ? e.config.claim_map : null;
-    if (!isObj(map)) continue;
-    const verdicts = readVerdicts(e.verdicts);
-    for (const [model, claimId] of Object.entries(map)) {
-      const claim = typeof claimId === "string" ? byId.get(claimId) : undefined;
+    const g = readVerdicts(e.verdicts);
+    const map = isObj(e.config) && isObj(e.config.claim_map) ? e.config.claim_map : {};
+    const pairs: [string, string][] = Object.entries(map).flatMap(([m, c]) => (typeof c === "string" ? [[m, c]] : []));
+    for (const c of g.cards.values())
+      if (!pairs.some(([, cid]) => cid === c.claim_id)) pairs.push([c.model ?? c.claim_id, c.claim_id]);
+
+    const lineOf = new Map<string, number>();
+    for (const [model, cid] of pairs) {
+      const claim = byId.get(cid);
       if (!claim) continue;
-      const ours = metrics
-        .filter((m) => m.experiment_id === e.id && m.name === `final_${model}`)
+      const v = g.cards.get(cid) ?? null;
+      const metricName = v?.metric_name ?? finalName(model);
+      const logged = metrics
+        .filter((m) => m.experiment_id === e.id && m.name === metricName)
         .sort((a, b) => a.log_line - b.log_line)
-        .map((m) => ({
-          step: m.step,
-          value: typeof m.value === "number" && Number.isFinite(m.value) ? m.value : null,
-          text: String(m.value),
-          log_line: m.log_line,
-        }));
+        .map(point);
+      const ours =
+        v && v.ours !== null && v.log_line !== null && !logged.some((p) => p.log_line === v.log_line)
+          ? [{ step: 0, value: v.ours, text: String(v.ours), log_line: v.log_line }]
+          : logged;
+      if (v?.log_line != null) lineOf.set(cid, v.log_line);
       rows.push({
         claim,
         model,
+        metricName,
         experimentId: e.id,
         experimentLabel: e.label,
-        margin: e.margin,
+        margin: v?.margin ?? e.margin,
         ours,
-        verdict: verdicts.get(claim.id) ?? null,
+        delta: v?.delta ?? null,
+        verdict: v,
       });
     }
+    const latest = (input.graded ?? [])
+      .filter((x) => x.experiment_id === e.id)
+      .sort((a, b) => ms(b.ts) - ms(a.ts))[0];
+    g.explanation ??= latest ? parseExplanation(latest.explanation) : null;
+    if (g.cards.size || g.relative.length || g.explanation) {
+      graded.push({
+        experimentId: e.id,
+        experimentLabel: e.label,
+        relative: g.relative.map((r) => ({
+          ...r,
+          lines: [r.method, r.baseline].flatMap((c) => (lineOf.has(c) ? [{ exp: e.id, line: lineOf.get(c)! }] : [])),
+        })),
+        explanation: g.explanation,
+        marginNote: g.marginNote,
+        seeds: g.seeds,
+        rules: g.rules,
+      });
+    }
+    if (g.settingsDiff.length) settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff };
   }
+
+  // Authenticity: each claim's verdict from the latest reproduction experiment that graded it. What-if branches
+  // (parent_id or config.whatif) change a setting on purpose, so their verdicts do not count.
+  const latest = new Map<string, { verdict: string; seedNote: string | null; relative: boolean; exp: ExpRow }>();
+  for (const e of sorted) {
+    if (e.parent_id || (isObj(e.config) && e.config.whatif)) continue;
+    const g = readVerdicts(e.verdicts);
+    for (const c of g.cards.values()) latest.set(c.claim_id, { ...c, relative: false, exp: e });
+    for (const r of g.relative) latest.set(`${r.method}_vs_${r.baseline}`, { ...r, relative: true, exp: e });
+  }
+
+  // Branch effects: each one-change branch against its parent, on every final_* metric both logged.
+  const branches: BranchEffect[] = [];
+  for (const e of sorted) {
+    const parent = e.parent_id ? expById.get(e.parent_id) : undefined;
+    if (!parent || !e.changed_key) continue;
+    const names = [...new Set(metrics.filter((m) => m.experiment_id === parent.id).map((m) => m.name))]
+      .filter((n) => n.startsWith("final_") && !n.endsWith("_wall_s") && n !== "final_total_wall_s");
+    const base = {
+      key: e.changed_key,
+      branchId: e.id,
+      branchLabel: e.label,
+      parentId: parent.id,
+      parentLabel: parent.label,
+      status: e.status,
+      prunedReason: e.pruned_reason,
+    };
+    if (!names.length) branches.push({ ...base, metric: "", parent: null, branch: null, effect: null });
+    for (const n of names) {
+      const p = lastPoint(metrics, parent.id, n);
+      const b = lastPoint(metrics, e.id, n);
+      branches.push({ ...base, metric: n, parent: p, branch: b, effect: p && b ? diffText(p, b) : null });
+    }
+  }
+
   const tested = new Set(rows.map((r) => r.claim.id));
-  return { rows, untested: claims.filter((c) => !tested.has(c.id)) };
+  const mem = input.memory;
+  return {
+    authenticity: authenticity([...latest.values()]),
+    rows,
+    untested: claims.filter((c) => !tested.has(c.id)),
+    graded,
+    settingsDiff: settings,
+    branches,
+    memory: mem
+      ? {
+          current: runStats(mem.project, mem.tasks, mem.llm, mem.events),
+          previous: mem.previous
+            ? runStats(mem.previous.project, mem.previous.tasks, mem.previous.llm, mem.previous.events)
+            : null,
+        }
+      : null,
+  };
+}
+
+const HEADLINE = ["reproduced", "partially_reproduced", "not_reproduced"];
+
+function authenticity(
+  graded: { verdict: string; seedNote: string | null; relative: boolean; exp: ExpRow }[],
+): Authenticity {
+  const kinds = [...HEADLINE, ...new Set(graded.map((g) => g.verdict).filter((v) => !HEADLINE.includes(v)))];
+  const rows = kinds.map((verdict) => {
+    const these = graded.filter((g) => g.verdict === verdict);
+    const notes = new Map<string, number>();
+    for (const g of these) if (g.seedNote) notes.set(g.seedNote, (notes.get(g.seedNote) ?? 0) + 1);
+    // "1 seed" when every one of them says so; "2 with 1 seed" when only some do.
+    const seeds = [...notes].map(([n, k]) => (k === these.length ? n : `${k} with ${n}`)).join(", ") || null;
+    return { verdict, ...verdictLabel(verdict), count: these.length, seeds };
+  });
+  const sources = new Map(graded.map((g) => [g.exp.id, { id: g.exp.id, label: g.exp.label }]));
+  const comparisons = graded.filter((g) => g.relative).length;
+  return { rows, total: graded.length, claims: graded.length - comparisons, comparisons, sources: [...sources.values()] };
+}
+
+/** The Reporter's latest notes: the newest done write_notes task's output.markdown (CONTRACTS.md §4). */
+export function latestNotes(
+  tasks: { id: string; capability: string; status: string; finished_at: string | null; output: unknown }[],
+): { taskId: string; markdown: string } | null {
+  const hit = tasks
+    .filter((t) => t.capability === "write_notes" && t.status === "done" && t.finished_at)
+    .sort((a, b) => ms(b.finished_at!) - ms(a.finished_at!))
+    .find((t) => isObj(t.output) && typeof t.output.markdown === "string" && t.output.markdown);
+  return hit ? { taskId: hit.id, markdown: (hit.output as { markdown: string }).markdown } : null;
 }

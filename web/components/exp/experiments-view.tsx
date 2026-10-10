@@ -10,6 +10,8 @@ import {
   formatDuration,
   groupMetrics,
   latestTaskByExperiment,
+  pickDefault,
+  retry,
   runTime,
   upsertRows,
   type TreeNode,
@@ -54,10 +56,11 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [attempt, setAttempt] = useState(0); // bumped by the Retry button
 
   useEffect(() => {
     const db = supabase();
-    const fail = (e: { message: string }) => setError(e.message);
+    let cancelled = false;
 
     // Subscribe before the initial fetch so no change falls in the gap; upserts dedupe by id.
     // Metrics have no project_id, so inserts are kept for every experiment and filtered at render.
@@ -81,33 +84,41 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
         else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") setStatus("error");
       });
 
-    db.from("experiments")
-      .select("*")
-      .eq("project_id", projectId)
-      .then(({ data, error }) => {
-        setLoaded(true);
-        if (error) return fail(error);
-        const rows = (data ?? []) as Experiment[];
-        setExperiments((cur) => upsertRows(cur, rows));
-        if (rows.length)
-          fetchMetrics(rows.map((r) => r.id))
-            .then((ms) => setMetrics((cur) => upsertRows(ms, cur)))
-            .catch(fail);
+    // A request can fail on a flaky connection: retry before showing an error.
+    const rows = <T,>(q: PromiseLike<{ data: unknown; error: { message: string } | null }>) =>
+      Promise.resolve(q).then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        return (data ?? []) as T[];
       });
-
-    db.from("tasks")
-      .select("id,created_at,status,executor,output")
-      .eq("project_id", projectId)
-      .not("output", "is", null)
-      .then(({ data, error }) => {
-        if (error) fail(error);
-        else setTasks((cur) => upsertRows((data ?? []) as TaskRow[], cur));
-      });
+    retry(async () => {
+      const [exps, ts] = await Promise.all([
+        rows<Experiment>(db.from("experiments").select("*").eq("project_id", projectId)),
+        rows<TaskRow>(
+          db
+            .from("tasks")
+            .select("id,created_at,status,executor,output")
+            .eq("project_id", projectId)
+            .not("output", "is", null),
+        ),
+      ]);
+      const ms = exps.length ? await fetchMetrics(exps.map((r) => r.id)) : [];
+      return { exps, ts, ms };
+    })
+      .then(({ exps, ts, ms }) => {
+        if (cancelled) return;
+        setExperiments((cur) => upsertRows(exps, cur));
+        setTasks((cur) => upsertRows(ts, cur));
+        setMetrics((cur) => upsertRows(ms, cur));
+        setError(null);
+      })
+      .catch((e: Error) => !cancelled && setError(e.message))
+      .finally(() => !cancelled && setLoaded(true));
 
     return () => {
+      cancelled = true;
       db.removeChannel(channel);
     };
-  }, [projectId]);
+  }, [projectId, attempt]);
 
   const tree = useMemo(() => buildTree(experiments), [experiments]);
   const taskFor = useMemo(() => latestTaskByExperiment(tasks), [tasks]);
@@ -117,11 +128,9 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
     return map;
   }, [metrics]);
 
-  // Default to a running experiment, else the newest; keep the user's pick while it exists.
+  // Keep the user's pick while it exists; otherwise a running experiment, else the newest with metrics.
   const current =
-    experiments.find((e) => e.id === selected) ??
-    experiments.find((e) => e.status === "running") ??
-    [...experiments].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+    experiments.find((e) => e.id === selected) ?? pickDefault(experiments, (id) => metricsByExp.get(id)?.length ?? 0);
 
   return (
     <section aria-labelledby="exp-heading">
@@ -140,12 +149,28 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
         </span>
       </div>
 
-      {error && <p className="mb-3 text-sm text-red-600">Could not load experiments: {error}</p>}
+      {error && (
+        <p className="mb-3 text-sm text-red-600">
+          Could not load experiments: {error}{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setLoaded(false);
+              setAttempt((n) => n + 1);
+            }}
+            className="underline"
+          >
+            Retry
+          </button>
+        </p>
+      )}
 
       {!loaded && experiments.length === 0 ? (
         <p className="text-sm text-neutral-500">Loading experiments…</p>
       ) : experiments.length === 0 ? (
-        <p className="text-sm text-neutral-500">No experiments yet. Runs appear here when they start.</p>
+        !error && 
+<p className="text-sm text-neutral-500">No experiments yet. Runs appear here when they start.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
           <nav aria-label="Experiment tree">
