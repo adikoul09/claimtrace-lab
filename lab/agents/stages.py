@@ -129,19 +129,23 @@ class Ctx:
         return out
 
 
-def checked(ctx: Ctx, goal: str, check, model: str = "fast") -> dict:
+def checked(ctx: Ctx, goal: str, check, model: str = "fast", accept_stopped: bool = False) -> dict:
     """Run the task's agent on `goal`; `check(answer)` is the code acceptance check (returns output fields, or raises
-    StepError). Returns tasks.output."""
+    StepError). Returns tasks.output. accept_stopped: an agent stopped by its budget still passes when the code check
+    does (its work is files in the run dir); 'failed' (an LLM error) always fails."""
     res = run_agent(ctx.agent, goal, ctx.workdir, db=ctx.db, llm=ctx.llm, task_id=ctx.task["id"],
                     project_id=ctx.pid, model=model)
     out = {"agent_status": res.status, "tokens": res.tokens, "cpu_s": res.cpu_s, "steps": res.steps,
            "answer": (res.answer or "")[:2000], "acceptance": check.__doc__ or "code check"}
-    if res.status != "finished":
-        return {**out, "outcome": "failed", "error": f"agent {res.status}: {res.reason}"[:500]}
+    stopped = f"agent {res.status}: {res.reason}"
+    if res.status != "finished" and not (accept_stopped and res.status == "stopped"):
+        return {**out, "outcome": "failed", "error": stopped[:500]}
     try:
-        return {**out, **(check(res.answer) or {}), "outcome": "passed", "error": None}
+        return {**out, **(check(res.answer) or {}), "outcome": "passed", "error": None,
+                **({"note": stopped[:300]} if res.status != "finished" else {})}
     except StepError as e:
-        return {**out, "outcome": "failed", "error": str(e)[:1000]}
+        return {**out, "outcome": "failed",
+                "error": (f"{stopped}; {e}" if res.status != "finished" else str(e))[:1000]}
 
 
 def _design(ctx: Ctx) -> dict:
@@ -207,7 +211,8 @@ def h_setup_env(ctx: Ctx) -> dict:
         """make_env succeeded: env.json and pinned requirements.txt exist in the run dir"""
         info = check_built(ctx.workdir)
         return {**info, "requirements": (ctx.workdir / "requirements.txt").read_text(encoding="utf-8")}
-    return checked(ctx, envbuilder_goal() + ctx.notes(), built)
+    return checked(ctx, envbuilder_goal() + ctx.notes(), built,
+                   accept_stopped=True)  # live 42fb4944: env ready on step 5, then stopped by max_steps on step 6
 
 
 def h_budget(ctx: Ctx) -> dict:
