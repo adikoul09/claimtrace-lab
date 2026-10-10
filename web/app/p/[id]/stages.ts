@@ -118,6 +118,7 @@ export function plainReason(raw: string | null | undefined): string {
   for (const [re, plain] of RULES) if (re.test(text)) return plain;
   // Unknown: the first clause, capitalised and short (stage reasons like "no public data: …" are already plain).
   const first = text.split(/(?<=[.!?])\s|\n/)[0].slice(0, 140).replace(/[.\s]+$/, "");
+  if (!first) return "The step failed without recording why.";
   return `${first[0].toUpperCase()}${first.slice(1)}.`;
 }
 

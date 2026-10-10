@@ -88,6 +88,9 @@ test("plainReason turns common failures into plain words and keeps unknown ones 
   assert.equal(plainReason("run timed out after 300 s"), "The step ran out of time.");
   assert.equal(plainReason("no public data: JFT is not public"), "No public data: JFT is not public.");
   assert.equal(plainReason(null), "The step failed without recording why.");
+  // An error that is only punctuation must not throw (it would hide the whole strip).
+  assert.equal(plainReason("..."), "The step failed without recording why.");
+  assert.equal(plainReason("."), "The step failed without recording why.");
 });
 
 test("stages done without a task of their own say how they were inferred", () => {
