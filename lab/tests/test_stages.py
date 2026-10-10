@@ -481,8 +481,22 @@ def test_read_paper_on_the_worker_gets_a_real_llm_client(runs, monkeypatch):
     made, seen = [], {}
     monkeypatch.setattr(stages, "LLM", lambda db: made.append(db) or "llm-client")
     def fake_read_paper(pid, arxiv, *, llm, **kw):
-        seen["llm"] = llm
+        seen["llm"], seen["model"] = llm, kw.get("model")
         return {"claims": [{"valid": True}], "settings": [], "tokens": 5}
     monkeypatch.setattr(paper_mod, "read_paper", fake_read_paper)
     out = stages.handle(db, task("read_paper", f"runs/{PID}"), executor="laptop-b")
     assert out["outcome"] == "passed" and seen["llm"] == "llm-client" and made == [db]
+    assert seen["model"] == "smart"  # live: gpt-5-mini spent the 4000-token cap reasoning even at effort low
+
+
+def test_implementer_uses_the_smart_model(runs, monkeypatch):
+    db = store()
+    up = with_upstream(db, design_experiment={"design": DESIGN})
+    models = []
+    def fake(agent, goal, workdir, **kw):
+        models.append(kw.get("model"))
+        (workdir / "train.py").write_text(GOOD, encoding="utf-8")
+        return RunResult("finished", "done", "x", 1, 10, 0.1)
+    monkeypatch.setattr(stages, "run_agent", fake)
+    stages.handle(db, task("write_code", f"runs/{PID}", upstream=up), executor="laptop-b")
+    assert models == ["smart"]
