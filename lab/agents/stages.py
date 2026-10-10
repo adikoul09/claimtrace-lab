@@ -269,6 +269,10 @@ def h_grade(ctx: Ctx) -> dict:
     explain = ctx.task["capability"] == "explain_diff"
     g = analyst.run(ctx.db, exp_id, with_explanation=explain, agent=ctx.agent if explain else None,
                     task_id=ctx.task["id"], llm=ctx.llm, log_reader=lambda e: log_lines(ctx, e))
+    if ctx.inp.get("extend_experiment_id"):
+        ext = next((e for e in _experiments(ctx) if e["id"] == exp_id), {})
+        if ext.get("parent_id"):
+            refresh_why(ctx, ext["parent_id"])  # the parent's table gains the branch's full-budget effect
     runnable = [r for r in g["claims"] if r["verdict"] != "Not runnable"]
     outcome = "passed" if runnable else "failed"
     if explain and not g["explanation"]["accepted"]:
@@ -400,6 +404,19 @@ def h_design_whatif(ctx: Ctx) -> dict:
     return checked(ctx, wi.whatif_goal(question, cfg, design.get("experiment")) + ctx.notes(), branched)
 
 
+def refresh_why(ctx: Ctx, experiment_id: str) -> None:
+    """Rebuild a reproduction experiment's config.why (T19), so branch effects measured after its own grading
+    show in its settings rows."""
+    from lab.agents import analyst
+
+    exp = next((e for e in _experiments(ctx) if e["id"] == experiment_id), None)
+    if not exp or (exp.get("config") or {}).get("whatif"):
+        return
+    w = analyst.why_tables(ctx.db, exp, ctx.settings, read=lambda e: log_lines(ctx, e))
+    cfg = {**(exp.get("config") or {}), "why": w}
+    ctx.db.table("experiments").update({"config": cfg}).eq("id", experiment_id).execute()
+
+
 def data_dir_rel(cwd_rel: str) -> str:
     import os
     return os.path.relpath(ROOT / "data", ROOT / cwd_rel).replace(os.sep, "/")
@@ -463,6 +480,7 @@ def h_whatif_rank(ctx: Ctx) -> dict:
                   "experiment": {**b["experiment"],
                                  "label": f"what-if {b['id']}: {b['key']}={json.dumps(b['value'])} (full)",
                                  "config": {**b["experiment"]["config"], "scale": "full"}}}
+    refresh_why(ctx, d["parent_experiment_id"])  # the parent's settings rows gain the branches' smoke effects
     emit(ctx.db, "whatif_ranked",
          f"what-if ranked: extend {top['id'] if top else 'none'}; pruned "
          f"{', '.join(r['id'] for r in ranking if r['decision'] == 'pruned') or 'none'}",

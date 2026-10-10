@@ -411,6 +411,19 @@ def test_compare_after_the_branch_smokes_ranks_prunes_and_proposes_the_extend(ru
                           "--set temperature=5")
     assert ext["experiment"]["parent_id"] == full["id"] and ext["experiment"]["config"]["scale"] == "full"
     assert any(e["type"] == "whatif_ranked" for e in db.rows["events"])
+    # the parent's why table is refreshed with the branches' smoke effects (T19)
+    assert "settings_diff" in full["config"]["why"]
+    # after the gated full run of b1, the post-extend compare grades it and refreshes the parent again
+    e_ext = db.table("experiments").insert({"project_id": PID, **ext["experiment"], "status": "done"}
+                                           ).execute().data[0]
+    for m, v in zip(CMAP, (80, 143, 80)):
+        db.rows["metrics"].append({"experiment_id": e_ext["id"], "name": f"final_{m}", "value": v, "step": 0,
+                                   "log_line": 3})
+    full["config"].pop("why")
+    out = stages.handle(db, task("compare", f"runs/{PID}", extend_experiment_id=e_ext["id"]), executor="laptop-b")
+    assert out["outcome"] == "passed" and out["experiment_id"] == e_ext["id"]
+    assert {v["claim_id"]: v["verdict"] for v in e_ext["verdicts"]}["c9"] == "reproduced"  # 80 vs 74, margin 10
+    assert "why" not in e_ext["config"] and "settings_diff" in full["config"]["why"]
 
 
 # ---- why it differs (T19): the compare of the reproduction stores the settings diff with branch effects -------------
