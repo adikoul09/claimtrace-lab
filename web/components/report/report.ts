@@ -15,7 +15,14 @@ export type Claim = {
   whose: string;
   model: string;
   valid: boolean;
+  /** ANY-1 (lab/agents/triage.py): papers.claims[i].runnable {status, reason}; null until the Reader tags it. */
+  runnable: { runnable: boolean; reason: string | null } | null;
 };
+
+function runnableTag(r: unknown): Claim["runnable"] {
+  if (!isObj(r) || (r.status !== "runnable" && r.status !== "not_runnable")) return null;
+  return { runnable: r.status === "runnable", reason: typeof r.reason === "string" && r.reason ? r.reason : null };
+}
 
 const str = (x: unknown) => (typeof x === "string" ? x : "");
 const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) ? x : null);
@@ -40,6 +47,7 @@ export function parseClaims(json: unknown): Claim[] {
             whose: str(c.whose),
             model: str(c.model),
             valid: c.valid !== false,
+            runnable: runnableTag(c.runnable),
           },
         ]
       : [],

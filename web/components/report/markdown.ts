@@ -166,7 +166,11 @@ export function reportMarkdown(
     out.push(`## Other claims in the paper (${d.untested.length}, not run)`);
     out.push(
       d.untested
-        .map((c) => `- ${c.id} ${c.model} · ${c.metric}: ${c.value} ${c.unit} (p. ${c.page ?? "?"})${c.valid ? "" : " — failed code check"}`)
+        .map(
+          (c) =>
+            `- ${c.id} ${c.model} · ${c.metric}: ${c.value} ${c.unit} (p. ${c.page ?? "?"})${c.valid ? "" : " — failed code check"}` +
+            (c.runnable ? ` — ${c.runnable.runnable ? "runnable" : "not runnable"}${c.runnable.reason ? `: ${c.runnable.reason}` : ""}` : ""),
+        )
         .join("\n"),
     );
   }

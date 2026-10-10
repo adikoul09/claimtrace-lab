@@ -4,6 +4,7 @@
 // Non-finite values (NaN) are gaps in the line; the tooltip shows the stored text and its log line.
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Point, Series } from "./experiments";
+import { metricLabel } from "./labels";
 
 const AXIS = { fill: "#737373", fontSize: 10 }; // neutral-500: legible on light and dark surfaces
 
@@ -25,7 +26,9 @@ export function MetricChart({ series, experimentId }: { series: Series; experime
   return (
     <figure className="min-w-0 rounded-lg border border-neutral-200 p-2 dark:border-neutral-800">
       <figcaption className="mb-1 flex flex-wrap items-baseline justify-between gap-x-2 text-xs">
-        <span className="break-all font-mono font-semibold">{series.name}</span>
+        <span className="break-words font-semibold" title={series.name}>
+          {metricLabel(series.name)}
+        </span>
         <a
           href={`/logs/${experimentId}#L${last.log_line}`}
           className="tabular-nums text-neutral-500 hover:underline"
