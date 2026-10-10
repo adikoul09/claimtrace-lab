@@ -1,11 +1,10 @@
 """Assign (SPEC §3.3): the active agent with the capability and the highest rolling reward gets the task."""
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional
 
-from lab.controller.rules import NEUTRAL_REWARD, ROLLING_WINDOW
+from lab.controller.rules import NEUTRAL_REWARD
 
 
 @dataclass
@@ -13,18 +12,6 @@ class Pick:
     agent: dict
     score: Optional[float]   # None: no scored task yet
     reason: str
-
-
-def rolling_means(rewards: list[dict]) -> dict[str, float]:
-    """agent_id -> mean reward over its last ROLLING_WINDOW scored tasks."""
-    per: dict[str, list[dict]] = defaultdict(list)
-    for r in rewards:
-        per[r["agent_id"]].append(r)
-    out = {}
-    for agent_id, rows in per.items():
-        last = sorted(rows, key=lambda r: r["ts"], reverse=True)[:ROLLING_WINDOW]
-        out[agent_id] = sum(float(r["reward"]) for r in last) / len(last)
-    return out
 
 
 def pick_agent(agents: list[dict], capability: str, scores: dict[str, float]) -> Optional[Pick]:
