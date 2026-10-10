@@ -60,6 +60,8 @@ export type VerdictCard = {
   metric_name: string | null;
   model: string | null;
   margin: number | null;
+  /** "1 seed" when the verdict says it rests on fewer than 3 seeds, else null. */
+  seedNote: string | null;
 };
 export type RelativeVerdict = {
   claim: string;
@@ -69,6 +71,7 @@ export type RelativeVerdict = {
   ours_gap: number | null;
   verdict: string;
   label: string;
+  seedNote: string | null;
 };
 export type Explanation = { text: string | null; accepted: boolean; problems: string[] };
 export type DiffLabel = "scale" | "omission" | "difference" | "same";
@@ -96,6 +99,7 @@ export type Grade = {
 const norm = (v: string) => v.trim().toLowerCase().replace(/[\s-]+/g, "_");
 
 const SEEDS = /^\((\d+ seeds?)\)\s*/;
+const LABEL_SEEDS = /\((\d+ seeds?)\)\s*$/;
 
 function card(id: unknown, v: unknown): VerdictCard | null {
   const c = isObj(v) ? v : { verdict: v };
@@ -105,6 +109,7 @@ function card(id: unknown, v: unknown): VerdictCard | null {
   let label = typeof c.label === "string" ? c.label : verdictLabel(norm(c.verdict)).label;
   // CONTRACTS.md §5: with fewer than 3 seeds the note starts with "(1 seed)"; it belongs with the verdict.
   const seeds = typeof c.label === "string" || !why ? null : SEEDS.exec(why);
+  const seedNote = seeds?.[1] ?? LABEL_SEEDS.exec(label)?.[1] ?? null;
   if (seeds && why) {
     label += ` (${seeds[1]})`;
     why = why.slice(seeds[0].length) || null;
@@ -120,6 +125,7 @@ function card(id: unknown, v: unknown): VerdictCard | null {
     metric_name: typeof c.metric_name === "string" ? c.metric_name : null,
     model: typeof c.model === "string" ? c.model : null,
     margin: num(c.margin),
+    seedNote,
   };
 }
 
@@ -188,6 +194,7 @@ export function readVerdicts(json: unknown): Grade {
           ours_gap: c.ours,
           verdict: c.verdict,
           label: c.label + (c.why ? ` ${c.why}` : ""),
+          seedNote: c.seedNote,
         });
       else g.cards.set(c.claim_id, c);
     }
@@ -200,6 +207,7 @@ export function readVerdicts(json: unknown): Grade {
       typeof r.verdict === "string"
         ? [
             {
+              seedNote: typeof r.label === "string" ? (LABEL_SEEDS.exec(r.label)?.[1] ?? null) : null,
               claim: str(r.claim),
               method: str(r.method),
               baseline: str(r.baseline),
@@ -214,6 +222,12 @@ export function readVerdicts(json: unknown): Grade {
     g.explanation = parseExplanation(json.explanation);
     g.marginNote = typeof json.margin_note === "string" ? json.margin_note : null;
     g.seeds = num(json.seeds);
+    // The Analyst's object states its seed count once; a verdict on fewer than 3 seeds carries it.
+    if (g.seeds !== null && g.seeds < 3) {
+      const note = `${g.seeds} seed${g.seeds === 1 ? "" : "s"}`;
+      for (const c of g.cards.values()) c.seedNote ??= note;
+      for (const r of g.relative) r.seedNote ??= note;
+    }
     g.rules = typeof json.rules === "string" ? json.rules : null;
     g.settingsDiff = settingsDiff(json.settings_diff);
   } else if (isObj(json)) {
@@ -300,7 +314,16 @@ export type RunStats = {
   llmCalls: number;
   lessonsApplied: EventRow[];
 };
+/** The headline: how many claims each verdict got, counted by code from the Analyst's verdicts. */
+export type Authenticity = {
+  rows: { verdict: string; label: string; tone: Tone; count: number; seeds: string | null }[];
+  total: number;
+  claims: number;
+  comparisons: number;
+  sources: { id: string; label: string }[];
+};
 export type ReportData = {
+  authenticity: Authenticity;
   rows: ReportRow[];
   untested: Claim[];
   graded: GradedExp[];
@@ -433,6 +456,16 @@ export function buildReport(input: ReportInput): ReportData {
     if (g.settingsDiff.length) settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff };
   }
 
+  // Authenticity: each claim's verdict from the latest reproduction experiment that graded it. What-if branches
+  // (parent_id or config.whatif) change a setting on purpose, so their verdicts do not count.
+  const latest = new Map<string, { verdict: string; seedNote: string | null; relative: boolean; exp: ExpRow }>();
+  for (const e of sorted) {
+    if (e.parent_id || (isObj(e.config) && e.config.whatif)) continue;
+    const g = readVerdicts(e.verdicts);
+    for (const c of g.cards.values()) latest.set(c.claim_id, { ...c, relative: false, exp: e });
+    for (const r of g.relative) latest.set(`${r.method}_vs_${r.baseline}`, { ...r, relative: true, exp: e });
+  }
+
   // Branch effects: each one-change branch against its parent, on every final_* metric both logged.
   const branches: BranchEffect[] = [];
   for (const e of sorted) {
@@ -460,6 +493,7 @@ export function buildReport(input: ReportInput): ReportData {
   const tested = new Set(rows.map((r) => r.claim.id));
   const mem = input.memory;
   return {
+    authenticity: authenticity([...latest.values()]),
     rows,
     untested: claims.filter((c) => !tested.has(c.id)),
     graded,
@@ -474,6 +508,25 @@ export function buildReport(input: ReportInput): ReportData {
         }
       : null,
   };
+}
+
+const HEADLINE = ["reproduced", "partially_reproduced", "not_reproduced"];
+
+function authenticity(
+  graded: { verdict: string; seedNote: string | null; relative: boolean; exp: ExpRow }[],
+): Authenticity {
+  const kinds = [...HEADLINE, ...new Set(graded.map((g) => g.verdict).filter((v) => !HEADLINE.includes(v)))];
+  const rows = kinds.map((verdict) => {
+    const these = graded.filter((g) => g.verdict === verdict);
+    const notes = new Map<string, number>();
+    for (const g of these) if (g.seedNote) notes.set(g.seedNote, (notes.get(g.seedNote) ?? 0) + 1);
+    // "1 seed" when every one of them says so; "2 with 1 seed" when only some do.
+    const seeds = [...notes].map(([n, k]) => (k === these.length ? n : `${k} with ${n}`)).join(", ") || null;
+    return { verdict, ...verdictLabel(verdict), count: these.length, seeds };
+  });
+  const sources = new Map(graded.map((g) => [g.exp.id, { id: g.exp.id, label: g.exp.label }]));
+  const comparisons = graded.filter((g) => g.relative).length;
+  return { rows, total: graded.length, claims: graded.length - comparisons, comparisons, sources: [...sources.values()] };
 }
 
 /** The Reporter's latest notes: the newest done write_notes task's output.markdown (CONTRACTS.md §4). */

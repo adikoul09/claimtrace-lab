@@ -334,3 +334,57 @@ test("latestNotes picks the newest done write_notes task's markdown (CONTRACTS.m
   assert.deepEqual(out, { taskId: "b", markdown: "# new" });
   assert.equal(latestNotes([]), null);
 });
+
+const tally = (d: ReturnType<typeof buildReport>) => d.authenticity.rows.map((r) => [r.label, r.count, r.seeds]);
+
+test("authenticity counts each graded claim once, with the seed note the verdicts carry", () => {
+  const d = buildReport({ claims: [], experiments: [exp("v2", { verdicts: ANALYST })], metrics: [] });
+  assert.deepEqual(tally(d), [
+    ["Reproduced", 1, "1 seed"],
+    ["Partially reproduced", 2, "1 seed"],
+    ["Not reproduced", 0, null],
+  ]);
+  assert.deepEqual([d.authenticity.total, d.authenticity.claims, d.authenticity.comparisons], [3, 2, 1]);
+  assert.deepEqual(d.authenticity.sources, [{ id: "v2", label: "exp v2" }]);
+});
+
+test("authenticity takes each claim's latest reproduction verdict and ignores what-if branches", () => {
+  const branch = [{ claim_id: "c8", verdict: "not reproduced", ours: 300, paper: 146, margin: 10, note: "(1 seed)", log_line: 9 }];
+  const d = buildReport({
+    claims: [],
+    experiments: [
+      exp("v2", { verdicts: ANALYST, created_at: "2026-10-10T10:00:00Z" }),
+      exp("v3", { verdicts: CONTRACT, created_at: "2026-10-10T11:00:00Z" }),
+      exp("b1", { verdicts: branch, parent_id: "v3", changed_key: "lr", created_at: "2026-10-10T12:00:00Z" }),
+      exp("w1", { verdicts: branch, config: { whatif: { task_id: "t" } }, created_at: "2026-10-10T12:00:00Z" }),
+    ],
+    metrics: [],
+  });
+  assert.deepEqual(tally(d), [
+    ["Reproduced", 1, "1 seed"],
+    ["Partially reproduced", 2, "1 seed"],
+    ["Not reproduced", 0, null],
+    ["Not runnable", 1, null],
+  ]);
+  assert.deepEqual(d.authenticity.sources.map((s) => s.id), ["v3"]);
+});
+
+test("authenticity says how many of a verdict are single-seed when seeds differ, and is empty before grading", () => {
+  const mixed = [
+    { claim_id: "c1", verdict: "reproduced", ours: 1, paper: 1, margin: 1, note: "within margin", log_line: 1 },
+    { claim_id: "c2", verdict: "reproduced", ours: 1, paper: 1, margin: 1, note: "(1 seed)", log_line: 2 },
+  ];
+  const d = buildReport({ claims: [], experiments: [exp("v", { verdicts: mixed })], metrics: [] });
+  assert.deepEqual(tally(d)[0], ["Reproduced", 2, "1 with 1 seed"]);
+  const none = buildReport({ claims: [], experiments: [exp("v")], metrics: [] });
+  assert.equal(none.authenticity.total, 0);
+  assert.deepEqual(tally(none).map((r) => r[1]), [0, 0, 0]);
+});
+
+test("reportMarkdown opens with the claim authenticity counts", () => {
+  const d = buildReport({ claims: [], experiments: [exp("v2", { verdicts: ANALYST })], metrics: [] });
+  const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, d, "http://x");
+  assert.ok(md.indexOf("## Claim authenticity") < md.indexOf("## Claims vs ours"));
+  assert.match(md, /\| Partially reproduced \| 2 \(1 seed\) \|/);
+  assert.match(md, /3 graded claims \(2 results, 1 comparison\)/);
+});

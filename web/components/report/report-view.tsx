@@ -8,10 +8,11 @@ import { supabase } from "@/lib/supabase";
 import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
-import { DIFF_TEXT, memoryRows, TEXT } from "./markdown";
+import { authenticitySummary, DIFF_TEXT, memoryRows, TEXT } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
   verdictLabel,
+  type Authenticity,
   type BranchEffect,
   type Claim,
   type GradedExp,
@@ -130,7 +131,7 @@ export function ReportView({ projectId }: { projectId: string }) {
       <div className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="report-heading" className="text-sm font-semibold">
-            Claims vs ours
+            Claim authenticity
           </h2>
           <a
             href={`/api/projects/${projectId}/report.md`}
@@ -140,6 +141,11 @@ export function ReportView({ projectId }: { projectId: string }) {
             Export Markdown
           </a>
         </div>
+        <AuthenticityTiles a={data.authenticity} />
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold">Claims vs ours</h2>
         <p className="text-xs text-neutral-500">{TEXT.claimsIntro}</p>
         {!hasPaper ? (
           <Muted>{TEXT.noPaper}</Muted>
@@ -481,6 +487,26 @@ function MemoryEffect({ memory }: { memory: ReportData["memory"] }) {
         </ul>
       )}
     </div>
+  );
+}
+
+function AuthenticityTiles({ a }: { a: Authenticity }) {
+  return (
+    <>
+      {a.total > 0 && (
+        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {a.rows.map((r) => (
+            <li key={r.verdict} className="rounded-lg border border-neutral-200 p-2 dark:border-neutral-800">
+              <p className="text-2xl font-semibold tabular-nums">{r.count}</p>
+              <Badge tone={r.tone}>{r.label}</Badge>
+              {r.seeds && <p className="mt-1 text-xs text-neutral-500">({r.seeds})</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="text-sm">{authenticitySummary(a)}</p>
+      <p className="text-xs text-neutral-500">{TEXT.authenticityIntro}</p>
+    </>
   );
 }
 

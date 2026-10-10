@@ -1,10 +1,13 @@
 // The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
 // so the export matches the screen. Every number of ours links to its log line.
 import { formatDuration } from "../exp/experiments.ts";
-import type { ReportData, RunStats } from "./report.ts";
+import type { Authenticity, ReportData, RunStats } from "./report.ts";
 
 /** Wording shared by the screen and the export. */
 export const TEXT = {
+  authenticityIntro:
+    "Counted by code from the Analyst's verdicts: each claim once, from the latest reproduction run that graded it (what-if branches excluded).",
+  noAuthenticity: "No claim has been graded yet.",
   claimsIntro:
     "Verdicts are computed by code (the Analyst) against the margin declared before the run. Every number of ours links to the log line that printed it.",
   noPaper: "No paper has been read for this project yet.",
@@ -27,6 +30,19 @@ export const DIFF_TEXT: Record<string, string> = {
   difference: "difference",
   same: "same",
 };
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+/** "3 graded claims (2 results, 1 comparison) from B0 full reference v2." */
+export const authenticitySummary = (a: Authenticity) =>
+  a.total === 0
+    ? TEXT.noAuthenticity
+    : `${plural(a.total, "graded claim", "graded claims")} (${plural(a.claims, "result", "results")}, ${plural(
+        a.comparisons,
+        "comparison",
+        "comparisons",
+      )}) from ${a.sources.map((s) => s.label).join(", ")}.`;
+/** "2 (1 seed)" */
+export const countText = (r: Authenticity["rows"][number]) => `${r.count}${r.seeds ? ` (${r.seeds})` : ""}`;
 
 export const memoryRows = (s: RunStats) => [
   [
@@ -56,6 +72,10 @@ export function reportMarkdown(
       .filter(Boolean)
       .join(" · "),
   );
+
+  out.push("## Claim authenticity", TEXT.authenticityIntro, authenticitySummary(d.authenticity));
+  if (d.authenticity.total)
+    out.push(table(["Verdict", "Claims"], d.authenticity.rows.map((r) => [r.label, countText(r)])));
 
   out.push("## Claims vs ours", TEXT.claimsIntro);
   if (!hasPaper) out.push(TEXT.noPaper);
