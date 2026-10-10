@@ -1,5 +1,6 @@
-// POST /api/inbox {from, subject, body, received_at} (T31): n8n forwards a journal email; we store one
-// email_received event on the project it names (arXiv id in the subject or body), else on the newest project.
+// POST /api/inbox {from, subject, body, received_at, project_id?} (T31): n8n forwards a journal email; we store one
+// email_received event on project_id if that project exists, else on the project the email names (arXiv id in the
+// subject or body), else on the newest project.
 // Auth is the x-inbox-secret header (INBOX_WEBHOOK_SECRET), not the demo passcode cookie.
 import type { NextRequest } from "next/server";
 import { reply } from "@/app/approvals/server";
@@ -27,7 +28,11 @@ export async function POST(req: NextRequest) {
 
   // The ids are digits and one dot (findArxivIds), so they are safe inside the PostgREST filter.
   let project: { id: string } | null = null;
-  if (plan.arxivIds.length) {
+  if (plan.projectId) {
+    const { data } = await db.from("projects").select("id").eq("id", plan.projectId).limit(1);
+    project = data?.[0] ?? null;
+  }
+  if (!project && plan.arxivIds.length) {
     const filter = plan.arxivIds.flatMap((id) => [`arxiv_id.eq.${id}`, `arxiv_id.like.${id}v*`]).join(",");
     const { data } = await db.from("projects").select("id").or(filter).order("created_at", { ascending: false }).limit(1);
     project = data?.[0] ?? null;

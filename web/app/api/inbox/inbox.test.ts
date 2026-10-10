@@ -67,6 +67,19 @@ test("planInboxEvent builds the email_received event from the n8n body", () => {
   });
 });
 
+test("planInboxEvent passes on a valid project_id and ignores anything else", () => {
+  const base = { from: "a@b", subject: "x", body: "y", received_at: "2026-10-10T09:00:00Z" };
+  const id = "A97EB78B-BC4D-4E2D-AB5B-6B2FFD287AE4";
+  const p = planInboxEvent({ ...base, project_id: ` ${id} ` });
+  assert.ok(p.ok);
+  assert.equal(p.projectId, id.toLowerCase());
+  for (const bad of [undefined, null, "", "not-a-uuid", 42, "a97eb78b-bc4d-4e2d-ab5b-6b2ffd287ae4,arxiv_id.eq.1"]) {
+    const q = planInboxEvent({ ...base, project_id: bad });
+    assert.ok(q.ok);
+    assert.equal(q.projectId, null);
+  }
+});
+
 test("planInboxEvent refuses a body that is not the email shape", () => {
   assert.equal(planInboxEvent({ subject: "x", body: "y", received_at: "2026-10-10T09:00:00Z" }).ok, false);
   assert.equal(planInboxEvent({ from: "a@b", subject: "x", body: 5, received_at: "2026-10-10" }).ok, false);
