@@ -23,7 +23,7 @@ FIXED_TOOLS = ("fetch_paper", "fetch_repo", "read_file", "write_file", "list_dir
 
 # One line per tool for the agent's system prompt.
 TOOL_DOCS = {
-    "fetch_paper": 'fetch_paper {"arxiv_id": str}: download the arXiv PDF, save paper.txt (text with "--- page N ---" markers) in the run dir',
+    "fetch_paper": 'fetch_paper {"arxiv_id": str}: download the arXiv PDF, save paper_sections.txt (its relevant sections, with "--- page N ---" markers) in the run dir',
     "fetch_repo": 'fetch_repo {"url": str, "commit": str?}: clone a repository into the run dir',
     "read_file": 'read_file {"path": str}: read a text file in the run dir (long files are cut at 20000 chars)',
     "write_file": 'write_file {"path": str, "content": str}: write a text file in the run dir',
@@ -111,9 +111,12 @@ class ToolBox:
         from lab.executor.worker import child_env, kill_tree, resolve_argv, start
 
         timeout_s = min(float(timeout_s), RUN_MAX_TIMEOUT_S)
-        argv = resolve_argv(cmd, sys.executable)
+        env_file = self.workdir / "env.json"  # the run folder's own venv (make_env), else the worker's python
+        python = json.loads(env_file.read_text(encoding="utf-8")).get("python") if env_file.is_file() else None
+        python = python if python and Path(python).is_file() else sys.executable
+        argv = resolve_argv(cmd, python)
         try:
-            p = start(argv, self.workdir, child_env(sys.executable))
+            p = start(argv, self.workdir, child_env(python))
         except OSError as e:
             raise ToolError(f"could not start {argv[0]!r}: {e}") from None
         timer = threading.Timer(timeout_s, kill_tree, args=(p,))
@@ -145,8 +148,9 @@ class ToolBox:
         except ImportError:
             raise ToolError("fetch_paper is not available yet") from None
         info = fetch_paper(arxiv_id, self.workdir, db=self.db, project_id=self.project_id)
-        return (f"saved paper.txt: {info['title']!r}, {info['pages']} pages, {info['chars']} chars; "
-                f"read it with read_file")
+        sec = info.get("sections") or {}
+        return (f"saved the paper: {info['title']!r}, {info['pages']} pages. Read paper_sections.txt with read_file: "
+                f"its relevant sections ({', '.join(sec.get('sections', []))}), {sec.get('sent_bytes')} bytes")
 
     def _fetch_repo(self, url: str, commit: str | None = None) -> str:
         check_repo_url(url)

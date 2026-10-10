@@ -21,3 +21,8 @@ def test_paths_outside_the_run_dir_are_refused(tmp_path, path):
 def test_non_text_content_is_refused(tmp_path):
     with pytest.raises(ValueError, match="text"):
         write_files({"a.py": 3}, tmp_path)
+
+
+def test_advertised_caps_add_host_and_agent_without_duplicates():
+    from lab.executor.worker import advertised_caps
+    assert advertised_caps("laptop-b", ["smoke", "train", "agent"]) == ["smoke", "train", "agent", "host:laptop-b"]
