@@ -1,39 +1,68 @@
 "use client";
 
-// Team tab: one card per agent, updated over Realtime when an agents row changes.
+// Team tab: lineage graph, scoreboard and one card per agent, all live over Realtime.
 // Agents are shared across projects, so this lists the whole roster.
-import { useEffect, useState } from "react";
+// Rewards are not in the Realtime publication; the controller's reward events (which are) trigger a refetch.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import type { Agent, AgentOrigin, AgentStatus } from "@/lib/types";
+import type { Agent, Event, Reward, Task } from "@/lib/types";
 import { applyAgentChange, sortAgents, type AgentChange } from "./agents";
+import { LineageGraph } from "./lineage-graph";
+import { lineageEdges, rollingReward } from "./lineage";
+import { RewardBreakdown, Scoreboard } from "./scoreboard";
+import { ORIGIN_STYLE, STATUS_STYLE } from "./styles";
 
 type Status = "connecting" | "live" | "error";
+type TaskRef = Pick<Task, "id" | "agent_id" | "capability">;
 
-const STATUS_STYLE: Record<AgentStatus, string> = {
-  active: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  retired: "bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-  merged: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
-};
-
-const ORIGIN_STYLE: Record<AgentOrigin, string> = {
-  seed: "border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400",
-  spawned: "border-amber-400 text-amber-700 dark:border-amber-600 dark:text-amber-400",
-  refined: "border-sky-400 text-sky-700 dark:border-sky-600 dark:text-sky-400",
-};
+const REWARD_EVENTS = ["reward", "reward_updated"];
 
 export function TeamView() {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [tasks, setTasks] = useState<Record<string, TaskRef>>({});
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [reasons, setReasons] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const breakdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const db = supabase();
+    const loadRewards = () =>
+      db
+        .from("rewards")
+        .select("*")
+        .then(({ data, error }) => {
+          if (error) setError(error.message);
+          else setRewards((data ?? []) as Reward[]);
+        });
+    const addTasks = (rows: TaskRef[]) =>
+      setTasks((cur) => ({ ...cur, ...Object.fromEntries(rows.map((t) => [t.id, t])) }));
+    const addReasons = (rows: Pick<Event, "task_id" | "reason">[]) =>
+      setReasons((cur) => ({
+        ...cur,
+        ...Object.fromEntries(rows.filter((e) => e.task_id).map((e) => [e.task_id, e.reason])),
+      }));
 
-    // Subscribe before the initial fetch so no change falls in the gap; the fetch then upserts.
+    // Subscribe before the initial fetches so no change falls in the gap; the fetches then upsert.
     const channel = db
       .channel("agents-team")
       .on("postgres_changes", { event: "*", schema: "public", table: "agents" }, (p) =>
         setAgents((cur) => applyAgentChange(cur, p as unknown as AgentChange<Agent>)),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (p) => {
+        const t = p.new as Partial<TaskRef>;
+        if (t.id) addTasks([{ id: t.id, agent_id: t.agent_id ?? null, capability: t.capability ?? "" }]);
+      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "events", filter: `type=in.(${REWARD_EVENTS.join(",")})` },
+        (p) => {
+          addReasons([p.new as Event]);
+          loadRewards();
+        },
       )
       .subscribe((s) => {
         if (s === "SUBSCRIBED") setStatus("live");
@@ -43,6 +72,7 @@ export function TeamView() {
     db.from("agents")
       .select("*")
       .then(({ data, error }) => {
+        setLoaded(true);
         if (error) setError(error.message);
         else
           setAgents((cur) =>
@@ -52,17 +82,46 @@ export function TeamView() {
             ),
           );
       });
+    db.from("tasks")
+      .select("id,agent_id,capability")
+      .then(({ data }) => addTasks((data ?? []) as TaskRef[]));
+    db.from("events")
+      .select("task_id,reason")
+      .in("type", REWARD_EVENTS)
+      .order("ts", { ascending: true })
+      .then(({ data }) => addReasons((data ?? []) as Pick<Event, "task_id" | "reason">[]));
+    loadRewards();
 
     return () => {
       db.removeChannel(channel);
     };
   }, []);
 
+  const sorted = useMemo(() => sortAgents(agents), [agents]);
+  const edges = useMemo(
+    () => lineageEdges(sorted, Object.fromEntries(Object.values(tasks).map((t) => [t.id, t.agent_id]))),
+    [sorted, tasks],
+  );
+  const rolling = useMemo(
+    () => Object.fromEntries(agents.map((a) => [a.id, rollingReward(rewards, a.id)?.mean ?? null])),
+    [agents, rewards],
+  );
+  const taskCapability = useMemo(
+    () => Object.fromEntries(Object.values(tasks).map((t) => [t.id, t.capability])),
+    [tasks],
+  );
   const names: Record<string, string> = Object.fromEntries(agents.map((a) => [a.id, a.name]));
+  const selected = agents.find((a) => a.id === selectedId) ?? null;
+
+  const select = useCallback((id: string) => {
+    setSelectedId(id);
+    // Cards sit below the fold on a phone: bring the breakdown into view.
+    requestAnimationFrame(() => breakdownRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+  }, []);
 
   return (
-    <section aria-labelledby="team-heading">
-      <div className="mb-3 flex items-center gap-2">
+    <section aria-labelledby="team-heading" className="space-y-6">
+      <div className="flex items-center gap-2">
         <h2 id="team-heading" className="text-sm font-semibold">
           Agents <span className="font-normal text-neutral-500">({agents.length})</span>
         </h2>
@@ -77,33 +136,82 @@ export function TeamView() {
         </span>
       </div>
 
-      {error && <p className="mb-3 text-sm text-red-600">Could not load agents: {error}</p>}
+      {error && <p className="text-sm text-red-600">Could not load the team: {error}</p>}
 
       {agents.length === 0 ? (
-        <p className="text-sm text-neutral-500">No agents yet.</p>
+        <p className="text-sm text-neutral-500">{loaded ? "No agents yet." : "Loading…"}</p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sortAgents(agents).map((a) => (
-            <li key={a.id}>
-              <AgentCard agent={a} names={names} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Lineage</h3>
+            <LineageGraph
+              agents={sorted}
+              edges={edges}
+              rolling={rolling}
+              selectedId={selectedId}
+              onSelect={select}
+            />
+          </div>
+
+          <div ref={breakdownRef} className="scroll-mt-4">
+            {selected && (
+              <RewardBreakdown
+                agent={selected}
+                rewards={rewards}
+                taskCapability={taskCapability}
+                reasons={reasons}
+                onClose={() => setSelectedId(null)}
+              />
+            )}
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Scoreboard</h3>
+            <Scoreboard agents={agents} rewards={rewards} selectedId={selectedId} onSelect={select} />
+          </div>
+
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sorted.map((a) => (
+              <li key={a.id}>
+                <AgentCard
+                  agent={a}
+                  names={names}
+                  rolling={rolling[a.id]}
+                  selected={a.id === selectedId}
+                  onSelect={select}
+                />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );
 }
 
-function AgentCard({ agent: a, names }: { agent: Agent; names: Record<string, string> }) {
+function AgentCard({
+  agent: a,
+  names,
+  rolling,
+  selected,
+  onSelect,
+}: {
+  agent: Agent;
+  names: Record<string, string>;
+  rolling: number | null;
+  selected: boolean;
+  onSelect: (id: string) => void;
+}) {
   const ref = (id: string | null) => (id ? names[id] ?? id.slice(0, 8) : null);
   const parent = ref(a.parent_id);
   const mergedInto = ref(a.merged_into);
 
   return (
     <article
-      className={`h-full rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800 ${
-        a.status === "active" ? "" : "opacity-70"
-      }`}
+      onClick={() => onSelect(a.id)}
+      className={`h-full cursor-pointer rounded-lg border p-3 text-sm ${
+        selected ? "border-sky-500" : "border-neutral-200 dark:border-neutral-800"
+      } ${a.status === "active" ? "" : "opacity-70"}`}
     >
       <header className="flex flex-wrap items-center gap-2">
         <h3 className="break-all font-mono font-semibold">{a.name}</h3>
@@ -139,10 +247,19 @@ function AgentCard({ agent: a, names }: { agent: Agent; names: Record<string, st
         ))}
       </ul>
 
-      {/* Rolling reward arrives with T08 (scored by lab/controller/reward.py). */}
-      <p className="mt-2 text-xs text-neutral-500">
-        Rolling reward: <span className="tabular-nums">—</span>
-      </p>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(a.id);
+        }}
+        aria-pressed={selected}
+        className="mt-2 text-xs text-neutral-500 hover:underline"
+      >
+        Rolling reward:{" "}
+        <span className="tabular-nums text-current">{rolling === null ? "—" : rolling.toFixed(2)}</span> ·
+        breakdown
+      </button>
     </article>
   );
 }
