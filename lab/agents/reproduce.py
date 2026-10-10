@@ -72,7 +72,8 @@ def parse_answer(text: str) -> dict:
     raise StepError(f"the answer is not a JSON object: {text[:200]!r}")
 
 
-def check_design(design: dict, claims: list[dict]) -> dict:
+def check_design(design: dict, claims: list[dict], settings: list[dict] | None = None) -> dict:
+    """Models map to valid claims; setting_ids (optional) name settings s1..sN of papers.settings."""
     by_id = {c["id"]: c for c in claims}
     models = design.get("models") or []
     if not models:
@@ -89,9 +90,26 @@ def check_design(design: dict, claims: list[dict]) -> dict:
             problems.append(f"there is no claim {cid} (model {name})")
         elif not by_id[cid].get("valid"):
             problems.append(f"claim {cid} is not valid (its quote or value failed the code check)")
+    sids = design.get("setting_ids")
+    if settings is not None and sids is not None:
+        valid_ids = {f"s{i}" for i in range(1, len(settings) + 1)}
+        bad = [x for x in sids if x not in valid_ids]
+        if bad:
+            problems.append(f"setting ids {bad} do not exist (s1 to s{len(settings)})")
     if problems:
         raise StepError("; ".join(problems))
-    return {**design, "claim_map": {m["name"]: m["claim_id"] for m in models}}
+    out = {**design, "claim_map": {m["name"]: m["claim_id"] for m in models}}
+    if sids is not None:
+        out["settings_used"] = list(dict.fromkeys(sids))
+    return out
+
+
+def used_settings(settings: list[dict], design: dict) -> list[dict]:
+    """The settings that apply to the design's experiment (and every unstated one); all when it names none."""
+    ids = design.get("settings_used")
+    if ids is None:
+        return settings
+    return [s for i, s in enumerate(settings, 1) if f"s{i}" in ids or s.get("value") is None]
 
 
 def check_train_script(code: str, names: list[str]) -> list[str]:
@@ -198,10 +216,12 @@ def designer_goal(claims: list[dict], settings: list[dict], cap_min: float) -> s
             "through torchvision, small models). List the models to train; each model reproduces exactly one claim "
             "below (use its id). Order the models so that a model another one needs (e.g. a teacher) comes first.\n\n"
             "Claims (id | model | metric | direction, whose | quote):\n" + "\n".join(map(_claim_line, valid)) +
-            "\n\nSettings stated by the paper:\n" + "\n".join(map(_setting_line, settings)) +
+            "\n\nSettings from the paper (id, key, applies to, value, quote):\n" +
+            "\n".join(f"[s{i}] {_setting_line(st)[2:]}" for i, st in enumerate(settings, 1)) +
             '\n\nFinish with answer = a JSON object: {"experiment": "<one line>", "reason": "<why this experiment '
             'and why it fits on CPU>", "models": [{"name": "<snake_case>", "claim_id": "<id>", "description": '
-            '"<architecture and training, from the settings>"}]}')
+            '"<architecture and training, from the settings>"}], "setting_ids": ["<ids of the settings that '
+            'belong to THIS experiment, e.g. s1>"]}')
 
 
 def implementer_goal(design: dict, claims: list[dict], settings: list[dict], feedback: str | None = None) -> str:
@@ -217,7 +237,7 @@ def implementer_goal(design: dict, claims: list[dict], settings: list[dict], fee
         f"Write train.py (one file, Python 3, PyTorch on CPU) that reproduces this experiment from the paper: "
         f"{design.get('experiment')}\n\nModels, trained in this order:\n{model_lines}\n\n"
         "Paper settings (verbatim quotes; 'not stated' means you choose a sensible value and say so in CONFIG):\n"
-        + "\n".join(map(_setting_line, settings)) +
+        + "\n".join(map(_setting_line, used_settings(settings, design))) +
         "\n\nContract (code checks it; the run fails otherwise):\n"
         "- CLI: python train.py --data-dir DIR --epochs N --subset M --seed S [--set KEY=VALUE ...]\n"
         "  --epochs: epochs for EVERY model; --subset: train on the first M training examples (0 = all); load the "
@@ -269,9 +289,9 @@ def budget_goal(design: dict, timing: dict, cap_s: float, executor: str, setting
 
 # ---- stage checks shared by the one-shot pipeline and the worker's stage handlers (lab/agents/stages.py) ---------
 
-def check_designed(answer: str, claims: list[dict], workdir: Path) -> dict:
+def check_designed(answer: str, claims: list[dict], workdir: Path, settings: list[dict] | None = None) -> dict:
     """the answer is a JSON design whose models each map to one valid claim"""
-    d = check_design(parse_answer(answer), claims)
+    d = check_design(parse_answer(answer), claims, settings)
     (workdir / "design.json").write_text(json.dumps(d, indent=2), encoding="utf-8")
     return d
 
@@ -405,7 +425,7 @@ class Pipeline:
     def design(self) -> dict:
         def designed(res):
             """the answer is a JSON design whose models each map to one valid claim"""
-            return {"design": check_designed(res.answer, self.claims, self.workdir)}
+            return {"design": check_designed(res.answer, self.claims, self.workdir, self.settings)}
         out, _ = self.agent_step("design_experiment", "Choose the experiment and target claims",
                                  designer_goal(self.claims, self.settings, self.cap_s / 60), designed)
         return out["design"]

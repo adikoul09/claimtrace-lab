@@ -153,3 +153,13 @@ def test_budget_rejects_a_bad_proposal_and_an_impossible_cap():
 def test_margin_is_declared_from_the_claim_unit():
     assert rp.declare_margin([c for c in CLAIMS if c["id"] in ("c7", "c8", "c9")]) == (10, rp.MARGIN_REASON["errors"])
     assert rp.declare_margin([CLAIMS[3]])[0] is None
+
+
+def test_design_may_name_the_settings_of_its_experiment():
+    settings = [{"key": "temperature", "value": "20"}, {"key": "hidden_units", "value": "2560"},
+                {"key": "lr", "value": None}]
+    d = rp.check_design({**DESIGN, "setting_ids": ["s1"]}, CLAIMS, settings)
+    assert d["settings_used"] == ["s1"]
+    assert rp.used_settings(settings, d) == [settings[0], settings[2]]  # plus every unstated one
+    with pytest.raises(rp.StepError, match="s7"):
+        rp.check_design({**DESIGN, "setting_ids": ["s7"]}, CLAIMS, settings)

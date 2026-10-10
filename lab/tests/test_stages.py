@@ -411,3 +411,49 @@ def test_compare_after_the_branch_smokes_ranks_prunes_and_proposes_the_extend(ru
                           "--set temperature=5")
     assert ext["experiment"]["parent_id"] == full["id"] and ext["experiment"]["config"]["scale"] == "full"
     assert any(e["type"] == "whatif_ranked" for e in db.rows["events"])
+
+
+# ---- why it differs (T19): the compare of the reproduction stores the settings diff with branch effects -------------
+
+def test_compare_stores_the_settings_diff_with_tested_branch_effects(runs, scripted):
+    from lab.agents import analyst
+    db = store()
+    db.rows["agents"].append({**AGENTS[0], "id": "a-design_whatif", "capabilities": ["design_whatif"]})
+    full, smoke = reproduction(runs, db)
+    db.rows["papers"][0]["settings"] = [
+        {"key": "temperature", "applies_to": "student_distilled", "value": "20", "page": 4,
+         "quote": "at a temperature of 20", "valid": True},
+        {"key": "lr", "applies_to": "all", "value": None, "quote": None, "page": None, "valid": True},
+        {"key": "epochs", "applies_to": "all", "value": None, "quote": None, "page": None, "valid": True}]
+    full["config"]["budget"] = {"epochs": 12, "subset": 0, "seeds": [0]}
+    # a ranked what-if: b1 (temperature=5) extended and run at full budget, distilled 96 -> 80
+    scripted(json.dumps(WHATIF))
+    t = task("design_whatif", f"runs/{PID}", question="?", upstream={"run": "run-full"})
+    design = stages.handle(db, t, executor="laptop-b")
+    b1 = design["branches"][0]
+    e_smoke = db.table("experiments").insert({"project_id": PID, **b1["experiment"], "status": "done"}
+                                             ).execute().data[0]
+    e_smoke["config"]["whatif"].update(decision="extend", effect=-40, score=4, model="student_distilled")
+    full_cfg = {**b1["experiment"]["config"], "scale": "full"}
+    e_full = db.table("experiments").insert({"project_id": PID, **b1["experiment"], "config": full_cfg,
+                                             "status": "done"}).execute().data[0]
+    db.rows["metrics"].append({"experiment_id": e_full["id"], "name": "final_student_distilled", "value": 80,
+                               "step": 0, "log_line": 7})
+    scripted("unused")
+    out = stages.handle(db, task("compare", f"runs/{PID}", upstream={"run": "run-full"}), executor="laptop-b")
+    assert out["outcome"] == "passed"
+    rows = {(r["key"], r["our_key"]): r for r in full["config"]["why"]["settings_diff"]}
+    temp = rows[("temperature", "temperature")]
+    assert (temp["paper"], temp["ours"], temp["label"]) == ("20", 20, "same")
+    assert temp["branch_effects"][0] == {"branch_id": "b1", "value": 5, "model": "student_distilled",
+                                         "smoke_effect": -40, "score": 4, "decision": "extend", "full_effect": -16,
+                                         "experiment_id": e_smoke["id"]}
+    assert rows[("lr", "lr.student")]["label"] == "paper omission"
+    assert rows[("epochs", "epochs")]["ours"] == 12
+    # the explanation may cite these numbers, and nothing else
+    g = {**analyst.grade(CLAIMS_3, CMAP, {m: {"value": v, "log_line": 9} for m, v in
+                                          zip(CMAP, (80, 143, 96))}, margin=10, seeds=1),
+         "why": full["config"]["why"]}
+    assert "temperature | paper: 20 | ours: temperature = 20 | same" in analyst.tables_text(g)
+    assert analyst.number_check("Lowering the temperature from 20 to 5 moved the student by 16 errors.", g) == []
+    assert analyst.number_check("A temperature of 8 would help.", g) == ["8"]

@@ -175,7 +175,7 @@ def h_paper(ctx: Ctx) -> dict:
 def h_design(ctx: Ctx) -> dict:
     def designed(answer):
         """the answer is a JSON design whose models each map to one valid claim; code declares the margin"""
-        d = check_designed(answer, ctx.claims, ctx.workdir)
+        d = check_designed(answer, ctx.claims, ctx.workdir, ctx.settings)
         margin, why = declare_margin([c for c in ctx.claims if c["id"] in d["claim_map"].values()])
         emit(ctx.db, "margin_declared", f"margin {margin} declared before the run", why, project_id=ctx.pid,
              task_id=ctx.task["id"], agent_id=ctx.agent.get("id"))
@@ -268,7 +268,7 @@ def h_grade(ctx: Ctx) -> dict:
         raise StepError("no experiment to grade: input.experiment_id and the upstream run's output are empty")
     explain = ctx.task["capability"] == "explain_diff"
     g = analyst.run(ctx.db, exp_id, with_explanation=explain, agent=ctx.agent if explain else None,
-                    task_id=ctx.task["id"], llm=ctx.llm)
+                    task_id=ctx.task["id"], llm=ctx.llm, log_reader=lambda e: log_lines(ctx, e))
     runnable = [r for r in g["claims"] if r["verdict"] != "Not runnable"]
     outcome = "passed" if runnable else "failed"
     if explain and not g["explanation"]["accepted"]:
@@ -443,7 +443,7 @@ def h_whatif_rank(ctx: Ctx) -> dict:
             continue
         cfg = {**(e.get("config") or {})}
         cfg["whatif"] = {**cfg.get("whatif", {}), "decision": r["decision"], "reason": r["reason"],
-                         "effect": r.get("effect"), "score": r.get("score")}
+                         "effect": r.get("effect"), "score": r.get("score"), "model": r.get("model")}
         patch = {"config": cfg}
         if r["decision"] == "pruned":
             patch.update(status="pruned", pruned_reason=r["reason"])
