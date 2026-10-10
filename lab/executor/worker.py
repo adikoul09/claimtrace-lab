@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from lab.db import ROOT, client, emit, setting
-from lab.executor.logparse import error_signature, last_traceback, parse_metric
+from lab.executor.logparse import error_signature, last_traceback, parse_divergence, parse_metric
 
 RUNS = ROOT / "runs"
 HEARTBEAT_S = 10
@@ -145,6 +145,16 @@ class LogSink:
     def close(self) -> None:
         self.flush(force=True)
         self.local.close()
+
+
+def advertised_caps(name: str, caps: list[str]) -> list[str]:
+    """EXECUTOR_CAPS plus 'agent' (this worker runs agent tasks) and 'host:<name>' (tasks pinned to this machine,
+    e.g. a full run that must use the run folder a smoke run left here)."""
+    out = list(dict.fromkeys(caps))
+    for extra in ("agent", f"host:{name}"):
+        if extra not in out:
+            out.append(extra)
+    return out
 
 
 def write_files(files: dict, cwd: Path) -> list[str]:
@@ -286,13 +296,20 @@ class Worker:
         timer = threading.Timer(timeout_s, on_timeout)
         timer.daemon = True
         timer.start()
-        n_metrics, unsent = 0, []
+        n_metrics, unsent, n_diverged = 0, [], 0
+        diverged: set[str] = set()
         try:
             for raw in p.stdout:
                 line = raw.rstrip("\r\n")
                 n = sink.add(line)
                 print(f"  | {line}", flush=True)
                 m = parse_metric(line, n)
+                d = None if m else parse_divergence(line, n)
+                if d:
+                    n_diverged += 1
+                    if d.name not in diverged:  # the first per metric; a NaN run repeats it every epoch
+                        diverged.add(d.name)
+                        self.divergence(task, exp_id, d)
                 if m:
                     try:
                         db.table("metrics").insert(m.as_row(exp_id)).execute()
@@ -327,7 +344,7 @@ class Worker:
         sig = None if ok else error_signature(sink.lines)
         output = {"experiment_id": exp_id, "log_path": log_path, "log_lines": len(sink.lines), "exit_code": code,
                   "wall_s": wall, "cpu_s": cpu, "cpu_seconds_source": "rusage" if cpu is not None else "wall_clock",
-                  "metrics": n_metrics, "metrics_unsent": len(unsent),
+                  "metrics": n_metrics, "metrics_unsent": len(unsent), "divergences": n_diverged,
                   "error_signature": sig, "error_log_line": tb.log_line if tb else None,
                   "log_upload_error": sink.error}
         if timed_out.is_set():
@@ -340,6 +357,18 @@ class Worker:
                     f"run {'finished' if ok else 'failed'} on {self.name} in {wall:.0f} s: "
                     f"{n_metrics} metrics, {len(sink.lines)} log lines", reason,
                     cpu=cpu if cpu is not None else wall)
+
+    def divergence(self, task: dict, exp_id: str, d) -> None:
+        """A NaN/inf METRIC line. metrics.value is NOT NULL until B1's migration, so no row yet: the event carries
+        the name, raw value, step and log line, and the controller's debug/spawn path reacts to it."""
+        try:
+            emit(self.db, "divergence_detected", f"{d.name}={d.raw} at step {d.step}",
+                 f"non-finite METRIC value at log line {d.log_line}: the run diverged",
+                 project_id=task.get("project_id"), agent_id=task.get("agent_id"), task_id=task["id"],
+                 data={"experiment_id": exp_id, "name": d.name, "raw": d.raw, "step": d.step,
+                       "log_line": d.log_line})
+        except Exception as e:  # never stop the run over an event
+            print(f"[worker] divergence event failed: {type(e).__name__}: {e}", flush=True)
 
     # -- main loop ------------------------------------------------------------------------------------------------
     def serve(self, once: bool = False) -> None:
@@ -381,7 +410,7 @@ def main(argv=None) -> None:
     caps = [c.strip() for c in (setting("EXECUTOR_CAPS") or "").split(",") if c.strip()]
     if not name or not caps:
         sys.exit("set EXECUTOR_NAME and EXECUTOR_CAPS (env or .env)")
-    Worker(name, caps).serve(once=a.once)
+    Worker(name, advertised_caps(name, caps)).serve(once=a.once)
 
 
 if __name__ == "__main__":

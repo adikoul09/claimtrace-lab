@@ -98,3 +98,19 @@ def test_chained_uses_the_last_traceback():
 ])
 def test_error_signature(log, sig):
     assert error_signature(log.splitlines()) == sig
+
+
+# ---- divergence: NaN/inf METRIC lines (integration item 3) ---------------------------------------------------------
+
+@pytest.mark.parametrize("line, raw", [("METRIC loss=nan step=4", "nan"), ("METRIC loss=-inf step=4", "-inf"),
+                                       ("METRIC loss=NaN step=4", "NaN"), ("METRIC loss=Infinity step=4", "Infinity")])
+def test_non_finite_metric_lines_are_divergences(line, raw):
+    from lab.executor.logparse import parse_divergence
+    d = parse_divergence(line, 17)
+    assert (d.name, d.raw, d.step, d.log_line) == ("loss", raw, 4, 17)
+
+
+@pytest.mark.parametrize("line", ["METRIC loss=0.5 step=4", "METRIC loss=abc step=4", "loss is nan"])
+def test_finite_or_malformed_lines_are_not_divergences(line):
+    from lab.executor.logparse import parse_divergence
+    assert parse_divergence(line, 1) is None
