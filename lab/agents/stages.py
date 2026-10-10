@@ -431,7 +431,8 @@ def h_whatif_rank(ctx: Ctx) -> dict:
     if not d.get("branches"):
         raise StepError(f"what-if task {tid} has no branches in its output")
     exps = {(e.get("config") or {}).get("whatif", {}).get("branch_id"): e for e in _experiments(ctx)
-            if ((e.get("config") or {}).get("whatif") or {}).get("task_id") == tid}
+            if ((e.get("config") or {}).get("whatif") or {}).get("task_id") == tid
+            and (e.get("config") or {}).get("scale") == "smoke"}  # an extend row shares task and branch ids
     runs_by_exp = {(t.get("input") or {}).get("experiment_id"): t for t in
                    ctx.db.table("tasks").select("*").eq("project_id", ctx.pid).eq("capability", "run").execute().data}
     parent = next((e for e in _experiments(ctx) if e["id"] == d["parent_experiment_id"]), {})
