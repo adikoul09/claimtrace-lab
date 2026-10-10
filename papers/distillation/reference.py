@@ -8,11 +8,18 @@ Trains three MLPs on MNIST on CPU and reports test errors out of 10,000:
 The paper does not state the optimizer, learning rate, batch size, epochs, dropout
 rates, max-norm value or the hard/soft loss weights; the values below are ours.
 
-Usage: python papers/distillation/reference.py [--quick]
+v2 (after results_full.json, where the distilled student hit a NaN loss in epoch 1 and predicted one class,
+9020 errors): the distilled student uses lr 0.03 and gradient-norm clipping at 5.0, and every model stops at its first
+non-finite loss with the epoch and step logged. The teacher checkpoint is saved under runs/ so a student can be
+retrained alone.
+
+Usage: python papers/distillation/reference.py [--quick] [--only MODEL ...] [--teacher-ckpt PATH]
+  --only student_distilled --teacher-ckpt runs/distillation/teacher_full_seed0.pt   retrain one student, no teacher
 """
 
 import argparse
 import json
+import math
 import platform
 import sys
 import time
@@ -45,8 +52,11 @@ EPOCHS = {
 
 MEAN, STD = 0.1307, 0.3081
 BATCH = 128
+MODELS = ("teacher", "student_hard", "student_distilled")
 # lr 0.1 left the dropout teacher at 488 errors after 3 epochs; 0.03 gave 252 after 2.
-LR = {"teacher": 0.03, "student_hard": 0.1, "student_distilled": 0.1}
+# v2: the distilled student diverged at 0.1 (the T^2-scaled soft loss gives ~T times larger logit gradients).
+LR = {"teacher": 0.03, "student_hard": 0.1, "student_distilled": 0.03}
+GRAD_CLIP = {"student_distilled": 5.0}  # max L2 norm of all gradients, per step (v2)
 MOMENTUM = 0.9
 MAX_NORM = 3.5  # per-unit L2 bound on incoming weights (teacher only)
 DROPOUT_IN, DROPOUT_HID = 0.2, 0.5
@@ -55,6 +65,14 @@ T = PAPER["temperature"]
 SOFT_WEIGHT = 0.9  # paper: "considerably lower weight" on the hard-label objective
 
 LOG = []  # every METRIC line printed, in order
+V2_CHANGES = [
+    {"setting": "lr.student_distilled", "from": 0.1, "to": LR["student_distilled"],
+     "why": "results_full.json: NaN loss in epoch 1 at lr 0.1, 9020 test errors (one class predicted)"},
+    {"setting": "grad_clip_norm.student_distilled", "from": None, "to": GRAD_CLIP["student_distilled"],
+     "why": "same divergence; the soft loss is scaled by T^2 = 400"},
+    {"setting": "nan_guard", "from": None, "to": "stop at the first non-finite loss",
+     "why": "v1 kept training 30 epochs on NaN weights; now the epoch and step are logged and training stops"},
+]
 
 
 def metric(name, value, step):
@@ -124,7 +142,8 @@ def train(name, model, epochs, train_xy, test_xy, gen, soft_logits=None, regular
     total = epochs * steps_per_epoch
     opt = torch.optim.SGD(model.parameters(), lr=LR[name], momentum=MOMENTUM)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: 1 - s / total)
-    history = []
+    clip = GRAD_CLIP.get(name)
+    history, diverged = [], None
     t0 = time.perf_counter()
     for epoch in range(1, epochs + 1):
         model.train()
@@ -143,8 +162,16 @@ def train(name, model, epochs, train_xy, test_xy, gen, soft_logits=None, regular
                 soft = F.kl_div(F.log_softmax(out / T, 1), F.softmax(soft_logits[idx] / T, 1),
                                 reduction="batchmean") * T * T
                 loss = SOFT_WEIGHT * soft + (1 - SOFT_WEIGHT) * hard
+            if not math.isfinite(loss.item()):
+                # Stop before the step, so the weights stay the last finite ones and test errors stay meaningful.
+                diverged = {"epoch": epoch, "step": i // BATCH + 1, "loss": str(loss.item())}
+                print(f"  [{name}] non-finite loss ({loss.item()}) at epoch {epoch}, step {i // BATCH + 1}: "
+                      f"training stopped", flush=True)
+                break
             opt.zero_grad(set_to_none=True)
             loss.backward()
+            if clip:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
             opt.step()
             sched.step()
             if regularise:
@@ -152,13 +179,32 @@ def train(name, model, epochs, train_xy, test_xy, gen, soft_logits=None, regular
             loss_sum += loss.item() * len(idx)
         errs = test_errors(model, *test_xy)
         elapsed = time.perf_counter() - t0
+        if diverged:
+            diverged["log_line"] = metric(f"{name}_diverged_epoch", epoch, epoch)
+            diverged["test_errors_at_stop"] = errs
+            diverged["test_errors_log_line"] = metric(f"{name}_test_errors", errs, epoch)
+            break
         lines = [metric(f"{name}_train_loss", round(loss_sum / n, 5), epoch),
                  metric(f"{name}_test_errors", errs, epoch)]
         history.append({"epoch": epoch, "train_loss": round(loss_sum / n, 5), "test_errors": errs,
                         "elapsed_s": round(elapsed, 1), "log_lines": lines})
         print(f"  [{name}] epoch {epoch}/{epochs}  loss {loss_sum / n:.4f}  "
               f"test errors {errs}/10000  {elapsed:.0f}s", flush=True)
-    return history, time.perf_counter() - t0
+    return history, time.perf_counter() - t0, diverged
+
+
+def save_teacher(model, path, meta):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save({"state_dict": model.state_dict(), "meta": meta}, path)
+    print(f"saved teacher checkpoint {path}", flush=True)
+
+
+def load_teacher(path):
+    ckpt = torch.load(path, map_location="cpu", weights_only=True)
+    model = MLP(1200, DROPOUT_IN, DROPOUT_HID)
+    model.load_state_dict(ckpt["state_dict"])
+    return model, ckpt["meta"]
 
 
 def main():
@@ -167,91 +213,133 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--data-dir", default=str(ROOT / "data"))
     ap.add_argument("--out", default=str(HERE / "results.json"))
+    ap.add_argument("--only", nargs="+", choices=MODELS, help="train only these models (default: all three)")
+    ap.add_argument("--teacher-ckpt", help="saved here after the teacher trains; loaded from here when only students "
+                                           "train (default runs/distillation/teacher_<mode>_seed<seed>.pt)")
     args = ap.parse_args()
 
     mode = "quick" if args.quick else "full"
     epochs = EPOCHS[mode]
+    todo = [m for m in MODELS if m in (args.only or MODELS)]
+    ckpt_path = Path(args.teacher_ckpt or ROOT / "runs" / "distillation" / f"teacher_{mode}_seed{args.seed}.pt")
+    if "student_distilled" in todo and "teacher" not in todo and not ckpt_path.is_file():
+        sys.exit(f"student_distilled needs a teacher: train it too, or pass --teacher-ckpt (missing: {ckpt_path})")
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     gen = torch.Generator().manual_seed(args.seed)
     run_start = time.perf_counter()
 
-    print(f"B0 distillation reference | mode={mode} seed={args.seed} torch={torch.__version__} "
-          f"threads={torch.get_num_threads()} | epochs={epochs}", flush=True)
+    print(f"B0 distillation reference v2 | mode={mode} seed={args.seed} torch={torch.__version__} "
+          f"threads={torch.get_num_threads()} | models={todo} | epochs={epochs}", flush=True)
     train_xy, test_xy = load_mnist(args.data_dir)
     print(f"MNIST: {len(train_xy[0])} train, {len(test_xy[0])} test", flush=True)
 
-    results = {}
+    models, teacher, teacher_ckpt = {}, None, {"path": str(ckpt_path)}
+    save = lambda complete: write_results(args, mode, todo, models, teacher_ckpt, run_start, complete)
 
-    print("\n== teacher: 2x1200 ReLU, dropout + max-norm + jitter ==", flush=True)
-    teacher = MLP(1200, DROPOUT_IN, DROPOUT_HID)
-    hist, secs = train("teacher", teacher, epochs["teacher"], train_xy, test_xy, gen, regularise=True)
-    results["teacher"] = (hist, secs)
-
-    print("\n== student_hard: 2x800 ReLU, no regularisation, hard labels ==", flush=True)
-    student = MLP(800)
-    hist, secs = train("student_hard", student, epochs["student_hard"], train_xy, test_xy, gen)
-    results["student_hard"] = (hist, secs)
-
-    print(f"\n== student_distilled: 2x800 ReLU, soft targets T={T} ==", flush=True)
-    t0 = time.perf_counter()
-    soft_logits = logits_of(teacher, train_xy[0])
-    distilled = MLP(800)
-    hist, secs = train("student_distilled", distilled, epochs["student_distilled"], train_xy, test_xy,
-                       gen, soft_logits=soft_logits)
-    results["student_distilled"] = (hist, time.perf_counter() - t0)
-
-    total_s = time.perf_counter() - run_start
-    print("\n== summary (test errors /10,000; one seed) ==", flush=True)
-    models = {}
-    for i, name in enumerate(("teacher", "student_hard", "student_distilled"), start=1):
-        hist, secs = results[name]
-        errs = hist[-1]["test_errors"]
+    def record(name, step, hist, secs, diverged):
+        errs = diverged["test_errors_at_stop"] if diverged else hist[-1]["test_errors"]
         paper = PAPER[f"{name}_test_errors"]
-        err_line = metric(f"final_{name}_test_errors", errs, i)
-        wall_line = metric(f"final_{name}_wall_s", round(secs, 1), i)
-        print(f"  {name:<18} ours {errs:>4}   paper {paper:>4}   diff {errs - paper:+5d}   "
-              f"wall {secs:6.1f}s  ({epochs[name]} epochs)", flush=True)
+        err_line = metric(f"final_{name}_test_errors", errs, step)
+        wall_line = metric(f"final_{name}_wall_s", round(secs, 1), step)
         models[name] = {
             "test_errors": errs, "paper_test_errors": paper, "diff": errs - paper,
-            "epochs": epochs[name], "wall_clock_s": round(secs, 1),
+            "epochs": epochs[name], "epochs_done": len(hist), "diverged": diverged, "wall_clock_s": round(secs, 1),
             "log_lines": {"test_errors": err_line, "wall_clock_s": wall_line},
             "history": hist,
         }
-    total_line = metric("total_wall_s", round(total_s, 1), 0)
-    gap_hard = models["student_hard"]["test_errors"]
-    gap_dist = models["student_distilled"]["test_errors"]
-    print(f"  distilled < hard-label: {gap_dist < gap_hard} ({gap_dist} vs {gap_hard})  "
-          f"total wall {total_s:.1f}s", flush=True)
+        save(complete=False)
 
+    if "teacher" in todo:
+        print("\n== teacher: 2x1200 ReLU, dropout + max-norm + jitter ==", flush=True)
+        teacher = MLP(1200, DROPOUT_IN, DROPOUT_HID)
+        hist, secs, div = train("teacher", teacher, epochs["teacher"], train_xy, test_xy, gen, regularise=True)
+        if div:
+            teacher_ckpt.update({"saved": False, "why_not": "the teacher diverged"})
+        else:
+            save_teacher(teacher, ckpt_path, {"mode": mode, "seed": args.seed, "epochs": epochs["teacher"],
+                                              "test_errors": hist[-1]["test_errors"],
+                                              "log_line": hist[-1]["log_lines"][1]})
+            teacher_ckpt["saved"] = True
+        record("teacher", 1, hist, secs, div)
+    elif "student_distilled" in todo:
+        teacher, meta = load_teacher(ckpt_path)
+        errs = test_errors(teacher, *test_xy)
+        line = metric("teacher_ckpt_test_errors", errs, 0)
+        print(f"loaded teacher checkpoint {ckpt_path}: {errs}/10000 test errors (saved with {meta})", flush=True)
+        teacher_ckpt.update({"loaded": True, "meta": meta, "test_errors": errs, "log_line": line})
+
+    if "student_hard" in todo:
+        print("\n== student_hard: 2x800 ReLU, no regularisation, hard labels ==", flush=True)
+        student = MLP(800)
+        hist, secs, div = train("student_hard", student, epochs["student_hard"], train_xy, test_xy, gen)
+        record("student_hard", 2, hist, secs, div)
+
+    if "student_distilled" in todo:
+        print(f"\n== student_distilled: 2x800 ReLU, soft targets T={T}, lr {LR['student_distilled']}, "
+              f"grad clip {GRAD_CLIP['student_distilled']} ==", flush=True)
+        t0 = time.perf_counter()
+        soft_logits = logits_of(teacher, train_xy[0])
+        distilled = MLP(800)
+        hist, _, div = train("student_distilled", distilled, epochs["student_distilled"], train_xy, test_xy,
+                             gen, soft_logits=soft_logits)
+        record("student_distilled", 3, hist, time.perf_counter() - t0, div)
+
+    print("\n== summary (test errors /10,000; one seed) ==", flush=True)
+    for name, m in models.items():
+        note = f"  DIVERGED at epoch {m['diverged']['epoch']}" if m["diverged"] else ""
+        print(f"  {name:<18} ours {m['test_errors']:>4}   paper {m['paper_test_errors']:>4}   "
+              f"diff {m['diff']:+5d}   wall {m['wall_clock_s']:6.1f}s  ({m['epochs_done']}/{m['epochs']} epochs)"
+              f"{note}", flush=True)
+    out = save(complete=True)
+    if out["distilled_beats_hard"] is not None:
+        print(f"  distilled < hard-label: {out['distilled_beats_hard']} "
+              f"({models['student_distilled']['test_errors']} vs {models['student_hard']['test_errors']})", flush=True)
+    print(f"  total wall {out['total_wall_clock_s']:.1f}s\nwrote {Path(args.out).resolve()}", flush=True)
+
+
+def write_results(args, mode, todo, models, teacher_ckpt, run_start, complete):
+    """Written after every model, so a timeout or a crash keeps the models that finished."""
+    total_s = time.perf_counter() - run_start
+    both = "student_hard" in models and "student_distilled" in models
     out = {
         "paper": PAPER,
+        "version": 2,
         "mode": mode,
         "seed": args.seed,
+        "models_trained": todo,
+        "complete": complete,
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "environment": {"python": sys.version.split()[0], "torch": torch.__version__,
                         "platform": platform.platform(), "machine": platform.machine(),
                         "threads": torch.get_num_threads()},
         "settings": {
-            "batch": BATCH, "optimizer": "SGD", "lr": LR, "momentum": MOMENTUM,
+            "batch": BATCH, "optimizer": "SGD", "lr": LR, "momentum": MOMENTUM, "grad_clip_norm": GRAD_CLIP,
+            "nan_guard": "a model stops at its first non-finite loss, before that step; epoch and step are logged",
+            "changes_from_v1": V2_CHANGES,
             "quick_epochs_note": "cut to fit <=15 min on CPU; paper trains to convergence",
             "lr_schedule": "linear decay to 0", "normalise": [MEAN, STD],
             "teacher": {"hidden": [1200, 1200], "dropout_input": DROPOUT_IN,
                         "dropout_hidden": DROPOUT_HID, "max_norm": MAX_NORM, "jitter_px": JITTER},
             "student_hard": {"hidden": [800, 800], "regularisation": "none"},
-            "student_distilled": {"hidden": [800, 800], "temperature": T,
+            "student_distilled": {"hidden": [800, 800], "temperature": T, "lr": LR["student_distilled"],
+                                  "grad_clip_norm": GRAD_CLIP["student_distilled"],
                                   "soft_weight": SOFT_WEIGHT, "hard_weight": round(1 - SOFT_WEIGHT, 2),
                                   "soft_loss": "KL(teacher_T || student_T) * T^2",
                                   "transfer_set": "MNIST train (60,000), no jitter"},
         },
+        "teacher_checkpoint": teacher_ckpt,
         "models": models,
-        "distilled_beats_hard": gap_dist < gap_hard,
+        "distilled_beats_hard": (models["student_distilled"]["test_errors"] < models["student_hard"]["test_errors"]
+                                 if both else None),
         "total_wall_clock_s": round(total_s, 1),
-        "total_log_line": total_line,
-        "metric_log": LOG,
     }
+    if complete:
+        out["total_log_line"] = metric("total_wall_s", round(total_s, 1), 0)
+    out["metric_log"] = LOG
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(out, indent=2) + "\n")
-    print(f"\nwrote {Path(args.out).resolve()}", flush=True)
+    return out
 
 
 if __name__ == "__main__":
