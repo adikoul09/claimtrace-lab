@@ -368,7 +368,7 @@ def reader_system(agent: dict) -> str:
 
 
 PART_BYTES = 7_000  # paper text per claims call: one answer for the whole excerpt overran the 4000-token output cap
-CLAIMS_PER_PART = 15  # a 44-cell per-row table in one part still ran through the cap
+CLAIMS_PER_PART = 25  # a 44-cell per-row table in one part ran through the cap; 18 claims took 1702 tokens out
 CLAIMS_PART = ("\n\nThis call: return only the claims stated in THIS part of the paper's text (part {i} of {n}); the "
                "other parts are read in separate calls. Return at most {cap} claims for this part: the headline "
                "results first; from a long per-row breakdown table keep only its main rows. Keep each claim compact: "
