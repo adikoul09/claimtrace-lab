@@ -60,25 +60,26 @@ export function howSteps(e: Evidence): HowStep[] {
     ),
     step(
       "grading",
-      "Code grades every number",
+      "Code grades every number vs the paper",
       "Plain code, not AI, compares each of our numbers with the paper's: reproduced, partly reproduced, or not.",
       e.graded,
     ),
     step(
       "report",
-      "Report with proof",
+      "Report with log-line proof",
       "Each claim sits next to our number, and every number links to the log line that printed it.",
       e.graded,
     ),
-    step("scores", "Scoring", "After each step, the lab scores the agent that did it.", e.rewards),
+    step("scores", "Controller scores agents", "After each step, the controller scores the agent that did it.", e.rewards),
     step(
       "evolve",
-      "Improve, add, retire",
+      "Refine, spawn or retire",
       "Agents that keep failing are rewritten or retired; a new specialist is added when a job needs one.",
       e.evolved,
     ),
-    step("lessons", "Lessons", "What worked or went wrong is saved as a lesson for the next run.", e.lessons),
-    step("email", "Journal email", "A reviewer's email arrives in the project's Inbox.", e.emails),
+    step("lessons", "Lessons saved for the next run", "What worked or went wrong is saved as a lesson.", e.lessons),
+    step("email", "Journal email", "A reviewer emails about the paper.", e.emails),
+    step("inbox", "Inbox", "The email shows up in the project's Inbox tab.", e.emails),
     step("engine", "Send to engine", "The lab acts on the email's requests by itself.", null),
   ];
 }

@@ -71,7 +71,7 @@ async function LiveDiagram() {
 
 const MAIN = ["paper", "reader", "designer", "implementer", "worker", "grading", "report"];
 const LOOP = ["scores", "evolve", "lessons"];
-const INBOX = ["email", "engine"];
+const INBOX = ["email", "inbox", "engine"];
 
 function Diagram({ steps, checking, failed }: { steps: HowStep[]; checking?: boolean; failed?: boolean }) {
   const pick = (ids: string[]) => ids.map((id) => steps.find((s) => s.id === id)!);

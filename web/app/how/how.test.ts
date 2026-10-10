@@ -21,6 +21,7 @@ test("a step is live only once it has worked here at least once", () => {
     evolve: "live",
     lessons: "live",
     email: "live",
+    inbox: "live",
     engine: "next",
   });
 });
