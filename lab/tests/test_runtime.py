@@ -92,7 +92,8 @@ def test_live_call_is_cached_and_logged_to_llm_calls(tmp_path, fake_provider):
     assert (resp.tokens_in, resp.tokens_out) == (300, 40)
     assert (tmp_path / "a" / f"{resp.key}.json").exists()
     assert db.rows["llm_calls"] == [{"agent_id": "ag-1", "task_id": "t-1", "model": "fake-fast", "tokens_in": 300,
-                                     "tokens_out": 40, "mode": "live", "cache_key": resp.key}]
+                                     "tokens_out": 40, "mode": "live", "cache_key": resp.key,
+                                     "total_tokens": 340, "request_id": None}]
 
 
 def test_replay_returns_the_recorded_response_and_logs_mode_replay(tmp_path, fake_provider):

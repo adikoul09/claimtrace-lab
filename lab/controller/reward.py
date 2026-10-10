@@ -12,6 +12,9 @@ Outcome, from the finished task (tasks.output), first match wins:
   output.agent_status = 'stopped'              partial (the agent hit its budget before finishing)
   otherwise                                    passed
 Feedback: the latest events row with type 'feedback' for the task, data.value = 'up' | 'down'.
+Who is scored: the task's agent, except for a run that crashed (error_signature): it counts against the agent that
+wrote the code it ran (the latest upstream debug task that changed the files, else write_code). The Runner only
+executes; the crash then goes down the Debugger path.
 Changing these values after 6 PM needs Laptop A's OK."""
 from __future__ import annotations
 
@@ -52,6 +55,20 @@ def outcome_of(task: dict) -> tuple[float, str]:
     return 1.0, "finished"
 
 
+def charged_agent(task: dict, by_id: dict[str, dict]) -> tuple[Optional[str], Optional[str]]:
+    """(agent_id the reward row belongs to, why it is not the task's own agent or None). by_id: upstream tasks."""
+    out = task.get("output") or {}
+    if task.get("capability") != "run" or task.get("status") != "failed" or not out.get("error_signature"):
+        return task.get("agent_id"), None
+    up = (task.get("input") or {}).get("upstream") or {}
+    for cap in ("debug", "write_code"):
+        author = by_id.get(up.get(cap) or "")
+        if author and author.get("agent_id") and (cap == "write_code" or (author.get("output") or {}).get("files")):
+            return author["agent_id"], (f"the run crashed ({out['error_signature']}); it counts against the agent "
+                                        f"that wrote the code it ran ({cap} task {author['id'][:8]})")
+    return task.get("agent_id"), None
+
+
 def latest_feedback(events: list[dict]) -> dict[str, str]:
     """task_id -> 'up' | 'down' from the newest valid feedback event per task."""
     out: dict[str, str] = {}
@@ -72,17 +89,20 @@ class Scored:
     reason: str    # every number that produced it
 
 
-def score(task: dict, tokens: int, feedback: Optional[str]) -> Scored:
-    """tokens: LLM tokens of the task (the llm_calls sum when there are calls, else tasks.tokens)."""
+def score(task: dict, tokens: int, feedback: Optional[str], agent_id: Optional[str] = None,
+          charged_why: Optional[str] = None) -> Scored:
+    """tokens: LLM tokens of the task (the llm_calls sum when there are calls, else tasks.tokens); agent_id: who the
+    row is charged to (default the task's agent; see charged_agent)."""
     cpu = float(task.get("cpu_seconds") or 0)
     o, o_why = outcome_of(task)
     c = round(cost_norm(tokens, cpu), 4)
     f = feedback_value(feedback)
     r = reward(o, c, f)
-    reason = (f"outcome {o:g} ({o_why}) · cost {c:.2f} ({tokens} tokens, {cpu:g} CPU s) · "
+    reason = (f"{charged_why}; " if charged_why else "") + (
+              f"outcome {o:g} ({o_why}) · cost {c:.2f} ({tokens} tokens, {cpu:g} CPU s) · "
               f"feedback {feedback or 'none'} ({f:g}) → reward {r:.2f} = {W_OUTCOME}·{o:g} + {W_COST}·(1−{c:.2f}) "
               f"+ {W_FEEDBACK}·{f:g}")
-    return Scored({"agent_id": task["agent_id"], "task_id": task["id"], "outcome": o, "cost_norm": c,
+    return Scored({"agent_id": agent_id or task["agent_id"], "task_id": task["id"], "outcome": o, "cost_norm": c,
                    "feedback": f, "reward": r}, reason)
 
 

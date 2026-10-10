@@ -23,10 +23,22 @@ def test_every_capability_gets_non_empty_required_caps(cap):
     assert routing.required_caps(cap, scale="full")
 
 
-def test_full_runs_need_heavy_and_smoke_runs_do_not():
-    assert set(routing.required_caps("run", "full")) >= {"train", "heavy"}
-    assert "heavy" not in routing.required_caps("run", "smoke")
-    assert routing.required_caps("read_paper") == ["parse"]
+def test_caps_follow_the_contract():
+    assert routing.required_caps("run", "full") == ["train"]
+    assert routing.required_caps("run", "smoke") == ["smoke"]
+    assert routing.required_caps("read_paper") == ["agent"]
+    assert routing.required_caps("debug") == ["agent"]
+
+
+def test_host_pin_is_the_executor_of_the_first_claimed_run():
+    tasks = [{"capability": "write_code", "executor": "laptop-b", "started_at": "2026-10-10T09:00:00Z"},
+             {"capability": "run", "executor": "laptop-a", "started_at": "2026-10-10T10:00:00Z"},
+             {"capability": "run", "executor": "voroa-1", "started_at": "2026-10-10T11:00:00Z"},
+             {"capability": "run", "executor": None, "started_at": None}]
+    assert routing.host_pin(tasks) == "host:laptop-a"
+    assert routing.host_pin([{"capability": "run", "executor": None, "started_at": None}]) is None
+    assert routing.with_pin(["agent"], "host:laptop-a") == ["agent", "host:laptop-a"]
+    assert routing.with_pin(["agent"], None) == ["agent"]
 
 
 def test_plan_tasks_need_the_controller_cap_no_worker_has():
@@ -106,7 +118,7 @@ def step(cap, **kw):
 
 def test_plan_check_drops_unknown_capabilities_with_a_reason():
     res = planner.check_plan({"reason": "r", "steps": [step("read_paper"), step("teleport"), step("write_code")]},
-                             budget_cpu_min=20)
+                             budget_cpu_min=20, order=None)
     assert [s.capability for s in res.steps] == ["read_paper", "write_code"]
     assert len(res.dropped) == 1 and "teleport" in res.dropped[0]
 
@@ -114,7 +126,7 @@ def test_plan_check_drops_unknown_capabilities_with_a_reason():
 def test_plan_check_defaults_run_scale_to_smoke_and_clips_budget_to_the_project_cap():
     res = planner.check_plan({"reason": "r", "steps": [step("run", budget_cpu_s=99_999),
                                                        step("run", scale="full", cmd="python train.py")]},
-                             budget_cpu_min=20)
+                             budget_cpu_min=20, order=None)
     a, b = res.steps
     assert a.scale == "smoke" and a.budget_cpu_s == 20 * 60
     assert b.scale == "full" and b.cmd == "python train.py"
@@ -123,11 +135,11 @@ def test_plan_check_defaults_run_scale_to_smoke_and_clips_budget_to_the_project_
 
 def test_plan_check_rejects_an_empty_plan():
     with pytest.raises(planner.PlanError):
-        planner.check_plan({"reason": "r", "steps": [step("teleport")]}, budget_cpu_min=20)
+        planner.check_plan({"reason": "r", "steps": [step("teleport")]}, budget_cpu_min=20, order=None)
 
 
 def test_plan_check_caps_the_number_of_steps():
-    res = planner.check_plan({"reason": "r", "steps": [step("read_paper")] * 40}, budget_cpu_min=20)
+    res = planner.check_plan({"reason": "r", "steps": [step("read_paper")] * 40}, budget_cpu_min=20, order=None)
     assert len(res.steps) == planner.MAX_STEPS and res.notes
 
 

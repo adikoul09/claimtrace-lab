@@ -1,11 +1,13 @@
-"""Routing (SPEC §3.4, §8): which executor caps a task needs, which executors are alive, which running tasks are stale.
+"""Routing (SPEC §3.4, §8; docs/CONTRACTS.md §1): which executor caps a task needs, which executors are alive, which
+running tasks are stale.
 
 Every task gets non-empty required_caps: claim_task() hands a task to any worker whose caps contain them, so empty
 caps would let any worker take anything.
-  parse          LLM-only work on text (paper, design, analysis, report)
-  train          work that writes or uses the run folder: code, environment, debug, runs (kept on the same machines)
-  smoke / heavy  smoke runs / full-budget runs (only laptop-a has heavy)
+  agent          every agent step (the worker runs the agent runtime)
+  smoke / train  smoke runs / full-budget runs
   controller     the controller's own `plan` tasks; no worker has this cap
+  host:<name>    every worker advertises its own; once a project's first run is claimed, its later tasks carry the
+                 claiming executor's host cap, so the run folder, venv and data stay on one machine
 """
 from __future__ import annotations
 
@@ -17,8 +19,7 @@ from lab.schemas import CAPABILITIES
 
 CONTROLLER_NAME = "controller"
 CONTROLLER_CAP = "controller"
-
-RUNDIR_CAPABILITIES = ("write_code", "setup_env", "debug")
+AGENT_CAP = "agent"
 
 
 def required_caps(capability: str, scale: Optional[str] = None) -> list[str]:
@@ -27,10 +28,20 @@ def required_caps(capability: str, scale: Optional[str] = None) -> list[str]:
     if capability not in CAPABILITIES:
         raise ValueError(f"unknown capability {capability!r}")
     if capability == "run":
-        return ["train", "heavy"] if scale == "full" else ["smoke", "train"]
-    if capability in RUNDIR_CAPABILITIES:
-        return ["train"]
-    return ["parse"]
+        return ["train"] if scale == "full" else ["smoke"]
+    return [AGENT_CAP]
+
+
+def host_pin(project_tasks: list[dict]) -> Optional[str]:
+    """host:<executor> of the project's first claimed run task, or None before any run was claimed."""
+    runs = [t for t in project_tasks if t.get("capability") == "run" and t.get("executor") and t.get("started_at")]
+    if not runs:
+        return None
+    return "host:" + min(runs, key=lambda t: t["started_at"])["executor"]
+
+
+def with_pin(caps: list[str], pin: Optional[str]) -> list[str]:
+    return caps + [pin] if pin and pin not in caps else list(caps)
 
 
 def parse_ts(s: Optional[str]) -> Optional[datetime]:
