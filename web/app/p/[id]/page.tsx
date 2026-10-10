@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ExperimentsView } from "@/components/exp/experiments-view";
+import { InboxBadge, InboxPanel } from "@/components/inbox/inbox-panel";
 import { EventStream } from "@/components/live/event-stream";
 import { NotesView } from "@/components/report/notes-view";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "@/components/report/precomputed";
@@ -9,8 +10,17 @@ import { TeamView } from "@/components/team/team-view";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 
-const TABS = ["team", "live", "experiments", "report", "notes"] as const;
+// Report first: it opens on the answer (claim verdicts and why), the rest is detail.
+const TABS = ["report", "experiments", "team", "inbox", "live", "notes"] as const;
 type Tab = (typeof TABS)[number];
+const LABEL: Record<Tab, string> = {
+  report: "Report",
+  experiments: "Experiments",
+  team: "Team",
+  inbox: "Inbox",
+  live: "Live",
+  notes: "Notes",
+};
 
 export default function ProjectPage({ params, searchParams }: PageProps<"/p/[id]">) {
   return (
@@ -23,7 +33,7 @@ export default function ProjectPage({ params, searchParams }: PageProps<"/p/[id]
 async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
   const { id } = await params;
   const { tab: rawTab } = await searchParams;
-  const tab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : "live";
+  const tab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : "report";
 
   const { data: project } = await supabase()
     .from("projects")
@@ -53,20 +63,23 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
               <Link
                 href={`/p/${id}?tab=${t}`}
                 aria-current={t === tab ? "page" : undefined}
-                className={`block px-3 py-2 capitalize ${
+                className={`block whitespace-nowrap px-3 py-2 ${
                   t === tab
                     ? "border-b-2 border-current font-semibold"
                     : "text-neutral-500 hover:text-current"
                 }`}
               >
-                {t}
+                {LABEL[t]}
+                {t === "inbox" && <InboxBadge projectId={id} />}
               </Link>
             </li>
           ))}
         </ul>
       </nav>
 
-      {tab === "live" ? (
+      {tab === "inbox" ? (
+        <InboxPanel projectId={id} />
+      ) : tab === "live" ? (
         <EventStream projectId={id} />
       ) : tab === "team" ? (
         <TeamView />

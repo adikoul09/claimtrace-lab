@@ -55,6 +55,8 @@ export type VerdictCard = {
   label: string; // as written, e.g. "Partially reproduced (1 seed)"
   why: string | null;
   ours: number | null;
+  paper: number | null;
+  unit: string | null;
   delta: number | null;
   log_line: number | null;
   metric_name: string | null;
@@ -72,7 +74,10 @@ export type RelativeVerdict = {
   verdict: string;
   label: string;
   seedNote: string | null;
+  sizeNote: string | null;
 };
+/** "a better than b" in the paper, and whether our numbers keep that order (the Analyst's relations). */
+export type Relation = { a: string; b: string; holds: boolean };
 export type Explanation = { text: string | null; accepted: boolean; problems: string[] };
 export type DiffLabel = "scale" | "omission" | "difference" | "same";
 export type SettingsDiffRow = {
@@ -85,6 +90,8 @@ export type SettingsDiffRow = {
   page: number | null;
   config_key: string | null;
   reason: string | null;
+  /** The model the paper's value is for ("teacher"), null when it applies to all. */
+  applies_to: string | null;
 };
 export type Grade = {
   cards: Map<string, VerdictCard>;
@@ -94,6 +101,7 @@ export type Grade = {
   seeds: number | null;
   rules: string | null;
   settingsDiff: SettingsDiffRow[];
+  relations: Relation[];
 };
 
 const norm = (v: string) => v.trim().toLowerCase().replace(/[\s-]+/g, "_");
@@ -120,6 +128,8 @@ function card(id: unknown, v: unknown): VerdictCard | null {
     label,
     why,
     ours: num(c.ours),
+    paper: num(c.paper),
+    unit: typeof c.unit === "string" ? c.unit : null,
     delta: num(c.delta),
     log_line: num(c.log_line),
     metric_name: typeof c.metric_name === "string" ? c.metric_name : null,
@@ -150,7 +160,9 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
   return json.filter(isObj).flatMap((r) => {
     if (typeof r.key !== "string") return [];
     const raw = str(r.label);
-    const text = (x: unknown) => (x === null || x === undefined ? null : String(x));
+    const text = (x: unknown) =>
+      x === null || x === undefined ? null : typeof x === "object" ? JSON.stringify(x) : String(x);
+    const scope = str(r.applies_to);
     return [
       {
         key: r.key,
@@ -160,8 +172,10 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
         rawLabel: raw,
         quote: typeof r.quote === "string" ? r.quote : null,
         page: num(r.page),
-        config_key: typeof r.config_key === "string" ? r.config_key : null,
-        reason: typeof r.reason === "string" ? r.reason : null,
+        // CONTRACTS §5b (lab/agents/why.py) names them our_key and why; the earlier proposal config_key and reason.
+        config_key: typeof r.our_key === "string" ? r.our_key : typeof r.config_key === "string" ? r.config_key : null,
+        reason: typeof r.why === "string" ? r.why : typeof r.reason === "string" ? r.reason : null,
+        applies_to: scope && scope.toLowerCase() !== "all" ? scope : null,
       },
     ];
   });
@@ -179,6 +193,7 @@ export function readVerdicts(json: unknown): Grade {
     seeds: null,
     rules: null,
     settingsDiff: [],
+    relations: [],
   };
   const addAll = (list: unknown[]) => {
     for (const v of list) if (isObj(v)) {
@@ -195,6 +210,7 @@ export function readVerdicts(json: unknown): Grade {
           verdict: c.verdict,
           label: c.label + (c.why ? ` ${c.why}` : ""),
           seedNote: c.seedNote,
+          sizeNote: c.why,
         });
       else g.cards.set(c.claim_id, c);
     }
@@ -208,6 +224,7 @@ export function readVerdicts(json: unknown): Grade {
         ? [
             {
               seedNote: typeof r.label === "string" ? (LABEL_SEEDS.exec(r.label)?.[1] ?? null) : null,
+              sizeNote: typeof r.size_note === "string" ? r.size_note : null,
               claim: str(r.claim),
               method: str(r.method),
               baseline: str(r.baseline),
@@ -230,6 +247,11 @@ export function readVerdicts(json: unknown): Grade {
     }
     g.rules = typeof json.rules === "string" ? json.rules : null;
     g.settingsDiff = settingsDiff(json.settings_diff);
+    g.relations = (Array.isArray(json.relations) ? json.relations : []).filter(isObj).flatMap((r) =>
+      typeof r.a === "string" && typeof r.b === "string" && typeof r.holds === "boolean"
+        ? [{ a: r.a, b: r.b, holds: r.holds }]
+        : [],
+    );
   } else if (isObj(json)) {
     for (const [id, v] of Object.entries(json)) {
       const c = card(id, v);
@@ -281,11 +303,13 @@ export type ReportRow = {
   ours: Point[];
   delta: number | null;
   verdict: VerdictCard | null;
+  /** One plain sentence on why a claim is only partially or not reproduced (claimWhy), else null. */
+  explain: string | null;
 };
 export type GradedExp = {
   experimentId: string;
   experimentLabel: string;
-  relative: (RelativeVerdict & { lines: { exp: string; line: number }[] })[];
+  relative: (RelativeVerdict & { lines: { exp: string; line: number }[]; explain: string | null })[];
   explanation: Explanation | null;
   marginNote: string | null;
   seeds: number | null;
@@ -327,7 +351,8 @@ export type ReportData = {
   rows: ReportRow[];
   untested: Claim[];
   graded: GradedExp[];
-  settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[] } | null;
+  /** configLogLine: the run's printed CONFIG line, where our values come from (config.why only). */
+  settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[]; configLogLine: number | null } | null;
   branches: BranchEffect[];
   memory: { current: RunStats; previous: RunStats | null } | null;
 };
@@ -433,6 +458,7 @@ export function buildReport(input: ReportInput): ReportData {
         ours,
         delta: v?.delta ?? null,
         verdict: v,
+        explain: v ? claimWhy({ ...v, margin: v.margin ?? e.margin }, claim, g, (id) => shortName(byId.get(id), id)) : null,
       });
     }
     const latest = (input.graded ?? [])
@@ -445,6 +471,7 @@ export function buildReport(input: ReportInput): ReportData {
         experimentLabel: e.label,
         relative: g.relative.map((r) => ({
           ...r,
+          explain: relativeWhy(r),
           lines: [r.method, r.baseline].flatMap((c) => (lineOf.has(c) ? [{ exp: e.id, line: lineOf.get(c)! }] : [])),
         })),
         explanation: g.explanation,
@@ -453,7 +480,13 @@ export function buildReport(input: ReportInput): ReportData {
         rules: g.rules,
       });
     }
-    if (g.settingsDiff.length) settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff };
+    // CONTRACTS §5b: experiments.config.why.settings_diff; the older verdicts.settings_diff only when that is empty.
+    const why = isObj(e.config) && isObj(e.config.why) ? e.config.why : null;
+    const whyRows = settingsDiff(why?.settings_diff);
+    if (whyRows.length)
+      settings = { experimentId: e.id, experimentLabel: e.label, rows: whyRows, configLogLine: num(why?.config_log_line) };
+    else if (g.settingsDiff.length)
+      settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff, configLogLine: null };
   }
 
   // Authenticity: each claim's verdict from the latest reproduction experiment that graded it. What-if branches
@@ -508,6 +541,47 @@ export function buildReport(input: ReportInput): ReportData {
         }
       : null,
   };
+}
+
+// ---- why a claim is not fully reproduced (plain sentences, numbers only from the verdict) ---------------------------
+
+const WHY_VERDICTS = new Set(["partially_reproduced", "not_reproduced"]);
+/** "Distilled small net (800 units/layer)" → "Distilled small net". */
+const shortName = (c: Claim | undefined, id: string) => c?.model.replace(/\s*\([^)]*\)/g, "").trim() || id;
+const order = (a: number, b: number) => (a < b ? "<" : a > b ? ">" : "=");
+const seedTail = (note: string | null) => (note ? ` ${note}.` : "");
+
+/** "Partially reproduced: ours 96 vs paper 74 (gap 22, over the margin of 10 errors), but the paper's direction holds
+ *  (Distilled small net 96 < Small net 143). 1 seed." Every number is one the verdict stores (ours, paper, |delta|,
+ *  margin (the item's, else the experiment's), the other claims' ours); code only compares them. Parts the verdict does not carry are left out. */
+export function claimWhy(v: VerdictCard, claim: Claim, g: Grade, name: (id: string) => string): string | null {
+  if (!WHY_VERDICTS.has(v.verdict) || v.ours === null) return null;
+  const unit = v.unit ?? claim.unit;
+  let s = `${verdictLabel(v.verdict).label}: ours ${v.ours} vs paper ${v.paper ?? claim.value}`;
+  if (v.delta !== null) {
+    const gap = Math.abs(v.delta);
+    s +=
+      v.margin === null
+        ? ` (gap ${gap})`
+        : ` (gap ${gap}, ${gap > v.margin ? "over" : "within"} the margin of ${v.margin}${unit ? ` ${unit}` : ""})`;
+  }
+  const ours = (id: string) => (id === v.claim_id ? v.ours : (g.cards.get(id)?.ours ?? null));
+  const mine = g.relations.filter((r) => (r.a === v.claim_id || r.b === v.claim_id) && ours(r.a) !== null && ours(r.b) !== null);
+  const text = (r: Relation) => `${name(r.a)} ${ours(r.a)} ${order(ours(r.a)!, ours(r.b)!)} ${name(r.b)} ${ours(r.b)}`;
+  const broken = mine.filter((r) => !r.holds);
+  const held = mine.filter((r) => r.holds);
+  // Lead with the orders where this claim is the better one (method over baseline), else any that involve it.
+  const lead = held.some((r) => r.a === v.claim_id) ? held.filter((r) => r.a === v.claim_id) : held;
+  if (broken.length) s += `, and the paper's direction does not hold (${broken.map(text).join("; ")})`;
+  else if (lead.length) s += `, but the paper's direction holds (${lead.map(text).join("; ")})`;
+  return `${s}.${seedTail(v.seedNote)}`;
+}
+
+/** "Partially reproduced: our gap 47 vs the paper's 72 (gap smaller than reported). 1 seed." */
+export function relativeWhy(r: RelativeVerdict): string | null {
+  if (!WHY_VERDICTS.has(r.verdict) || r.ours_gap === null || r.paper_gap === null) return null;
+  const size = r.sizeNote ? ` (${r.sizeNote})` : "";
+  return `${verdictLabel(r.verdict).label}: our gap ${r.ours_gap} vs the paper's ${r.paper_gap}${size}.${seedTail(r.seedNote)}`;
 }
 
 const HEADLINE = ["reproduced", "partially_reproduced", "not_reproduced"];
