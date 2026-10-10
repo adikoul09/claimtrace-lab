@@ -25,7 +25,7 @@ export function buildTree<T extends ExpRow>(rows: T[]): TreeNode<T>[] {
   return roots;
 }
 
-type MetricRow = { id: string; name: string; step: number; value: number; log_line: number };
+type MetricRow = { id: string; name: string; step: number; value: number | null; log_line: number };
 /** value is null when the run logged a non-finite number (NaN, inf); text keeps what was stored. */
 export type Point = { step: number; value: number | null; text: string; log_line: number };
 export type Series = { name: string; points: Point[] };
@@ -36,7 +36,9 @@ export function groupMetrics(rows: MetricRow[]): { curves: Series[]; scalars: Se
   const byName = new Map<string, Point[]>();
   for (const r of rows) {
     const v = typeof r.value === "number" && Number.isFinite(r.value) ? r.value : null;
-    const p = { step: r.step, value: v, text: String(r.value), log_line: r.log_line };
+    // NaN or inf in the log is stored as NULL (CONTRACTS.md §5, migration 003).
+    const text = r.value === null || r.value === undefined ? "non-finite" : String(r.value);
+    const p = { step: r.step, value: v, text, log_line: r.log_line };
     byName.set(r.name, [...(byName.get(r.name) ?? []), p]);
   }
   const series = [...byName].map(([name, points]) => ({
@@ -88,4 +90,27 @@ export function formatDuration(s: number): string {
   if (s < 60) return `${Math.round(s * 10) / 10} s`;
   if (s < 3600) return `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
   return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min`;
+}
+
+/** The experiment to open first: a running one, else the newest with metrics, else the newest. */
+export function pickDefault<T extends { id: string; status: string; created_at: string }>(
+  rows: T[],
+  metricCount: (id: string) => number,
+): T | undefined {
+  const newest = [...rows].sort((a, b) => ms(b.created_at) - ms(a.created_at));
+  return (
+    newest.find((e) => e.status === "running") ?? newest.find((e) => metricCount(e.id) > 0) ?? newest[0]
+  );
+}
+
+/** Run fn up to `tries` times, waiting delayMs × attempt between tries; rethrows the last error. */
+export async function retry<T>(fn: () => Promise<T>, tries = 3, delayMs = 1000): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (attempt >= tries) throw e;
+      await new Promise((r) => setTimeout(r, delayMs * attempt));
+    }
+  }
 }
