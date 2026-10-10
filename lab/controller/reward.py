@@ -55,6 +55,12 @@ def outcome_of(task: dict) -> tuple[float, str]:
     return 1.0, "finished"
 
 
+def no_answer(task: dict) -> bool:
+    """The agent produced no answer (agent_status 'failed': a code error, a missing input or an LLM error such as the
+    output cap). Such a task is neither scored nor refined: there is nothing of the agent's to judge."""
+    return task.get("capability") != "run" and (task.get("output") or {}).get("agent_status") == "failed"
+
+
 def charged_agent(task: dict, by_id: dict[str, dict]) -> tuple[Optional[str], Optional[str]]:
     """(agent_id the reward row belongs to, why it is not the task's own agent or None). by_id: upstream tasks."""
     out = task.get("output") or {}

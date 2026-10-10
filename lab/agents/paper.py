@@ -239,6 +239,7 @@ def compare_with_reference(claims: list[dict], reference: dict, suffix: str = "_
 # ---- relevant sections (paper text per request stays under 40 KB; never the whole PDF text) -----------------------
 
 MAX_REQUEST_BYTES = 40_000
+READER_MAX_OUTPUT = 4_000  # the gateway's maximum output (reasoning included); claims and settings each get a call
 SECTION_BUDGET = 20_000  # bytes of paper text per request (measured: keeps all of 1503.02531 section 3)
 CHUNK_BYTES = 3_000
 NAMED_HEADINGS = ("abstract", "introduction", "references", "bibliography", "acknowledgments", "acknowledgements",
@@ -350,23 +351,52 @@ def check_request_size(prompt: str, system: str = "") -> None:
 
 # ---- the Reader ---------------------------------------------------------------------------------------------------
 
+READER_SYSTEM = ("You are the Reader. You extract claims and settings from the paper text in the message, in one "
+                 "structured answer. You have no tools: do not try to read, write or save files; everything you need "
+                 "is in the message. Answer with exactly the JSON object the schema asks for and nothing else: no "
+                 "extra keys, no prose.")
+COMPACT_SETTINGS = ("\n\nThis call: return only the settings, compactly: each value in a few words and each quote the "
+                    "shortest verbatim span that states it. The claims were extracted in a separate call.")
+
+
+def reader_system(agent: dict) -> str:
+    """The code's Reader instruction first; the agent's own role prompt (refined by the controller) only as additional
+    guidance after it, so the schema and the no-tools rule win."""
+    role = (agent.get("role_prompt") or "").strip()
+    return READER_SYSTEM + (f"\n\nAdditional guidance from the agent's role (the rules above win):\n{role}" if role
+                            else "")
+
+
 def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "", task_id=None,
             model: str = "smart") -> dict:
-    """The model sees only the selected sections; quotes are checked against every page of the full text."""
+    """The model sees only the selected sections; quotes are checked against every page of the full text.
+    One call for the claims; when its answer already carries the settings they are used, else one compact settings
+    call (both parts in one requested answer overran the gateway's 4000-token output cap)."""
     from lab.llm import Request
 
     sel, report = select_sections(text)
     prompt = PROMPT.format(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS),
                            text=sel)
-    check_request_size(prompt, agent.get("role_prompt") or "")
-    resp = llm.call(Request(agent=agent["name"], system=agent["role_prompt"], prompt=prompt, schema=EXTRACT_SCHEMA,
-                            model=model), agent_id=agent.get("id"), task_id=task_id)
+    system = reader_system(agent)
+    out, tokens, resp = {}, 0, None
+    for part in ("claims", "settings"):
+        if part == "settings" and isinstance(out.get("settings"), list):
+            break  # the claims answer already has them: no second call
+        p = prompt + ("\n\nThis call: return the claims; the settings may follow in a separate call."
+                      if part == "claims" else COMPACT_SETTINGS)
+        check_request_size(p, system)
+        schema = {"type": "object", "properties": {part: EXTRACT_SCHEMA["properties"][part]}, "required": [part]}
+        resp = llm.call(Request(agent=agent["name"], system=system, prompt=p, schema=schema,
+                                model=model, max_output=READER_MAX_OUTPUT), agent_id=agent.get("id"), task_id=task_id)
+        got = resp.output if isinstance(resp.output, dict) else {}
+        out[part] = got.get(part) or []
+        if part == "claims" and isinstance(got.get("settings"), list):
+            out["settings"] = got["settings"]
+        tokens += resp.tokens_in + resp.tokens_out
     pages = parse_pages(text)
-    out = resp.output if isinstance(resp.output, dict) else {}
-    return {"claims": check_claims(out.get("claims") or [], pages),
+    return {"claims": check_claims(out["claims"], pages),
             "settings": [check_setting(s, pages) for s in out.get("settings") or []],
-            "tokens": resp.tokens_in + resp.tokens_out, "model": resp.model, "mode": resp.mode,
-            "cache_key": resp.key, "sections": report}
+            "tokens": tokens, "model": resp.model, "mode": resp.mode, "cache_key": resp.key, "sections": report}
 
 
 # ---- intake -------------------------------------------------------------------------------------------------------
@@ -428,8 +458,11 @@ def fetch_paper(arxiv_id: str, workdir: Path, *, db, project_id) -> dict:
 
 
 def read_paper(project_id: str, arxiv_id: str, *, db, llm, agent: dict, workdir: Path, task_id=None,
-               reference: Optional[dict] = None, model: str = "smart") -> dict:
-    """fetch_paper, then extract, then store papers.claims and papers.settings, with an event for each step."""
+               reference: Optional[dict] = None, model: str = "smart", cap_min: float = 20) -> dict:
+    """fetch_paper, then extract, then tag each claim runnable or not (lab/agents/triage.py), then store
+    papers.claims and papers.settings, with an event for each step."""
+    from lab.agents.triage import extract_facts, summary, triage
+
     info = fetch_paper(arxiv_id, workdir, db=db, project_id=project_id)
     text = (Path(workdir) / "paper.txt").read_text(encoding="utf-8")
     try:
@@ -440,6 +473,19 @@ def read_paper(project_id: str, arxiv_id: str, *, db, llm, agent: dict, workdir:
              project_id=project_id, agent_id=agent.get("id"), task_id=task_id)
         raise
     claims, settings = res["claims"], res["settings"]
+    try:  # facts only (a small call); a failure leaves every claim "unverified", never fails the Reader
+        facts, facts_tokens, facts_error = *extract_facts(text, claims, llm=llm, agent=agent, title=info["title"] or "",
+                                                          arxiv_id=arxiv_id, task_id=task_id, model=model), None
+    except Exception as e:
+        facts, facts_tokens, facts_error = [], 0, f"{type(e).__name__}: {e}"[:300]
+    claims = triage(claims, facts, cap_min)
+    res = {**res, "claims": claims, "tokens": res["tokens"] + facts_tokens}
+    emit(db, "claims_triaged", f"claims triaged: {summary(claims)}",
+         "code rules on the facts the Reader extracted (no public data, dataset too big, compute over budget, needs "
+         f"GPU; cap {cap_min:g} CPU-min)" + (f"; the facts call failed: {facts_error}" if facts_error else ""),
+         project_id=project_id, agent_id=agent.get("id"), task_id=task_id,
+         data={"claims": [{"claim_id": c["id"], **{k: c["runnable"][k] for k in ("status", "reason")}}
+                          for c in claims], "facts_tokens": facts_tokens})
     db.table("papers").update({"claims": claims, "settings": settings}).eq("project_id", project_id).execute()
     n_ok = sum(c["valid"] for c in claims)
     stated = [s for s in settings if s["checks"].get("stated")]

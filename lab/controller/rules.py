@@ -11,3 +11,4 @@ SPAWN_ON_FAILURES = 2        # the same agent failing the same task this often s
 RETIRE_BELOW = 0.35          # rolling mean reward below this over the last MIN_SCORED tasks retires an agent (§4.2)
 MERGE_OVERLAP = 0.8          # capability overlap (shared / all tags) at which two agents merge (§4.4)
 MIN_SCORED = 3               # scored tasks an agent needs before retire or merge can apply to it
+MAX_REFINES_PER_ROLE = 3     # refines of one agent role (name without -vN) per project; then the task stays failed

@@ -153,11 +153,13 @@ def test_extract_checks_what_the_model_returns(tmp_path, monkeypatch):
               "settings": [{"key": "temperature", "applies_to": "distilled", "value": "20",
                             "quote": "at a temperature of 20", "page": 4},
                            {"key": "epochs", "applies_to": "all", "value": None, "quote": None, "page": None}]}
-    seen = {}
+    seen = []
 
     def provider(req, model):
-        seen["prompt"], seen["schema"] = req.prompt, req.schema
-        return {"output": answer, "text": json.dumps(answer), "tokens_in": 9000, "tokens_out": 800, "models": [model]}
+        part = list(req.schema["properties"])  # one part per call: claims, then settings
+        seen.append({"prompt": req.prompt, "part": part, "max_output": req.max_output})
+        out = {p: answer[p] for p in part}
+        return {"output": out, "text": json.dumps(out), "tokens_in": 9000, "tokens_out": 800, "models": [model]}
     monkeypatch.setitem(llm_mod.PROVIDERS, "fake", provider)
     db = FakeDB()
     client = LLM(mode="live", provider="fake", cache_dir=tmp_path, db=db, models={"smart": "fake-pro"})
@@ -165,8 +167,43 @@ def test_extract_checks_what_the_model_returns(tmp_path, monkeypatch):
 
     out = paper.extract(paper.render([PAGE3, PAGE4], first=3), llm=client, agent=agent)
 
-    assert "--- page 4 ---" in seen["prompt"] and seen["schema"] == paper.EXTRACT_SCHEMA
+    # Live run: one call for claims and settings ran out of the gateway's output cap (4000 tokens, reasoning
+    # included) before answering; each part now gets its own call at the cap.
+    assert [s["part"] for s in seen] == [["claims"], ["settings"]]
+    assert all(s["max_output"] == paper.READER_MAX_OUTPUT == 4000 for s in seen)
+    assert all("--- page 4 ---" in s["prompt"] for s in seen)
     assert [c["valid"] for c in out["claims"]] == [True, True]
     assert [s["valid"] for s in out["settings"]] == [True, True]
-    assert out["tokens"] == 9800
+    assert out["tokens"] == 2 * 9800
     assert db.rows["llm_calls"][0]["agent_id"] == "ag-reader"
+
+
+def test_reader_system_is_code_first_and_settings_in_the_claims_answer_skip_the_second_call(tmp_path, monkeypatch):
+    """Live run: a refined role prompt asked for file writes (no tools here) and the model answered empty; another
+    returned claims and settings together, then the settings call overran the 4000-token cap."""
+    both = {"claims": [claim(67, "This net achieved 67 test errors", whose="oracle")],
+            "settings": [{"key": "temperature", "applies_to": "distilled", "value": "20",
+                          "quote": "at a temperature of 20", "page": 4}]}
+    calls = []
+
+    def provider(req, model):
+        calls.append(req)
+        out = answers.pop(0)
+        return {"output": out, "text": json.dumps(out), "tokens_in": 100, "tokens_out": 50, "models": [model]}
+    monkeypatch.setitem(llm_mod.PROVIDERS, "fake", provider)
+    client = LLM(mode="live", provider="fake", cache_dir=tmp_path, db=FakeDB(), models={"smart": "fake-pro"})
+    agent = {"id": "ag", "name": "reader-v9", "role_prompt": "Write paper_summary.json with your findings."}
+    text = paper.render([PAGE3, PAGE4], first=3)
+
+    answers = [both]  # the claims answer already carries settings: one call only
+    out = paper.extract(text, llm=client, agent=agent)
+    assert len(calls) == 1 and [s["valid"] for s in out["settings"]] == [True]
+    system = calls[0].system
+    assert system.startswith(paper.READER_SYSTEM) and "no tools" in system
+    assert system.index("Write paper_summary.json") > system.index("Additional guidance")
+
+    calls.clear()
+    answers = [{"claims": both["claims"]}, {"settings": both["settings"]}]  # no settings: a compact second call
+    out = paper.extract(text, llm=client, agent=agent, arxiv_id="x2")
+    assert len(calls) == 2 and "compact" in calls[1].prompt and list(calls[1].schema["properties"]) == ["settings"]
+    assert out["tokens"] == 300

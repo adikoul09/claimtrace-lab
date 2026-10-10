@@ -32,6 +32,7 @@ from lab.agents.reproduce import (StepError, budget_goal, check_built, check_des
 from lab.agents.runtime import run_agent
 from lab.agents.tools import RUNS
 from lab.db import ROOT, emit
+from lab.llm import LLM
 
 PAPER_CAPS = ("read_paper", "extract_claims", "extract_settings")
 FILE_CAPS = ("write_code", "debug")  # upstream outputs that may carry files, in the order they apply
@@ -163,8 +164,8 @@ def h_paper(ctx: Ctx) -> dict:
     arxiv = ctx.project.get("arxiv_id")
     if not arxiv:
         raise StepError("the project has no arxiv_id")
-    res = read_paper(ctx.pid, arxiv, db=ctx.db, llm=ctx.llm, agent=ctx.agent, workdir=ctx.workdir,
-                     task_id=ctx.task["id"])
+    res = read_paper(ctx.pid, arxiv, db=ctx.db, llm=ctx.llm or LLM(db=ctx.db), agent=ctx.agent, workdir=ctx.workdir,
+                     task_id=ctx.task["id"], model="smart", cap_min=ctx.cap_s / 60)  # gpt-5-mini reasoned through the 4000 cap
     cv = sum(bool(c.get("valid")) for c in res.get("claims", []))
     sv = sum(bool(s.get("valid")) for s in res.get("settings", []))
     return {"outcome": "passed" if cv else "failed", "agent_status": "finished", "tokens": res.get("tokens", 0),

@@ -16,8 +16,8 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 
-from lab.controller.rules import MERGE_OVERLAP, MIN_SCORED, RETIRE_BELOW
-from lab.controller.spawn import REPAIR_POLICY
+from lab.controller.rules import MAX_REFINES_PER_ROLE, MERGE_OVERLAP, MIN_SCORED, RETIRE_BELOW
+from lab.controller.spawn import REPAIR_POLICY, role_of
 
 MAX_PROMPT_CHARS = 8000
 
@@ -129,6 +129,8 @@ def refine_triggers(agents: list[dict], tasks: list[dict], feedback: dict[str, s
         if not (a.get("budget") or {}).get("max_tokens"):
             continue  # code-only agent: no prompt to refine
         out_ = t.get("output") or {}
+        if (out_.get("agent_status") == "failed") and t.get("capability") != "run":
+            continue  # no answer: nothing of the agent's to refine (reward.no_answer)
         if out_.get("outcome") == "failed":
             kind = "failed_check"
             reason = f"task {t['id'][:8]} ({t.get('capability')}) failed its acceptance check (run by code)"
@@ -141,6 +143,20 @@ def refine_triggers(agents: list[dict], tasks: list[dict], feedback: dict[str, s
         out.append(Refine(a, t, kind, reason))
         seen.add(a["id"])
     return out
+
+
+def refine_counts(agents: list[dict], project_of: dict[str, str]) -> dict[tuple[str, str], int]:
+    """(project id, role) -> refined versions created by that project's tasks."""
+    out: dict[tuple[str, str], int] = defaultdict(int)
+    for a in agents:
+        pid = project_of.get(a.get("created_by_task") or "")
+        if a.get("origin") == "refined" and pid:
+            out[(pid, role_of(a["name"]))] += 1
+    return dict(out)
+
+
+def is_capped(project_id: str, agent_name: str, counts: dict[tuple[str, str], int]) -> bool:
+    return counts.get((project_id, role_of(agent_name)), 0) >= MAX_REFINES_PER_ROLE
 
 
 def next_name(name: str, version: int) -> str:

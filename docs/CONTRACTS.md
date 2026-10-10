@@ -185,6 +185,28 @@ Written at `compare` / `explain_diff` on a reproduction experiment:
 Feedback: `POST /api/tasks/<id>/feedback` writes an events row `{type: 'feedback', task_id, data: {value: 'up' | 'down'}}`
 on a `done` or `failed` task. The controller rescores the task's reward from the newest one.
 
+## 6b. Inbox "Send to engine" (T33)
+
+The web writes one event when a researcher sends an `email_received` event's points to the engine:
+`{type: 'engine_requested', project_id, task_id: null, data: {email_event_id}}`. The controller acts on each once:
+
+- `plan_redirect`: `data {engine_request_id, email_event_id, from, subject, points: [str], plan_task_id}`; `reason` is
+  the numbered points as sent to the planner (at most 10, each cut at 300 characters). A new `plan` task
+  (`input.redirect_note`, `input.source`) is queued and the project goes to `planning`; the plan follows, then its
+  tasks, as for any plan.
+- or `engine_request_refused`: `data {engine_request_id, email_event_id}`, `reason` = why (email not found, another
+  project's email, no points).
+
+## 6c. Lesson events (MEM-1, for the Lessons panel)
+
+- `lesson_applied`: `data {lesson_id, kind, tags (the matched tags), where ("planner" | "<capability> task"), rank
+  (1 = most relevant), overlap (number of matched tags), times_applied (after this use), paper}`.
+- `lesson_skipped` (at plan time only): `data {lesson_id, reason, detail, kind, tags, where, paper}` with `reason` one
+  of `no_evidence` · `other_paper` (a `setting_mattered` lesson from another paper, unless tagged `generic`, which
+  marks a check that holds for any training paper: Round 0 F2, F3, F4, F6, F8) · `duplicate` (same kind and tag
+  set as a lesson used more often) · `over_limit` (more than 5 matched).
+- `paper` is the lesson's arXiv id, `round0:matchdg` for the imported Round 0 lessons, or null.
+
 ## 7. Statuses
 
 - `tasks.status`: `queued` → `running` → `done` / `failed`; `awaiting_approval` → `queued` / `rejected`.

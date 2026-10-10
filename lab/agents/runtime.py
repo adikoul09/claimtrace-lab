@@ -29,6 +29,7 @@ PROCESS_TOOLS = ("run", "make_env")
 OBS_IN_PROMPT = 2_000  # earlier observations are cut to this in the prompt; the latest is shown in full
 OBS_TIGHT = 300  # ...and to this when the prompt would pass MAX_PROMPT_BYTES
 MAX_PROMPT_BYTES = 36_000  # with the system prompt, every request stays under 40 KB
+AGENT_MAX_OUTPUT = 4_000  # the gateway's output cap incl. reasoning; at the default the model ran out before answering
 
 
 @dataclass
@@ -128,7 +129,7 @@ def run_agent(agent: dict, goal: str, workdir: Path, *, db=None, llm: LLM | None
 
         try:
             resp = llm.call(Request(agent=name, system=system, prompt=step_prompt(goal, transcript), schema=schema,
-                                    model=model), agent_id=agent_id, task_id=task_id)
+                                    model=model, max_output=AGENT_MAX_OUTPUT), agent_id=agent_id, task_id=task_id)
         except Exception as e:
             return result("failed", None, f"LLM call failed: {type(e).__name__}: {e}"[:500], "agent_failed",
                           f"{name} failed")
@@ -138,7 +139,10 @@ def run_agent(agent: dict, goal: str, workdir: Path, *, db=None, llm: LLM | None
         action, args, why = act.get("action"), act.get("args") or {}, act.get("reason") or ""
 
         if action == "finish":
-            return result("finished", act.get("answer") or "", why or "the agent returned its answer",
+            answer = act.get("answer")
+            if answer is not None and not isinstance(answer, str):  # a JSON object instead of text: keep it as JSON
+                answer = json.dumps(answer, ensure_ascii=False)
+            return result("finished", answer or "", why or "the agent returned its answer",
                           "agent_finished", f"{name} finished in {steps} steps")
 
         t0 = time.monotonic()

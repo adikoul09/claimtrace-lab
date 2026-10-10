@@ -9,6 +9,7 @@
               approval-gated extend run and final compare are created in order (SPEC §7.4, CONTRACTS.md §5b)
   learn       after a failure-then-recovery or a finished project, the Reporter proposes lessons (SPEC §6)
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
+  engine      an engine_requested event (inbox "Send to engine") queues a new plan with the reviewer's points (T33)
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
   decisions   an awaiting task with a decision moves on (docs/CONTRACTS.md §6), in case the web did not move it
   advance     for each running project, the next ready step becomes a task: agent assigned, required_caps set;
@@ -23,9 +24,10 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, lifecycle, memory, planner, progress, reward, routing, spawn, whatif, wiring
+from lab.controller import (assign, inbox, lifecycle, memory, planner, progress, reward, routing, spawn, whatif,
+                            wiring)
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
-from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
+from lab.controller.rules import MAX_REFINES_PER_ROLE, ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
 from lab.schemas import PlanStep
 
@@ -75,7 +77,8 @@ class Controller:
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
         for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
-                     self.apply_decisions, self.intake, self.plan_queued, self.advance, self.prepare_whatifs,
+                     self.apply_decisions, self.intake, self.engine_requests, self.plan_queued, self.advance,
+                     self.prepare_whatifs,
                      self.advance_whatifs, self.learn):
             try:
                 step(now)
@@ -143,6 +146,9 @@ class Controller:
                                           .in_("task_id", ids).execute().data)
         todo = [t for t in tasks if t["id"] not in existing
                 or existing[t["id"]]["feedback"] != reward.feedback_value(feedback.get(t["id"]))]
+        for t in [t for t in todo if reward.no_answer(t)]:
+            self._not_scored(t)
+        todo = [t for t in todo if not reward.no_answer(t)]
         if not todo:
             return
         tokens: dict[str, int] = defaultdict(int)
@@ -173,6 +179,19 @@ class Controller:
                  f"{s.reason}; rolling mean {mean:.2f} over its last {len(recent)} scored task(s)",
                  project_id=t.get("project_id"), agent_id=agent_id, task_id=t["id"],
                  data={**s.row, "rolling_mean": round(mean, 4), "rolling_n": len(recent)})
+
+    def _not_scored(self, t: dict) -> None:
+        """One event per task whose agent produced no answer: it is not scored and not refined."""
+        if not self.once(("not_scored", t["id"])):
+            return
+        if self.db.table("events").select("id").eq("task_id", t["id"]).eq("type", "not_scored").limit(1) \
+                .execute().data:
+            return
+        err = str((t.get("output") or {}).get("error") or "no error recorded")
+        emit(self.db, "not_scored", f"{t['capability']} task not scored or refined: the agent produced no answer",
+             f"agent_status failed ({err[:300]}); a code or LLM failure is not the agent's work, so its reward and "
+             f"role prompt stay as they are", project_id=t.get("project_id"), agent_id=t.get("agent_id"),
+             task_id=t["id"], data={"error": err[:1000]})
 
     # ---- lifecycle (SPEC §4) -----------------------------------------------------------------------------------------
     def lifecycle(self, now: datetime) -> None:
@@ -212,11 +231,42 @@ class Controller:
         agents = db.table("agents").select("*").execute().data
         already = {(a["parent_id"], a["created_by_task"]) for a in agents
                    if a.get("origin") == "refined" and a.get("parent_id") and a.get("created_by_task")}
+        counts = self._refine_counts(agents)
         for r in lifecycle.refine_triggers(agents, tasks, feedback, already):
             key = (r.agent["id"], r.task["id"])
+            pid = r.task.get("project_id")
+            if lifecycle.is_capped(pid, r.agent["name"], counts):
+                self._refine_capped(pid, r.agent, r.task, counts)
+                continue
             if time.monotonic() - self._refine_failed.get(key, -1e9) < self.SPAWN_RETRY_S:
                 continue
             self.refine(r, key)
+
+    def _agent_names(self) -> dict[str, str]:
+        return {a["id"]: a["name"] for a in self.db.table("agents").select("id,name").execute().data}
+
+    def _refine_counts(self, agents: list[dict]) -> dict:
+        refined = [a for a in agents if a.get("origin") == "refined" and a.get("created_by_task")]
+        ids = sorted({a["created_by_task"] for a in refined})
+        project_of = {t["id"]: t["project_id"] for t in self.db.table("tasks").select("id,project_id")
+                      .in_("id", ids).execute().data} if ids else {}
+        return lifecycle.refine_counts(refined, project_of)
+
+    def _refine_capped(self, pid: str, agent: dict, task: dict, counts: dict) -> None:
+        """R4: the role was refined MAX_REFINES_PER_ROLE times in this project; the task stays failed. One event per
+        project and role."""
+        role = lifecycle.role_of(agent["name"])
+        if not self.once(("refine_capped", pid, role)):
+            return
+        seen = self.db.table("events").select("id").eq("project_id", pid).eq("type", "refine_capped") \
+            .eq("data->>role", role).limit(1).execute().data
+        if seen:
+            return
+        emit(self.db, "refine_capped", f"no more refines of {role} in this project",
+             f"{role} was refined {counts.get((pid, role), 0)} times in this project (cap {MAX_REFINES_PER_ROLE}); "
+             f"task {task['id'][:8]} stays failed and no new agent is spawned in its place",
+             project_id=pid, agent_id=agent["id"], task_id=task["id"],
+             data={"role": role, "refines": counts.get((pid, role), 0), "cap": MAX_REFINES_PER_ROLE})
 
     REFINE_SCHEMA = {"type": "object", "properties": {
         "role_prompt": {"type": "string", "description": "the full new system prompt, with the lesson built in"},
@@ -348,6 +398,32 @@ class Controller:
                  f"arXiv {p.get('arxiv_id') or '?'}, budget {p.get('budget_cpu_min')} CPU-min; queued for planning",
                  project_id=p["id"])
 
+    def engine_requests(self, now: datetime) -> None:
+        """T33: each engine_requested event is acted on once: a plan_redirect event quoting the reviewer's points and a
+        queued plan task carrying them, or an engine_request_refused event with the reason."""
+        db = self.db
+        for r in self.q("events", "id,project_id,type,data,ts").eq("type", "engine_requested").order("ts") \
+                .execute().data:
+            if not self.once(("engine_request", r["id"])):
+                continue
+            done = db.table("events").select("id").in_("type", ["plan_redirect", "engine_request_refused"]) \
+                .eq("data->>engine_request_id", r["id"]).limit(1).execute().data
+            if done:
+                continue
+            eid = (r.get("data") or {}).get("email_event_id")
+            rows = db.table("events").select("id,project_id,type,data").eq("id", eid).execute().data if eid else []
+            email = rows[0] if rows else None
+            why = inbox.problem(r, email)
+            if why:
+                emit(db, "engine_request_refused", "reviewer email not sent to the engine", why,
+                     project_id=r.get("project_id"), data={"engine_request_id": r["id"], "email_event_id": eid})
+                continue
+            task, ev = inbox.plan_request(r, email)
+            row = db.table("tasks").insert(task).execute().data[0]
+            db.table("projects").update({"status": "planning"}).eq("id", r["project_id"]).execute()
+            emit(db, ev["type"], ev["message"], ev["reason"], project_id=r["project_id"], task_id=row["id"],
+                 data={**ev["data"], "plan_task_id": row["id"]})
+
     def plan_queued(self, now: datetime) -> None:
         for t in self.q("tasks", "id").eq("status", "queued").eq("capability", "plan").execute().data:
             claimed = self.db.table("tasks").update({"status": "running", "executor": CONTROLLER_NAME,
@@ -363,7 +439,7 @@ class Controller:
         paper = papers[0] if papers else None
         tags = memory.task_tags(project, "plan") + [c for slot in planner.REPRO_ORDER for c in slot
                                                     if not c.startswith("run")]
-        lessons = memory.relevant(db, tags, memory.PER_PLAN)
+        lessons, skipped_lessons = memory.choose(db, tags, project, memory.PER_PLAN)
         agents = db.table("agents").select("*").eq("status", "active").execute().data
         scores = reward.rolling_means(db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True)
                                       .limit(1000).execute().data)
@@ -371,8 +447,10 @@ class Controller:
         if not (paper and paper.get("claims")) and project.get("arxiv_id"):
             _, abstract = planner.arxiv_abstract(project["arxiv_id"])
         try:
+            note = (task.get("input") or {}).get("redirect_note")
             plan, resp = planner.make_plan(self.llm, project, paper, lessons, agents, task_id=task["id"],
-                                           abstract=abstract, scores=scores)
+                                           abstract=abstract, scores=scores,
+                                           extra=inbox.planner_extra(note) if note else "")
         except Exception as e:
             reason = f"{type(e).__name__}: {e}"[:500]
             db.table("tasks").update({"status": "failed", "output": {"error": reason},
@@ -388,7 +466,10 @@ class Controller:
             .eq("id", task["id"]).execute()
         db.table("projects").update({"status": "running"}).eq("id", pid).execute()
         memory.apply(db, lessons, tags, "planner", project_id=pid, task_id=task["id"])
+        memory.skip(db, skipped_lessons, tags, "planner", project_id=pid, task_id=task["id"])
         reason = plan.reason or "the planner gave no reason"
+        if (task.get("input") or {}).get("redirect_note"):
+            reason = "redirected by a reviewer's email; " + reason
         if plan.dropped:
             reason += f" | code dropped {len(plan.dropped)} step(s): " + "; ".join(plan.dropped)
         emit(db, "plan", f"plan: {len(steps)} steps: " + " → ".join(s["capability"] for s in steps), reason,
@@ -627,7 +708,7 @@ class Controller:
             inp.update(fields)
             inp.update({"scale": step.scale, "experiment_id": exp_row["id"], "label": step.title,
                         "timeout_s": max(step.budget_cpu_s, RUN_TIMEOUT_FLOOR_S)})
-        fails = Counter(t.get("agent_id") for t in attempts if t["status"] == "failed")
+        fails = spawn.fails_by_role(attempts, self._agent_names())
         context = f"Plan step {i + 1} of {len(steps)}: {step.title}\nInstructions: {step.instructions}"
         if attempts:
             context += "\nEarlier attempts failed: " + "; ".join(
@@ -673,11 +754,11 @@ class Controller:
                          acceptance="the failing command gets past the error, and the change is labelled REPAIR(env) "
                                     "or REPAIR(code)",
                          requires_approval=False,
-                         fails=Counter(d.get("agent_id") for d in mine if d["status"] == "failed"),
+                         fails=spawn.fails_by_role(mine, self._agent_names()),
                          trigger_task=failed, context=context, label=f"debug step {i + 1}: {sig}")
 
     def create_task(self, project: dict, capability: str, inp: dict, now: datetime, *, parent_task_id: str,
-                    caps: list[str], acceptance: str, requires_approval: bool, fails: Counter, trigger_task: dict,
+                    caps: list[str], acceptance: str, requires_approval: bool, fails: dict, trigger_task: dict,
                     context: str, label: str, preferred: Optional[str] = None,
                     existing: Optional[dict] = None) -> Optional[dict]:
         """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task, or, with
@@ -690,6 +771,11 @@ class Controller:
         rewards = db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True).limit(1000).execute().data
         pick = assign.pick_agent(agents, capability, reward.rolling_means(rewards), preferred=preferred)
         trig = spawn.trigger(pick, capability, fails)
+        if trig and trig.kind == "repeated_failure" and lifecycle.is_capped(
+                pid, pick.agent["name"], self._refine_counts(db.table("agents").select("*").execute().data)):
+            trig = None  # R4: a capped role is not replaced by a spawned agent either
+            pick = assign.Pick(pick.agent, pick.score, pick.reason + "; its role reached the refine cap in this "
+                                                                    "project, so no new agent is spawned")
         if trig:
             agent = self.spawn_agent(project, capability, trig, context, trigger_task, agents)
             if agent is None:
@@ -700,7 +786,7 @@ class Controller:
         lessons, tags = [], []
         if capability != "run":  # a run has no prompt: nothing could apply a lesson there
             tags = memory.task_tags(project, capability, inp.get("error_signature"))
-            lessons = memory.relevant(db, tags, memory.PER_TASK)
+            lessons = memory.relevant(db, tags, memory.PER_TASK, project)
             if lessons:
                 inp["goal"] = inp["goal"] + "\n\n" + memory.lessons_block(lessons)
                 inp["lessons"] = [l["id"] for l in lessons]
@@ -741,8 +827,11 @@ class Controller:
         try:
             draft, resp = spawn.draft_spec(self.llm, capability, trig, context, agents, cap_s,
                                            task_id=trigger_task["id"])
-            taken = {a["name"] for a in db.table("agents").select("name").execute().data}
-            row, notes = spawn.check_spec(draft, capability, cap_s, taken)
+            everyone = db.table("agents").select("name,capabilities,budget").execute().data
+            taken = {a["name"] for a in everyone}
+            floor = max([(a.get("budget") or {}).get("max_tokens") or 0 for a in everyone
+                         if capability in (a.get("capabilities") or [])] or [spawn.MIN_TOKENS])
+            row, notes = spawn.check_spec(draft, capability, cap_s, taken, floor_tokens=floor)
         except Exception as e:
             self._spawn_failed[key] = time.monotonic()
             emit(db, "spawn_failed", f"could not spawn an agent for {capability}",
