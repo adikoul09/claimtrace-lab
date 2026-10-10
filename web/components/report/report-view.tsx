@@ -11,6 +11,7 @@ import { loadReport, type ReportBundle } from "./load";
 import { authenticitySummary, DIFF_TEXT, memoryRows, TEXT } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
+  splitClaimRows,
   verdictLabel,
   type Authenticity,
   type BranchEffect,
@@ -151,7 +152,7 @@ export function ReportView({ projectId }: { projectId: string }) {
         ) : data.rows.length === 0 ? (
           <Muted>{TEXT.noRows}</Muted>
         ) : (
-          <ClaimsTable rows={data.rows} />
+          <ClaimRows rows={data.rows} />
         )}
         <Comparisons graded={data.graded} />
       </div>
@@ -217,6 +218,27 @@ const VerdictCell = ({ r }: { r: ReportRow }) =>
   ) : (
     <span className="text-xs text-neutral-500">{TEXT.notGraded}</span>
   );
+
+/** Graded and measured rows first; rows of runs that are only planned wait in a closed section below them. */
+function ClaimRows({ rows }: { rows: ReportRow[] }) {
+  const { shown, planned } = splitClaimRows(rows);
+  return (
+    <>
+      {shown.length ? <ClaimsTable rows={shown} /> : <Muted>{TEXT.noneGraded}</Muted>}
+      {planned.length > 0 && (
+        <details className="rounded-lg border border-neutral-200 dark:border-neutral-800">
+          <summary className="flex min-h-11 cursor-pointer items-center px-3 py-2 text-sm font-semibold">
+            {TEXT.planned} ({planned.length})
+          </summary>
+          <div className="border-t border-neutral-200 p-3 dark:border-neutral-800">
+            <p className="text-xs text-neutral-500">{TEXT.plannedIntro}</p>
+            <ClaimsTable rows={planned} />
+          </div>
+        </details>
+      )}
+    </>
+  );
+}
 
 /** Phones get one card per claim; wider screens get the table. Same data and links in both. */
 function ClaimsTable({ rows }: { rows: ReportRow[] }) {

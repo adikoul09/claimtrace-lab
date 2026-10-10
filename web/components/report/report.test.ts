@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildReport, diffText, latestNotes, parseClaims, readVerdicts, runStats, verdictLabel, type ExpRow } from "./report.ts";
+import { buildReport, diffText, latestNotes, parseClaims, readVerdicts, runStats, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
 import { reportMarkdown, TEXT } from "./markdown.ts";
 
 const claim = (id: string, value: unknown, extra: Record<string, unknown> = {}) => ({
@@ -509,4 +509,22 @@ test("parseClaims reads ANY-1's runnable tag (papers.claims[i].runnable) and lea
     null,
     null,
   ]);
+});
+
+test("splitClaimRows keeps graded and measured rows, and moves rows with no verdict and no value to planned", () => {
+  const d = buildReport({
+    claims: parseClaims(V2_CLAIMS),
+    experiments: [
+      exp("v2", { verdicts: V2, created_at: "2026-10-10T10:00:00Z" }),
+      exp("plan", { config: { claim_map: { teacher: "c7", hard: "c8" } }, created_at: "2026-10-11T10:00:00Z" }),
+      exp("ran", { config: { claim_map: { distilled: "c9" } }, created_at: "2026-10-11T11:00:00Z" }),
+    ],
+    metrics: [metric("ran", "final_distilled", 95, 40)],
+  });
+  const { shown, planned } = splitClaimRows(d.rows);
+  assert.deepEqual(shown.map((r) => `${r.experimentId}:${r.claim.id}`), ["v2:c7", "v2:c8", "v2:c9", "ran:c9"]);
+  assert.deepEqual(planned.map((r) => `${r.experimentId}:${r.claim.id}`), ["plan:c7", "plan:c8"]);
+  const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, d, "http://x");
+  assert.match(md, /### Planned, not run yet \(2\)/);
+  assert.ok(md.indexOf("ran:c9") === -1 && md.indexOf("[95](http://x/logs/ran#L40)") < md.indexOf("### Planned, not run yet"));
 });

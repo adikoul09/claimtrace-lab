@@ -611,6 +611,12 @@ function authenticity(
   return { rows, total: graded.length, claims: graded.length - comparisons, comparisons, sources: [...sources.values()] };
 }
 
+/** Claims vs ours: rows to show, and rows of runs that are only planned (no verdict and no logged value yet). */
+export function splitClaimRows(rows: ReportRow[]): { shown: ReportRow[]; planned: ReportRow[] } {
+  const planned = (r: ReportRow) => !r.verdict && r.ours.length === 0;
+  return { shown: rows.filter((r) => !planned(r)), planned: rows.filter(planned) };
+}
+
 /** The Reporter's latest notes: the newest done write_notes task's output.markdown (CONTRACTS.md §4). */
 export function latestNotes(
   tasks: { id: string; capability: string; status: string; finished_at: string | null; output: unknown }[],
