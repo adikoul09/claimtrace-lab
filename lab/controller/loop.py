@@ -4,6 +4,7 @@
   caps        a queued task with empty required_caps gets them from the capability map (any worker could claim it)
   stale       a running task whose executor's heartbeat is older than STALE_HEARTBEAT_S goes back to 'queued'
   score       a finished agent task gets its rewards row (SPEC §5); a new 👍/👎 feedback event rescores it
+  lifecycle   retire, merge and refine agents by the rules in lifecycle.py (SPEC §4)
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
   decisions   an awaiting task with a decision moves on (docs/CONTRACTS.md §6), in case the web did not move it
@@ -19,7 +20,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, planner, progress, reward, routing, spawn, wiring
+from lab.controller import assign, lifecycle, planner, progress, reward, routing, spawn, wiring
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
 from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
@@ -38,6 +39,7 @@ class Controller:
         self._noted: set = set()  # (kind, key) of conditions already reported, so a waiting state is logged once
         self._spawn_failed: dict = {}  # (trigger task, capability, kind) -> time of the last failed spawn
         self._replan_failed: dict = {}  # redirected task id -> time of the last failed replan
+        self._refine_failed: dict = {}  # (agent id, task id) -> time of the last failed refinement
 
     @property
     def llm(self):
@@ -67,8 +69,8 @@ class Controller:
 
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
-        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.apply_decisions,
-                     self.intake, self.plan_queued, self.advance):
+        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
+                     self.apply_decisions, self.intake, self.plan_queued, self.advance):
             try:
                 step(now)
             except Exception as e:  # one failing step must not stop the loop
@@ -152,6 +154,115 @@ class Controller:
                  f"{s.reason}; rolling mean {mean:.2f} over its last {len(recent)} scored task(s)",
                  project_id=t.get("project_id"), agent_id=t["agent_id"], task_id=t["id"],
                  data={**s.row, "rolling_mean": round(mean, 4), "rolling_n": len(recent)})
+
+    # ---- lifecycle (SPEC §4) -----------------------------------------------------------------------------------------
+    def lifecycle(self, now: datetime) -> None:
+        db = self.db
+        rewards = db.table("rewards").select("agent_id,task_id,reward,ts").order("ts", desc=True).limit(5000) \
+            .execute().data
+        agents = db.table("agents").select("*").eq("status", "active").execute().data
+        for r in lifecycle.retire_candidates(agents, rewards):
+            moved = db.table("agents").update({"status": "retired"}).eq("id", r.agent["id"]).eq("status", "active") \
+                .execute().data
+            if moved:
+                emit(db, "agent_retired", f"retired {r.agent['name']}", r.reason, agent_id=r.agent["id"],
+                     data={"rule": "4.2", "mean": r.mean, "last": r.last})
+                self._hand_over(r.agent, None, f"{r.agent['name']} was retired")
+
+        agents = db.table("agents").select("*").eq("status", "active").execute().data
+        for m in lifecycle.merge_candidates(agents, rewards):
+            row = lifecycle.merged_version(m.winner, m.loser, m.reason)
+            new = db.table("agents").insert(row).execute().data[0]
+            db.table("agents").update({"status": "merged", "merged_into": new["id"]}).eq("id", m.loser["id"]).execute()
+            db.table("agents").update({"status": "retired"}).eq("id", m.winner["id"]).execute()
+            emit(db, "agent_merged", f"merged {m.loser['name']} into {new['name']}", m.reason, agent_id=new["id"],
+                 data={"rule": "4.4", "winner": m.winner["id"], "loser": m.loser["id"], "overlap": m.overlap,
+                       "capabilities": row["capabilities"]})
+            emit(db, "agent_retired", f"retired {m.winner['name']}", f"superseded by v{row['version']} ({new['name']})",
+                 agent_id=m.winner["id"], data={"rule": "4.4", "superseded_by": new["id"]})
+            for old in (m.winner, m.loser):
+                self._hand_over(old, new, f"{old['name']} was merged into {new['name']}")
+
+        tasks = self.q("tasks", "id,project_id,agent_id,capability,status,input,output,acceptance") \
+            .in_("status", ["done", "failed"]).not_.is_("agent_id", "null") \
+            .order("finished_at", desc=True).limit(self.SCORE_SCAN).execute().data
+        if not tasks:
+            return
+        feedback = reward.latest_feedback(db.table("events").select("task_id,data,ts").eq("type", "feedback")
+                                          .in_("task_id", [t["id"] for t in tasks]).execute().data)
+        agents = db.table("agents").select("*").execute().data
+        already = {(a["parent_id"], a["created_by_task"]) for a in agents
+                   if a.get("origin") == "refined" and a.get("parent_id") and a.get("created_by_task")}
+        for r in lifecycle.refine_triggers(agents, tasks, feedback, already):
+            key = (r.agent["id"], r.task["id"])
+            if time.monotonic() - self._refine_failed.get(key, -1e9) < self.SPAWN_RETRY_S:
+                continue
+            self.refine(r, key)
+
+    REFINE_SCHEMA = {"type": "object", "properties": {
+        "role_prompt": {"type": "string", "description": "the full new system prompt, with the lesson built in"},
+        "lesson": {"type": "string", "description": "one sentence: what the agent must do differently"},
+        "reason": {"type": "string"}}, "required": ["role_prompt", "lesson"]}
+
+    def refine(self, r, key) -> None:
+        """SPEC §4.1: the LLM writes vN+1 of the role prompt; code makes the row and retires the old one."""
+        from lab.llm import Request
+
+        db, old, t = self.db, r.agent, r.task
+        out = t.get("output") or {}
+        detail = {k: out.get(k) for k in ("outcome", "error", "problems", "agent_status") if out.get(k)}
+        prompt = (f"An agent of the research team needs a better role prompt.\n\nAgent: {old['name']} "
+                  f"(capabilities {', '.join(old['capabilities'])})\nCurrent role prompt:\n{old['role_prompt']}\n\n"
+                  f"Why it is being refined: {r.reason}\nThe task's goal:\n{(t.get('input') or {}).get('goal', '')}"
+                  f"\nAcceptance check: {(t.get('acceptance') or {}).get('text', '')}\nWhat code recorded: "
+                  f"{detail}\nAnswer excerpt: {str(out.get('answer') or '')[:1500]}\n\n"
+                  "Write version n+1 of the role prompt: keep what works, add the lesson from this failure as a "
+                  "concrete instruction. Return the full prompt.")
+        try:
+            resp = self.llm.call(Request(agent="controller", system="You improve the prompts of AI research agents.",
+                                         prompt=prompt, schema=self.REFINE_SCHEMA, model="smart"),
+                                 task_id=t["id"])
+            o = resp.output if isinstance(resp.output, dict) else {}
+            lesson = str(o.get("lesson") or "").strip()
+            row = lifecycle.refined_version(old, o.get("role_prompt") or "",
+                                            r.reason + (f"; lesson: {lesson}" if lesson else ""), t["id"])
+            new = db.table("agents").insert(row).execute().data[0]
+        except Exception as e:
+            self._refine_failed[key] = time.monotonic()
+            emit(db, "refine_failed", f"could not refine {old['name']}", f"{r.reason}; {type(e).__name__}: {e}"[:1000],
+                 project_id=t.get("project_id"), agent_id=old["id"], task_id=t["id"])
+            return
+        db.table("agents").update({"status": "retired"}).eq("id", old["id"]).execute()
+        emit(db, "agent_refined", f"{old['name']} → {new['name']}", row["origin_reason"],
+             project_id=t.get("project_id"), agent_id=new["id"], task_id=t["id"],
+             data={"rule": "4.1", "kind": r.kind, "from": old["id"], "lesson": lesson, "model": resp.model,
+                   "mode": resp.mode})
+        emit(db, "agent_retired", f"retired {old['name']}", f"superseded by v{row['version']} ({new['name']})",
+             project_id=t.get("project_id"), agent_id=old["id"], task_id=t["id"],
+             data={"rule": "4.1", "superseded_by": new["id"]})
+        self._hand_over(old, new, f"{old['name']} was superseded by {new['name']}")
+
+    def _hand_over(self, old: dict, new: Optional[dict], why: str) -> None:
+        """Queued or awaiting tasks of an agent that left go to its successor, or to the best active agent."""
+        db = self.db
+        waiting = db.table("tasks").select("id,project_id,capability").eq("agent_id", old["id"]) \
+            .in_("status", ["queued", "awaiting_approval"]).execute().data
+        if not waiting:
+            return
+        agents = db.table("agents").select("*").eq("status", "active").execute().data
+        scores = reward.rolling_means(db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True)
+                                      .limit(1000).execute().data)
+        for t in waiting:
+            target = new if new and t["capability"] in new["capabilities"] else \
+                getattr(assign.pick_agent(agents, t["capability"], scores), "agent", None)
+            if target is None:
+                emit(db, "gap", f"no active agent for a waiting {t['capability']} task",
+                     f"{why}; no active agent has {t['capability']}; the task keeps its old agent",
+                     project_id=t.get("project_id"), task_id=t["id"])
+                continue
+            db.table("tasks").update({"agent_id": target["id"]}).eq("id", t["id"]).execute()
+            emit(db, "task_reassigned", f"{t['capability']} task → {target['name']}", why,
+                 project_id=t.get("project_id"), agent_id=target["id"], task_id=t["id"])
 
     # ---- decisions --------------------------------------------------------------------------------------------------
     def apply_decisions(self, now: datetime) -> None:
