@@ -8,6 +8,7 @@ import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
 import { ExecutorDots } from "@/components/live/executor-dots";
+import { InboxToast } from "@/components/inbox/inbox-toast";
 import { InboxCard } from "@/components/live/inbox-card";
 import { projectIdFromPath } from "@/components/live/inbox";
 import { ReplayBadge } from "@/components/live/replay-badge";
@@ -38,7 +39,7 @@ function Stamp({ label, ts, now }: { label: string; ts: string | null; now: numb
   );
 }
 
-// On a project page (any tab), the newest journal email for that project. The pathname is request data, so the
+// On a project page (any tab), the newest journal email for that project, and a toast when a new one arrives. The pathname is request data, so the
 // caller wraps this in <Suspense> (cacheComponents).
 function ProjectInbox() {
   const projectId = projectIdFromPath(usePathname());
@@ -46,6 +47,7 @@ function ProjectInbox() {
   return (
     <div className="mx-auto max-w-5xl px-4">
       <InboxCard key={projectId} projectId={projectId} />
+      <InboxToast key={`toast-${projectId}`} projectId={projectId} />
     </div>
   );
 }
