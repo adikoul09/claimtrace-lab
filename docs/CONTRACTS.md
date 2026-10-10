@@ -202,7 +202,8 @@ The web writes one event when a researcher sends an `email_received` event's poi
 - `lesson_applied`: `data {lesson_id, kind, tags (the matched tags), where ("planner" | "<capability> task"), rank
   (1 = most relevant), overlap (number of matched tags), times_applied (after this use), paper}`.
 - `lesson_skipped` (at plan time only): `data {lesson_id, reason, detail, kind, tags, where, paper}` with `reason` one
-  of `no_evidence` · `other_paper` (a `setting_mattered` lesson from another paper) · `duplicate` (same kind and tag
+  of `no_evidence` · `other_paper` (a `setting_mattered` lesson from another paper, unless tagged `generic`, which
+  marks a check that holds for any training paper: Round 0 F2, F3, F4, F6, F8) · `duplicate` (same kind and tag
   set as a lesson used more often) · `over_limit` (more than 5 matched).
 - `paper` is the lesson's arXiv id, `round0:matchdg` for the imported Round 0 lessons, or null.
 

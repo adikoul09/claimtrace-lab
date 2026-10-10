@@ -149,3 +149,19 @@ def test_a_proposal_duplicating_an_existing_lesson_is_dropped():
     props = [{"text": "pin torch", "tags": ["setup_env", "torch"], "evidence_event_id": "e1", "kind": "failure_fix"}]
     kept, dropped = memory.check_proposals(props, {"e1"}, existing=existing)
     assert kept == [] and "duplicate of lesson old" in dropped[0]
+
+
+# ---- MEM-1 follow-up: generic Round 0 checks carry across papers --------------------------------------------------
+
+def test_a_generic_setting_mattered_lesson_carries_across_papers():
+    ls = [L("gen", "setting_mattered", ["design_experiment", "generic"], paper="round0:matchdg"),
+          L("spec", "setting_mattered", ["design_experiment"], paper="round0:matchdg")]
+    chosen, skipped = memory.select(ls, ["design_experiment"], "1503.02531", limit=5)
+    assert [l["id"] for l in chosen] == ["gen"]
+    assert [(l["id"], code) for l, code, _ in skipped] == [("spec", "other_paper")]
+
+
+def test_the_generic_round0_checks_are_f2_f3_f4_f6_f8():
+    generic = {l["finding"] for l in memory.ROUND0_LESSONS if memory.GENERIC_TAG in l["tags"]}
+    assert generic == {"F2", "F3", "F4", "F6", "F8"}
+    assert all(l["kind"] == "setting_mattered" for l in memory.ROUND0_LESSONS)   # what they were in MatchDG

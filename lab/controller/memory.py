@@ -2,8 +2,9 @@
 
   read    select() is the lesson policy (MEM-1), all code:
             - a lesson without evidence_event_id is never used                         (skipped: no_evidence)
-            - setting_mattered lessons apply only to the same paper (arXiv id; Round 0 = round0:matchdg);
-              failure_fix, budget and agent_choice lessons carry across projects       (skipped: other_paper)
+            - setting_mattered lessons apply only to the same paper (arXiv id; Round 0 = round0:matchdg), unless
+              tagged "generic" (a check that holds for any training paper); failure_fix, budget and
+              agent_choice lessons carry across projects                               (skipped: other_paper)
             - duplicates by kind + tag set keep the most applied one                   (skipped: duplicate)
             - rank by tag overlap (domain tags, capability, error signature), then times_applied
             - at most PER_PLAN (5) in the planner's prompt, PER_TASK (3) in a task's goal (skipped: over_limit)
@@ -18,6 +19,7 @@
           first result and LLM tokens (R14), all from rows.
 
   python -m lab.controller.memory import-round0
+  python -m lab.controller.memory reclassify-round0   (adds the "generic" tag to F2, F3, F4, F6, F8 already stored)
   python -m lab.controller.memory effect <run1 project id> <run2 project id>
 """
 from __future__ import annotations
@@ -35,6 +37,8 @@ PER_PLAN = 5          # lessons added to the planner's prompt
 REPORT = "baseline/el01-auditor/inputs/spike-matchdg/report.md"
 DECISIONS = "baseline/el01-auditor/DECISIONS.md"
 LABEL = "Imported from Round 0 audit"
+GENERIC_TAG = "generic"  # a setting_mattered lesson that is a general check, so it carries across papers
+GENERIC_FINDINGS = ("F2", "F3", "F4", "F6", "F8")  # model selection, optimizer, schedules, tuning data, SD vs SE
 
 ROUND0_LESSONS = [
     {"finding": "F1", "kind": "setting_mattered",
@@ -92,6 +96,8 @@ ROUND0_LESSONS = [
 for _l in ROUND0_LESSONS:
     _l["text"] = f"{LABEL} (MatchDG, {_l['finding']}): {_l['text']}"
     _l["tags"].append(f"round0-{_l['finding'].lower()}")
+    if _l["finding"] in GENERIC_FINDINGS:
+        _l["tags"].append(GENERIC_TAG)
 
 
 # ---- read ---------------------------------------------------------------------------------------------------------
@@ -139,7 +145,8 @@ def select(lessons: list[dict], tags: list[str], project_paper: Optional[str], l
     for l in matched:
         if not l.get("evidence_event_id"):
             skipped.append((l, "no_evidence", SKIP_REASONS["no_evidence"]))
-        elif l.get("kind") == "setting_mattered" and (not project_paper or l.get("paper") != project_paper):
+        elif l.get("kind") == "setting_mattered" and GENERIC_TAG not in (l.get("tags") or []) \
+                and (not project_paper or l.get("paper") != project_paper):
             skipped.append((l, "other_paper", f"{SKIP_REASONS['other_paper']} (lesson: {l.get('paper') or 'unknown'}"
                                               f", this project: {project_paper or 'unknown'})"))
         else:
@@ -304,6 +311,25 @@ def import_round0(db) -> list[str]:
     return done
 
 
+def reclassify_round0(db) -> list[str]:
+    """Add the generic tag to the stored Round 0 lessons of GENERIC_FINDINGS (idempotent). Returns findings changed."""
+    from lab.db import emit
+
+    changed = []
+    for f in GENERIC_FINDINGS:
+        rows = db.table("lessons").select("id,tags").contains("tags", [f"round0-{f.lower()}"]).execute().data
+        for r in rows:
+            if GENERIC_TAG in (r.get("tags") or []):
+                continue
+            db.table("lessons").update({"tags": [*r["tags"], GENERIC_TAG]}).eq("id", r["id"]).execute()
+            emit(db, "lesson_reclassified", f"Round 0 lesson {f} now carries across papers",
+                 f"{f} is a general check for any training paper, not a MatchDG-only setting; tagged "
+                 f"'{GENERIC_TAG}' so the setting_mattered same-paper rule does not skip it (HoO decision, MEM-1)",
+                 data={"lesson_id": r["id"], "finding": f, "added_tag": GENERIC_TAG})
+            changed.append(f)
+    return changed
+
+
 # ---- memory effect (R14) ------------------------------------------------------------------------------------------
 
 def _ts(s: Optional[str]) -> Optional[datetime]:
@@ -359,6 +385,7 @@ def main(argv=None) -> None:
     ap = argparse.ArgumentParser(description="Research memory tools")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("import-round0", help="seed the MatchDG F1-F8 lessons (idempotent)")
+    sub.add_parser("reclassify-round0", help="tag the generic Round 0 checks so they carry across papers")
     e = sub.add_parser("effect", help="compare run 2 with run 1 of the same paper (writes a memory_effect event)")
     e.add_argument("run1")
     e.add_argument("run2")
@@ -367,6 +394,8 @@ def main(argv=None) -> None:
     db = client()
     if a.cmd == "import-round0":
         print("imported:", import_round0(db) or "nothing new")
+    elif a.cmd == "reclassify-round0":
+        print("tagged generic:", reclassify_round0(db) or "nothing to change")
     else:
         print(json.dumps(project_effect(db, a.run1, a.run2), indent=1))
 
