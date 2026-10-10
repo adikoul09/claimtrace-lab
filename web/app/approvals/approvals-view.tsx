@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Agent, Event, Json, Project, Reward, Task } from "@/lib/types";
 import { PasscodeForm, post, useAuthed } from "@/components/live/write";
+import { budgetLabel, capabilityLabel, statusLabel } from "@/components/live/labels";
 
 type Row = Pick<
   Task,
@@ -13,6 +14,7 @@ type Row = Pick<
 >;
 const FIELDS = "id,project_id,agent_id,capability,status,input,created_at,finished_at";
 const FINISHED_LIMIT = 15;
+const HISTORY_LIMIT = 30;
 
 const obj = (j: Json | null | undefined) =>
   j && typeof j === "object" && !Array.isArray(j) ? (j as Record<string, Json>) : {};
@@ -21,6 +23,7 @@ export function ApprovalsView() {
   const [authed, setAuthed] = useAuthed();
   const [awaiting, setAwaiting] = useState<Row[]>([]);
   const [finished, setFinished] = useState<Row[]>([]);
+  const [history, setHistory] = useState<Row[]>([]); // failed and rejected: folded under "Show history"
   const [names, setNames] = useState<Record<string, string>>({});
   const [projects, setProjects] = useState<Record<string, string>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
@@ -30,23 +33,32 @@ export function ApprovalsView() {
 
   const load = useCallback(async () => {
     const db = supabase();
-    const [a, f] = await Promise.all([
+    const [a, f, h] = await Promise.all([
       db.from("tasks").select(FIELDS).eq("status", "awaiting_approval").order("created_at"),
       db
         .from("tasks")
         .select(FIELDS)
-        .in("status", ["done", "failed"])
+        .eq("status", "done")
         .not("agent_id", "is", null)
         .order("finished_at", { ascending: false, nullsFirst: false })
         .limit(FINISHED_LIMIT),
+      db
+        .from("tasks")
+        .select(FIELDS)
+        .in("status", ["failed", "rejected"])
+        .order("created_at", { ascending: false })
+        .limit(HISTORY_LIMIT),
     ]);
-    if (a.error || f.error) return setError((a.error ?? f.error)!.message);
+    const err = a.error ?? f.error ?? h.error;
+    if (err) return setError(err.message);
     const aw = (a.data ?? []) as Row[];
     const fin = (f.data ?? []) as Row[];
+    const hist = (h.data ?? []) as Row[];
     setAwaiting(aw);
     setFinished(fin);
+    setHistory(hist);
 
-    const ids = [...aw, ...fin].map((t) => t.id);
+    const ids = [...aw, ...fin, ...hist].map((t) => t.id);
     if (ids.length === 0) return;
     const [ev, rw] = await Promise.all([
       db.from("events").select("task_id,type,reason,data,ts").in("task_id", ids).order("ts"),
@@ -154,6 +166,28 @@ export function ApprovalsView() {
           </ul>
         )}
       </section>
+
+      {history.length > 0 && (
+        <details>
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            Show history <span className="font-normal text-neutral-500">({history.length} failed or rejected)</span>
+          </summary>
+          <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
+            {history.map((t) => (
+              <li key={t.id}>
+                <FeedbackRow
+                  task={t}
+                  agent={t.agent_id ? names[t.agent_id] : undefined}
+                  current={feedback[t.id]}
+                  reward={rewards[t.id]}
+                  canAct={!!authed}
+                  onDone={load}
+                />
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }
@@ -178,7 +212,7 @@ function ApprovalCard({
   const [error, setError] = useState<string | null>(null);
   const input = obj(t.input);
   const goal = typeof input.goal === "string" ? input.goal : null;
-  const budget = obj(input.budget);
+  const budget = budgetLabel(obj(input.budget));
 
   const decide = async (decision: "approve" | "reject" | "redirect") => {
     setBusy(true);
@@ -196,7 +230,7 @@ function ApprovalCard({
   return (
     <article className="rounded-lg border border-amber-300 p-3 text-sm dark:border-amber-800">
       <header className="flex flex-wrap items-baseline gap-x-2">
-        <h3 className="font-mono font-semibold">{t.capability}</h3>
+        <h3 className="font-semibold">{capabilityLabel(t.capability)}</h3>
         {agent && <span className="text-xs text-neutral-500">by {agent}</span>}
       </header>
       {project && <p className="mt-0.5 break-words text-xs text-neutral-500">{project}</p>}
@@ -213,12 +247,10 @@ function ApprovalCard({
           <p className="mt-1 max-h-60 overflow-y-auto whitespace-pre-wrap break-words text-xs">{goal}</p>
         </details>
       )}
-      {Object.keys(budget).length > 0 && (
+      {budget && (
         <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
           <span className="font-medium">Cost estimate: </span>
-          {Object.entries(budget)
-            .map(([k, v]) => `${k} ${String(v)}`)
-            .join(" · ")}
+          {budget}
         </p>
       )}
 
@@ -313,20 +345,35 @@ function FeedbackRow({
   return (
     <div className="flex items-center gap-2 py-2 text-sm">
       <div className="min-w-0 flex-1">
-        <p className="font-mono">
-          {t.capability}{" "}
-          <span className={t.status === "failed" ? "text-red-600" : "text-green-700 dark:text-green-400"}>
-            {t.status}
+        <p>
+          {capabilityLabel(t.capability)}{" "}
+          <span
+            className={
+              t.status === "done"
+                ? "text-green-700 dark:text-green-400"
+                : t.status === "failed"
+                  ? "text-red-600"
+                  : "text-neutral-500"
+            }
+          >
+            {statusLabel(t.status)}
           </span>
         </p>
         <p className="truncate text-xs text-neutral-500">
-          {agent ?? "—"} · reward{" "}
-          <span className="tabular-nums">{reward === undefined ? "not scored yet" : reward.toFixed(2)}</span>
+          {agent ?? "no agent"}
+          {t.status !== "rejected" && (
+            <>
+              {" "}
+              · reward{" "}
+              <span className="tabular-nums">{reward === undefined ? "not scored yet" : reward.toFixed(2)}</span>
+            </>
+          )}
         </p>
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
-      {thumb("up", "Thumbs up", "👍")}
-      {thumb("down", "Thumbs down", "👎")}
+      {/* Feedback is for finished work only (done or failed); a rejected task never ran. */}
+      {t.status !== "rejected" && thumb("up", "Thumbs up", "👍")}
+      {t.status !== "rejected" && thumb("down", "Thumbs down", "👎")}
     </div>
   );
 }

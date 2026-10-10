@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 import { NewResearchForm } from "@/components/live/new-research-form";
 import { projectBadge } from "@/components/live/project-badge";
+import { groupProjects, statusLabel } from "@/components/live/labels";
 
 export default function Home() {
   return (
@@ -29,6 +30,27 @@ async function ProjectList() {
   const projects = (data ?? []) as Pick<Project, "id" | "title" | "arxiv_id" | "status" | "created_at">[];
   if (projects.length === 0) return <p className="text-sm text-neutral-500">No projects yet.</p>;
 
+  const { main, other } = groupProjects(projects);
+  return (
+    <>
+      {main.length === 0 ? (
+        <p className="text-sm text-neutral-500">No live, reference or precomputed projects yet.</p>
+      ) : (
+        <ProjectRows projects={main} />
+      )}
+      {other.length > 0 && (
+        <details className="mt-4">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            Other runs <span className="font-normal text-neutral-500">({other.length} test or failed)</span>
+          </summary>
+          <ProjectRows projects={other} />
+        </details>
+      )}
+    </>
+  );
+}
+
+function ProjectRows({ projects }: { projects: Pick<Project, "id" | "title" | "arxiv_id" | "status">[] }) {
   return (
     <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
       {projects.map((p) => {
@@ -46,7 +68,7 @@ async function ProjectList() {
               </span>
               <span className="text-xs text-neutral-500">
                 {p.arxiv_id ? `arXiv ${p.arxiv_id} · ` : ""}
-                {p.status}
+                {statusLabel(p.status)}
               </span>
             </Link>
           </li>
