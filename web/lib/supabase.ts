@@ -14,3 +14,15 @@ export function supabase(): SupabaseClient {
   client = createClient(url, key, { auth: { persistSession: false } });
   return client;
 }
+
+/**
+ * Server-only client with the service key, for the write routes (SPEC §12). The key is not NEXT_PUBLIC, so it is
+ * never inlined into a browser bundle; calling this in the browser throws. Returns null when it is not configured.
+ */
+export function serviceSupabase(): SupabaseClient | null {
+  if (typeof window !== "undefined") throw new Error("serviceSupabase() is server-only");
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
