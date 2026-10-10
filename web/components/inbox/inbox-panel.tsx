@@ -97,11 +97,15 @@ export function InboxPanel({ projectId }: { projectId: string }) {
   );
 }
 
+/** How many of the project's journal emails this viewer has not seen in the Inbox panel yet. */
+export function useUnreadCount(projectId: string, channel: string): number {
+  const { emails } = useProjectEmails(projectId, channel);
+  return unreadCount(emails, useLastRead(projectId));
+}
+
 /** Unread journal emails for the project (count pill); hidden when there are none. For the Inbox tab's label. */
 export function InboxBadge({ projectId }: { projectId: string }) {
-  const { emails } = useProjectEmails(projectId, "inbox-badge");
-  const lastRead = useLastRead(projectId);
-  const n = unreadCount(emails, lastRead);
+  const n = useUnreadCount(projectId, "inbox-badge");
   if (n === 0) return null;
   return (
     <span

@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
 import { ExecutorDots } from "@/components/live/executor-dots";
 import { InboxToast } from "@/components/inbox/inbox-toast";
-import { InboxCard } from "@/components/live/inbox-card";
+import { InboxStrip } from "@/components/inbox/inbox-strip";
 import { projectIdFromPath } from "@/components/live/inbox";
 import { ReplayBadge } from "@/components/live/replay-badge";
 import { TokenMeter } from "@/components/live/token-meter";
@@ -48,7 +48,7 @@ const TAB_TITLE: Record<string, string> = {
   inbox: "Inbox",
 };
 
-// On a project page (any tab), the newest journal email for that project, and a toast when a new one arrives. The pathname is request data, so the
+// On a project page (any tab): a one-line strip while there is unread journal email, and a toast when one arrives. The pathname is request data, so the
 // caller wraps this in <Suspense> (cacheComponents).
 function ProjectInbox() {
   const projectId = projectIdFromPath(usePathname());
@@ -71,7 +71,7 @@ function ProjectInbox() {
   if (!projectId) return null;
   return (
     <div className="mx-auto max-w-5xl px-4">
-      <InboxCard key={projectId} projectId={projectId} />
+      <InboxStrip key={projectId} projectId={projectId} />
       <InboxToast key={`toast-${projectId}`} projectId={projectId} />
     </div>
   );
