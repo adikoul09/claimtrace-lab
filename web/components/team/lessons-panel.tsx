@@ -20,12 +20,14 @@ export function LessonsPanel() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const db = supabase();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async () => {
       const { data, error } = await db.from("lessons").select("*");
+      setLoaded(true);
       if (error) return setError(error.message);
       const rows = (data ?? []) as Lesson[];
       setLessons(rows);
@@ -58,9 +60,15 @@ export function LessonsPanel() {
       </h3>
       {error && <p className="text-sm text-red-600">Could not load lessons: {error}</p>}
       {lessons.length === 0 ? (
-        <p className="text-sm text-neutral-500">
-          No lessons yet. The Reporter proposes them after a finished experiment or a failure-then-recovery.
-        </p>
+        !loaded ? (
+          <p className="text-sm text-neutral-500">Loading…</p>
+        ) : (
+          !error && (
+            <p className="text-sm text-neutral-500">
+              No lessons yet. The Reporter proposes them after a finished experiment or a failure-then-recovery.
+            </p>
+          )
+        )
       ) : (
         <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
           {sortLessons(lessons).map((l) => {
