@@ -8,6 +8,7 @@ dependencies = [
     "google-genai>=2.29",
     "httpx>=0.28",
     "pymupdf>=1.28",
+    "pydantic>=2",
 ]
 
 [dependency-groups]

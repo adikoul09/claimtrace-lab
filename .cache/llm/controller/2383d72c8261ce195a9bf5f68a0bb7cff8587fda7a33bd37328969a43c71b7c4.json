@@ -1,0 +1,197 @@
+{
+ "key": "2383d72c8261ce195a9bf5f68a0bb7cff8587fda7a33bd37328969a43c71b7c4",
+ "agent": "controller",
+ "provider": "gemini",
+ "model": "gemini-flash-latest",
+ "created_utc": "2026-10-10T09:12:01Z",
+ "request": {
+  "system": "You are the planner of an AI research team.",
+  "prompt": "Goal: reproduce the key result of this paper on CPU, within 20 CPU-minutes in total.\n\nPaper:\narXiv 1503.02531: T07 controller test (Distillation)\nAbstract: A very simple way to improve the performance of almost any machine learning algorithm is to train many different models on the same data and then to average their predictions. Unfortunately, making predictions using a whole ensemble of models is cumbersome and may be too computationally expensive to allow deployment to a large number of users, especially if the individual models are large neural nets. Caruana and his collaborators have shown that it is possible to compress the knowledge in an ensemble into a single model which is much easier to deploy and we develop this approach further using a different compression technique. We achieve some surprising results on MNIST and we show that we can significantly improve the acoustic model of a heavily used commercial system by distilling the knowledge in an ensemble of models into a single model. We also introduce a new type of ensemble composed of one or more full models and many specialist models which learn to distinguish fine-grained classes that the full models confuse. Unlike a mixture of experts, these specialist models can be trained rapidly and in parallel.\n\nTeam (capability: agents):\n- read_paper: reader-v1\n- extract_claims: reader-v1\n- extract_settings: reader-v1\n- design_experiment: designer-v1\n- budget: designer-v1\n- write_code: implementer-v1\n- setup_env: envbuilder-v1\n- run: runner-v1\n- debug: (no agent yet; one is spawned if needed)\n- compare: analyst-v1\n- explain_diff: analyst-v1\n- design_whatif: designer-v1\n- write_report: reporter-v1\n- write_notes: reporter-v1\n\nLessons from earlier projects (apply them where they fit and say which in the reason):\n- (none match)\n\nWrite an ordered plan. Rules:\n- Each step uses exactly one capability from the team list and is done by one agent; steps run one after another.\n- A typical reproduction reads the paper (claims and settings), designs the experiment at a scale that fits the budget, writes train.py (it prints every metric as `METRIC name=value step=N`), sets up the environment, does a smoke run, does the full run, compares with the paper and writes the report.\n- run steps: set scale (smoke = 1 epoch on a small subset; full = the budgeted run) and cmd, the command run in the project folder, e.g. `python train.py --smoke`.\n- Do not plan debug steps; the controller adds them when something fails.\n- budget_cpu_s per step; the run steps together must fit the budget. budget_tokens for LLM steps.\n- instructions must be self-contained: the agent sees only its step.\n- acceptance: one sentence that code can check (a file exists, a metric line was printed, claims include X).\n- requires_approval: true only for a step a human should confirm before it spends the budget.",
+  "schema": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "type": "string",
+     "description": "two or three sentences: why this plan, and which lessons it uses"
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "capability": {
+        "type": "string",
+        "enum": [
+         "read_paper",
+         "extract_claims",
+         "extract_settings",
+         "design_experiment",
+         "budget",
+         "write_code",
+         "setup_env",
+         "run",
+         "debug",
+         "compare",
+         "explain_diff",
+         "design_whatif",
+         "write_report",
+         "write_notes"
+        ]
+       },
+       "title": {
+        "type": "string"
+       },
+       "instructions": {
+        "type": "string",
+        "description": "what the agent must do, self-contained"
+       },
+       "acceptance": {
+        "type": "string",
+        "description": "how code can check the step succeeded"
+       },
+       "budget_cpu_s": {
+        "type": "integer"
+       },
+       "budget_tokens": {
+        "type": "integer"
+       },
+       "scale": {
+        "type": "string",
+        "enum": [
+         "smoke",
+         "full"
+        ],
+        "description": "run steps only"
+       },
+       "cmd": {
+        "type": "string",
+        "description": "run steps only: the command, run in the project folder"
+       },
+       "requires_approval": {
+        "type": "boolean"
+       }
+      },
+      "required": [
+       "capability",
+       "title",
+       "instructions",
+       "acceptance",
+       "budget_cpu_s"
+      ]
+     }
+    }
+   },
+   "required": [
+    "reason",
+    "steps"
+   ]
+  },
+  "inputs": {}
+ },
+ "response": {
+  "output": {
+   "reason": "This plan reproduces the core MNIST knowledge distillation result from Hinton et al. (2015) using lightweight MLPs on CPU. It first extracts specific claims and settings, designs a budget-constrained experiment under 20 CPU-minutes, verifies execution via a smoke run, runs the full experiment, and evaluates the performance gap between distilled and baseline student models.",
+   "steps": [
+    {
+     "capability": "extract_claims",
+     "title": "Extract quantitative claims from paper",
+     "instructions": "Read arXiv 1503.02531 and extract key quantitative claims regarding knowledge distillation performance on MNIST, specifically comparing error rates and test accuracy among the teacher ensemble/model, the distilled student, and the baseline student trained without distillation.",
+     "acceptance": "A markdown file claims.json exists containing the extracted quantitative claims and baseline metrics.",
+     "budget_cpu_s": 30,
+     "budget_tokens": 2000,
+     "requires_approval": false
+    },
+    {
+     "capability": "extract_settings",
+     "title": "Extract experimental settings",
+     "instructions": "Identify the model architecture, temperature T, loss weights (soft targets vs hard targets), optimizer, learning rate, and training parameters for the MNIST experiment in arXiv 1503.02531.",
+     "acceptance": "settings.json exists containing temperature, alpha loss weighting, and architecture specifications.",
+     "budget_cpu_s": 30,
+     "budget_tokens": 2000,
+     "requires_approval": false
+    },
+    {
+     "capability": "design_experiment",
+     "title": "Design CPU-feasible distillation experiment",
+     "instructions": "Design an experimental protocol to reproduce distillation on MNIST within a 20-minute CPU ceiling: specify a 2-hidden-layer teacher net (or small ensemble), a smaller 2-hidden-layer student net, and baseline student without distillation. Include data subsets or epoch limits to guarantee fast convergence on CPU while retaining statistical validity.",
+     "acceptance": "experiment_plan.md exists detailing model architectures, epoch counts, dataset split, and evaluation protocol.",
+     "budget_cpu_s": 30,
+     "budget_tokens": 2500,
+     "requires_approval": false
+    },
+    {
+     "capability": "budget",
+     "title": "Allocate computational runtime budget",
+     "instructions": "Compute time per epoch on CPU for teacher, baseline student, and distilled student training routines, ensuring the total full run executes well under 1200 CPU seconds (~800s planned).",
+     "acceptance": "budget.json exists defining runtime and epoch limits satisfying the 1200s total budget constraint.",
+     "budget_cpu_s": 15,
+     "budget_tokens": 1500,
+     "requires_approval": false
+    },
+    {
+     "capability": "setup_env",
+     "title": "Set up execution environment",
+     "instructions": "Install necessary Python packages including torch, torchvision, and numpy in the working environment.",
+     "acceptance": "Command 'python -c \"import torch, torchvision; print(torch.__version__)\"' exits with code 0.",
+     "budget_cpu_s": 120,
+     "budget_tokens": 1000,
+     "requires_approval": false
+    },
+    {
+     "capability": "write_code",
+     "title": "Write training and evaluation code",
+     "instructions": "Implement train.py implementing MNIST download, Teacher model training, Student baseline training, and Distilled Student training using Hinton distillation loss with temperature T and alpha weighting. The script must accept '--smoke' and '--full' flags, and print all metrics matching the format 'METRIC name=value step=N'.",
+     "acceptance": "train.py exists and contains distillation loss implementation and metric logging statements formatted as METRIC name=value step=N.",
+     "budget_cpu_s": 60,
+     "budget_tokens": 4000,
+     "requires_approval": false
+    },
+    {
+     "capability": "run",
+     "title": "Execute smoke test",
+     "instructions": "Run train.py in smoke mode (1 epoch on a tiny data subset) to verify that data loading, forward/backward passes, and metric outputs function without errors.",
+     "acceptance": "The run finishes with return code 0 and prints at least one line matching 'METRIC smoke_complete=1 step=1'.",
+     "budget_cpu_s": 45,
+     "scale": "smoke",
+     "cmd": "python train.py --smoke",
+     "requires_approval": false
+    },
+    {
+     "capability": "run",
+     "title": "Execute full distillation reproduction",
+     "instructions": "Execute the full experiment on CPU: train teacher network, baseline student, and distilled student, logging test accuracies and error rates.",
+     "acceptance": "The run finishes with return code 0 and logs final test accuracy metrics for teacher, baseline, and distilled student.",
+     "budget_cpu_s": 850,
+     "scale": "full",
+     "cmd": "python train.py --full",
+     "requires_approval": true
+    },
+    {
+     "capability": "compare",
+     "title": "Compare results against paper claims",
+     "instructions": "Extract generated metric logs and compare the test error improvement of the distilled student over the baseline student against the relative gains documented in arXiv 1503.02531.",
+     "acceptance": "comparison.json exists containing table of empirical metrics vs paper claims.",
+     "budget_cpu_s": 30,
+     "budget_tokens": 2500,
+     "requires_approval": false
+    },
+    {
+     "capability": "write_report",
+     "title": "Generate reproduction report",
+     "instructions": "Write report.md summarizing the reproduction methodology, implementation details, CPU execution time, final accuracy comparisons, and conclusion on whether the paper's core knowledge distillation effect was successfully validated.",
+     "acceptance": "report.md exists with sections for Summary, Methodology, Results, and Discussion.",
+     "budget_cpu_s": 30,
+     "budget_tokens": 3000,
+     "requires_approval": false
+    }
+   ]
+  },
+  "text": "{\n  \"reason\": \"This plan reproduces the core MNIST knowledge distillation result from Hinton et al. (2015) using lightweight MLPs on CPU. It first extracts specific claims and settings, designs a budget-constrained experiment under 20 CPU-minutes, verifies execution via a smoke run, runs the full experiment, and evaluates the performance gap between distilled and baseline student models.\",\n  \"steps\": [\n    {\n      \"capability\": \"extract_claims\",\n      \"title\": \"Extract quantitative claims from paper\",\n      \"instructions\": \"Read arXiv 1503.02531 and extract key quantitative claims regarding knowledge distillation performance on MNIST, specifically comparing error rates and test accuracy among the teacher ensemble/model, the distilled student, and the baseline student trained without distillation.\",\n      \"acceptance\": \"A markdown file claims.json exists containing the extracted quantitative claims and baseline metrics.\",\n      \"budget_cpu_s\": 30,\n      \"budget_tokens\": 2000,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"extract_settings\",\n      \"title\": \"Extract experimental settings\",\n      \"instructions\": \"Identify the model architecture, temperature T, loss weights (soft targets vs hard targets), optimizer, learning rate, and training parameters for the MNIST experiment in arXiv 1503.02531.\",\n      \"acceptance\": \"settings.json exists containing temperature, alpha loss weighting, and architecture specifications.\",\n      \"budget_cpu_s\": 30,\n      \"budget_tokens\": 2000,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"design_experiment\",\n      \"title\": \"Design CPU-feasible distillation experiment\",\n      \"instructions\": \"Design an experimental protocol to reproduce distillation on MNIST within a 20-minute CPU ceiling: specify a 2-hidden-layer teacher net (or small ensemble), a smaller 2-hidden-layer student net, and baseline student without distillation. Include data subsets or epoch limits to guarantee fast convergence on CPU while retaining statistical validity.\",\n      \"acceptance\": \"experiment_plan.md exists detailing model architectures, epoch counts, dataset split, and evaluation protocol.\",\n      \"budget_cpu_s\": 30,\n      \"budget_tokens\": 2500,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"budget\",\n      \"title\": \"Allocate computational runtime budget\",\n      \"instructions\": \"Compute time per epoch on CPU for teacher, baseline student, and distilled student training routines, ensuring the total full run executes well under 1200 CPU seconds (~800s planned).\",\n      \"acceptance\": \"budget.json exists defining runtime and epoch limits satisfying the 1200s total budget constraint.\",\n      \"budget_cpu_s\": 15,\n      \"budget_tokens\": 1500,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"setup_env\",\n      \"title\": \"Set up execution environment\",\n      \"instructions\": \"Install necessary Python packages including torch, torchvision, and numpy in the working environment.\",\n      \"acceptance\": \"Command 'python -c \\\"import torch, torchvision; print(torch.__version__)\\\"' exits with code 0.\",\n      \"budget_cpu_s\": 120,\n      \"budget_tokens\": 1000,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"write_code\",\n      \"title\": \"Write training and evaluation code\",\n      \"instructions\": \"Implement train.py implementing MNIST download, Teacher model training, Student baseline training, and Distilled Student training using Hinton distillation loss with temperature T and alpha weighting. The script must accept '--smoke' and '--full' flags, and print all metrics matching the format 'METRIC name=value step=N'.\",\n      \"acceptance\": \"train.py exists and contains distillation loss implementation and metric logging statements formatted as METRIC name=value step=N.\",\n      \"budget_cpu_s\": 60,\n      \"budget_tokens\": 4000,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"run\",\n      \"title\": \"Execute smoke test\",\n      \"instructions\": \"Run train.py in smoke mode (1 epoch on a tiny data subset) to verify that data loading, forward/backward passes, and metric outputs function without errors.\",\n      \"acceptance\": \"The run finishes with return code 0 and prints at least one line matching 'METRIC smoke_complete=1 step=1'.\",\n      \"budget_cpu_s\": 45,\n      \"scale\": \"smoke\",\n      \"cmd\": \"python train.py --smoke\",\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"run\",\n      \"title\": \"Execute full distillation reproduction\",\n      \"instructions\": \"Execute the full experiment on CPU: train teacher network, baseline student, and distilled student, logging test accuracies and error rates.\",\n      \"acceptance\": \"The run finishes with return code 0 and logs final test accuracy metrics for teacher, baseline, and distilled student.\",\n      \"budget_cpu_s\": 850,\n      \"scale\": \"full\",\n      \"cmd\": \"python train.py --full\",\n      \"requires_approval\": true\n    },\n    {\n      \"capability\": \"compare\",\n      \"title\": \"Compare results against paper claims\",\n      \"instructions\": \"Extract generated metric logs and compare the test error improvement of the distilled student over the baseline student against the relative gains documented in arXiv 1503.02531.\",\n      \"acceptance\": \"comparison.json exists containing table of empirical metrics vs paper claims.\",\n      \"budget_cpu_s\": 30,\n      \"budget_tokens\": 2500,\n      \"requires_approval\": false\n    },\n    {\n      \"capability\": \"write_report\",\n      \"title\": \"Generate reproduction report\",\n      \"instructions\": \"Write report.md summarizing the reproduction methodology, implementation details, CPU execution time, final accuracy comparisons, and conclusion on whether the paper's core knowledge distillation effect was successfully validated.\",\n      \"acceptance\": \"report.md exists with sections for Summary, Methodology, Results, and Discussion.\",\n      \"budget_cpu_s\": 30,\n      \"budget_tokens\": 3000,\n      \"requires_approval\": false\n    }\n  ]\n}",
+  "tokens_in": 686,
+  "tokens_out": 2091,
+  "models": [
+   "gemini-3.8-flash"
+  ],
+  "wall_seconds": 129.7
+ }
+}
