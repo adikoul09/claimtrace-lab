@@ -156,7 +156,7 @@ def _gemini(req: Request, model: str) -> dict:
             if isinstance(e, errors.APIError) and e.code in RETRY_CODES and attempt < len(RETRY_WAIT_S):
                 time.sleep(RETRY_WAIT_S[attempt])
                 continue
-            raise LLMError(f"gemini call failed: {type(e).__name__}: {str(e).replace(key, '***')[:800]}") from None
+            raise LLMEventError(scrub(f"gemini call failed: {type(e).__name__}: {e}", key)) from None
     text = r.text or ""
     if req.schema is not None:
         try:
@@ -378,10 +378,13 @@ class LLM:
             t0 = time.monotonic()
             try:
                 r = PROVIDERS[self.provider](replace(req, max_output=cap), model)
-            except LLMEventError as e:
-                self._event(e.event, f"LLM call failed for {req.agent} ({self.provider} {model})", str(e), agent_id,
-                            task_id, {"provider": self.provider, "model": model})
-                raise
+            except Exception as e:  # every provider error reaches the event stream in full, keys scrubbed
+                text = scrub(str(e) if isinstance(e, LLMError) else f"{type(e).__name__}: {e}", setting("LLM_API_KEY"))
+                self._event(getattr(e, "event", "llm_error"), f"LLM call failed for {req.agent} ({self.provider} "
+                            f"{model})", text, agent_id, task_id, {"provider": self.provider, "model": model})
+                if isinstance(e, LLMError):
+                    raise
+                raise LLMError(text) from None
             rec = {"key": key, "agent": req.agent, "provider": self.provider, "model": model,
                    "created_utc": utc_now(),
                    "request": {"system": req.system, "prompt": req.prompt, "schema": req.schema,

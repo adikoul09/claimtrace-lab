@@ -171,3 +171,24 @@ def test_replay_ignores_the_daily_cap(tmp_path, monkeypatch):
         "response": {"output": "cached", "text": "cached", "tokens_in": 1, "tokens_out": 1}})
     monkeypatch.setattr(llm, "tokens_today", lambda: 10**9)
     assert llm.call(req).output == "cached"
+
+
+# ---- every provider error reaches the event stream in full, keys scrubbed -----------------------------------------
+
+def test_any_provider_error_is_an_event_with_the_full_text_and_no_key(monkeypatch, tmp_path):
+    long_detail = "x" * 3000
+
+    def broken(req, model):
+        raise RuntimeError(f"upstream said: key AIza-secret-123 rejected; Bearer abc.def; {long_detail}")
+
+    monkeypatch.setitem(llm_mod.PROVIDERS, "broken", broken)
+    monkeypatch.setattr(llm_mod, "setting", lambda name, default=None: {"LLM_API_KEY": "AIza-secret-123"}.get(name, default))
+    db = FakeDB()
+    llm = LLM(mode="live", provider="broken", cache_dir=tmp_path, db=db, models=MODELS)
+    with pytest.raises(LLMError) as e:
+        llm.call(Request(agent="a", prompt="p"), task_id="t9")
+    ev = [x for x in db.rows["events"] if x["type"] == "llm_error"]
+    assert ev and ev[0]["task_id"] == "t9"
+    assert long_detail in ev[0]["reason"]                       # not cut
+    assert "AIza-secret-123" not in ev[0]["reason"] and "abc.def" not in ev[0]["reason"]
+    assert "AIza-secret-123" not in str(e.value)
