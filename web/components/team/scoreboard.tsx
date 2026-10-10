@@ -5,6 +5,7 @@
 import type { Agent, Reward } from "@/lib/types";
 import { ROLLING_WINDOW, scoreboard, rollingReward } from "./lineage";
 import { STATUS_STYLE } from "./styles";
+import { capabilityLabel } from "@/components/live/labels";
 
 const OUTCOME: Record<number, string> = { 0: "failed", 0.5: "partial", 1: "passed" };
 const FEEDBACK: Record<number, string> = { 0: "👎", 0.5: "none", 1: "👍" };
@@ -146,7 +147,7 @@ export function RewardBreakdown({
                     <time dateTime={r.ts}>{new Date(r.ts).toLocaleTimeString()}</time>
                   </td>
                   <td className="py-1 pr-2">
-                    <span className="font-mono">{taskCapability[r.task_id] ?? r.task_id.slice(0, 8)}</span>
+                    <span>{taskCapability[r.task_id] ? capabilityLabel(taskCapability[r.task_id]) : "A task"}</span>
                     {reasons[r.task_id] && (
                       <p className="mt-0.5 max-w-xs break-words text-neutral-500">{reasons[r.task_id]}</p>
                     )}

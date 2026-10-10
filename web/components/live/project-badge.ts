@@ -11,7 +11,7 @@ const BADGES: Record<string, ProjectBadge> = {
     className: `${PILL} border-violet-400 bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300`,
   },
   reference: {
-    label: "Reference",
+    label: "Reference run",
     title: "The paper's reference script run by hand (papers/), the yardstick for the lab's runs",
     className: `${PILL} border-sky-400 bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300`,
   },

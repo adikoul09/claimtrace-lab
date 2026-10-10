@@ -5,6 +5,7 @@
 // Rewards are not in the Realtime publication; the controller's reward events (which are) trigger a refetch.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { capabilityLabel } from "@/components/live/labels";
 import type { Agent, Event, Reward, Task } from "@/lib/types";
 import { applyAgentChange, sortAgents, type AgentChange } from "./agents";
 import { LessonsPanel } from "./lessons-panel";
@@ -209,7 +210,7 @@ function AgentCard({
   selected: boolean;
   onSelect: (id: string) => void;
 }) {
-  const ref = (id: string | null) => (id ? names[id] ?? id.slice(0, 8) : null);
+  const ref = (id: string | null) => (id ? names[id] ?? "a removed agent" : null);
   const parent = ref(a.parent_id);
   const mergedInto = ref(a.merged_into);
 
@@ -247,9 +248,9 @@ function AgentCard({
         {a.capabilities.map((c) => (
           <li
             key={c}
-            className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+            className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
           >
-            {c}
+            {capabilityLabel(c)}
           </li>
         ))}
       </ul>
