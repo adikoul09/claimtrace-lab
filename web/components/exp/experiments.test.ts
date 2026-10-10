@@ -75,6 +75,11 @@ test("groupMetrics keeps NaN values as gaps with their raw text, never as number
   assert.equal(curves[0].points[1].text, "0.3");
 });
 
+test("groupMetrics shows a NULL value (NaN or inf, migration 003) as a non-finite gap", () => {
+  const { curves } = groupMetrics([m("1", "loss", 1, null, 7), m("2", "loss", 2, 0.3, 9)]);
+  assert.deepEqual([curves[0].points[0].value, curves[0].points[0].text], [null, "non-finite"]);
+});
+
 test("upsertRows replaces by id and appends new rows", () => {
   const out = upsertRows([{ id: "a", v: 1 }, { id: "b", v: 1 }], [{ id: "a", v: 2 }, { id: "c", v: 1 }]);
   assert.deepEqual(out, [{ id: "a", v: 2 }, { id: "b", v: 1 }, { id: "c", v: 1 }]);

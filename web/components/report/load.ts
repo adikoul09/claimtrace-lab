@@ -6,6 +6,7 @@ import {
   parseClaims,
   type EventRow,
   type ExpRow,
+  type GradedEvent,
   type LlmRow,
   type MetricRow,
   type ProjectRow,
@@ -46,12 +47,20 @@ async function runRows(db: SupabaseClient, projectId: string) {
 }
 
 export async function loadReport(db: SupabaseClient, projectId: string): Promise<ReportBundle> {
-  const [p, paper, exps, run] = await Promise.all([
+  const [p, paper, exps, run, gradedEvents] = await Promise.all([
     db.from("projects").select("id,title,arxiv_id,created_at,status,tags").eq("id", projectId).maybeSingle(),
     db.from("papers").select("claims").eq("project_id", projectId).maybeSingle(),
     db.from("experiments").select(EXP_COLS).eq("project_id", projectId),
     runRows(db, projectId),
+    // Grading detail (the explanation and its number check) is in the graded event's data (CONTRACTS.md §5).
+    db.from("events").select("ts,data").eq("project_id", projectId).eq("type", "graded"),
   ]);
+  const graded: GradedEvent[] = (check(gradedEvents) as { ts: string; data: Record<string, unknown> | null }[]).flatMap(
+    (e) =>
+      typeof e.data?.experiment_id === "string"
+        ? [{ experiment_id: e.data.experiment_id, ts: e.ts, explanation: e.data.explanation }]
+        : [],
+  );
   const project = check(p) as ReportProject | null;
   const experiments = check(exps) as ExpRow[];
   const paperRow = check(paper) as { claims: unknown } | null;
@@ -67,7 +76,7 @@ export async function loadReport(db: SupabaseClient, projectId: string): Promise
       )
     : [];
 
-  // Memory effect: the newest earlier real (non-test) project of the same paper is "run 1".
+  // Memory effect: the newest earlier real project of the same paper is "run 1" (not test, reference or precomputed).
   let previous = null;
   if (project?.arxiv_id) {
     const prev = check(
@@ -75,7 +84,7 @@ export async function loadReport(db: SupabaseClient, projectId: string): Promise
         .from("projects")
         .select("id,title,arxiv_id,created_at,status")
         .eq("arxiv_id", project.arxiv_id)
-        .neq("status", "test")
+        .not("status", "in", "(test,reference,precomputed)")
         .lt("created_at", project.created_at)
         .order("created_at", { ascending: false })
         .limit(1),
@@ -87,6 +96,7 @@ export async function loadReport(db: SupabaseClient, projectId: string): Promise
     claims: parseClaims(paperRow?.claims),
     experiments,
     metrics,
+    graded,
     memory: project ? { project, ...run, previous } : undefined,
   });
   return { project, hasPaper: paperRow !== null, data };

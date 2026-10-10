@@ -80,6 +80,66 @@ test("readVerdicts reads the Analyst's object: cards, relative claims, explanati
   assert.ok(!g.cards.has("rules"), "top-level keys are not claims");
 });
 
+// docs/CONTRACTS.md §5: a list, one item per claim; relative claims are "<method>_vs_<baseline>" items.
+const CONTRACT = [
+  { claim_id: "c7", verdict: "partially reproduced", ours: 80, paper: 67, margin: 10, note: "(1 seed) c7 better than c8 still holds", log_line: 186 },
+  { claim_id: "c8", verdict: "reproduced", ours: 143, paper: 146, margin: 10, note: "(1 seed)", log_line: 280 },
+  { claim_id: "c9", verdict: "not runnable", ours: null, paper: 74, margin: 10, note: "no METRIC line", log_line: null },
+  { claim_id: "c7_vs_c8", verdict: "partially reproduced", ours: 63, paper: 79, margin: 10, note: "(1 seed) gap smaller than reported" },
+];
+
+test("readVerdicts reads the CONTRACTS.md list: seed note joins the label, relative items split out", () => {
+  const g = readVerdicts(CONTRACT);
+  assert.deepEqual([...g.cards.keys()], ["c7", "c8", "c9"]);
+  const c7 = g.cards.get("c7")!;
+  assert.deepEqual([c7.verdict, c7.label, c7.why, c7.ours, c7.log_line, c7.margin], [
+    "partially_reproduced",
+    "Partially reproduced (1 seed)",
+    "c7 better than c8 still holds",
+    80,
+    186,
+    10,
+  ]);
+  assert.deepEqual([g.cards.get("c8")!.label, g.cards.get("c8")!.why], ["Reproduced (1 seed)", null]);
+  assert.equal(g.cards.get("c9")!.ours, null);
+  assert.deepEqual(g.relative.map((r) => [r.claim, r.method, r.baseline, r.paper_gap, r.ours_gap, r.label]), [
+    ["c7 beats c8", "c7", "c8", 79, 63, "Partially reproduced (1 seed) gap smaller than reported"],
+  ]);
+});
+
+test("buildReport uses the item's margin and takes the explanation from the graded event", () => {
+  const claims = parseClaims([claim("c7", 67), claim("c8", 146), claim("c9", 74)]);
+  const d = buildReport({
+    claims,
+    experiments: [exp("e", { margin: null, verdicts: CONTRACT })],
+    metrics: [],
+    graded: [
+      { experiment_id: "e", ts: "2026-10-10T10:00:00Z", explanation: { text: "old", accepted: true, problems: [] } },
+      { experiment_id: "e", ts: "2026-10-10T11:00:00Z", explanation: { text: "Teacher 80 vs 67.", accepted: true, problems: [] } },
+      { experiment_id: "other", ts: "2026-10-10T12:00:00Z", explanation: { text: "no", accepted: true, problems: [] } },
+    ],
+  });
+  assert.deepEqual(d.rows.map((r) => [r.claim.id, r.margin, r.ours.map((p) => p.log_line)]), [
+    ["c7", 10, [186]],
+    ["c8", 10, [280]],
+    ["c9", 10, []],
+  ]);
+  assert.equal(d.graded[0].explanation?.text, "Teacher 80 vs 67.");
+  assert.deepEqual(d.graded[0].relative[0].lines, [
+    { exp: "e", line: 186 },
+    { exp: "e", line: 280 },
+  ]);
+});
+
+test("a NULL metric value (NaN or inf in the log, migration 003) shows as non-finite", () => {
+  const d = buildReport({
+    claims: parseClaims([claim("c9", 74)]),
+    experiments: [exp("e", { config: { claim_map: { distilled: "c9" } } })],
+    metrics: [metric("e", "final_distilled", null, 300)],
+  });
+  assert.deepEqual(d.rows[0].ours.map((p) => [p.text, p.value]), [["non-finite", null]]);
+});
+
 test("readVerdicts still reads a bare list and the old {claim_id: verdict} dict", () => {
   assert.equal(readVerdicts([{ claim_id: "c7", verdict: "Not runnable" }]).cards.get("c7")?.verdict, "not_runnable");
   const old = readVerdicts({ c7: "reproduced", c8: { verdict: "Not reproduced", reason: "gap 40 > margin 10" } });

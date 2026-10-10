@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ExperimentsView } from "@/components/exp/experiments-view";
 import { EventStream } from "@/components/live/event-stream";
 import { NotesView } from "@/components/report/notes-view";
+import { isPrecomputed, PRECOMPUTED_LABEL } from "@/components/report/precomputed";
 import { ReportView } from "@/components/report/report-view";
 import { TeamView } from "@/components/team/team-view";
 import { supabase } from "@/lib/supabase";
@@ -34,6 +35,11 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
     <>
       <div className="mb-4 min-w-0">
         <h1 className="break-words text-lg font-semibold">{project?.title ?? "Unknown project"}</h1>
+        {isPrecomputed(project) && (
+          <p className="mt-1 inline-block rounded border border-amber-400 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+            {PRECOMPUTED_LABEL} · not a live run
+          </p>
+        )}
         <p className="break-all font-mono text-xs text-neutral-500">
           {project?.arxiv_id ? `arXiv ${project.arxiv_id} · ` : ""}
           {id}

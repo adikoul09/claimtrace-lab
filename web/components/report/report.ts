@@ -59,6 +59,7 @@ export type VerdictCard = {
   log_line: number | null;
   metric_name: string | null;
   model: string | null;
+  margin: number | null;
 };
 export type RelativeVerdict = {
   claim: string;
@@ -94,20 +95,40 @@ export type Grade = {
 
 const norm = (v: string) => v.trim().toLowerCase().replace(/[\s-]+/g, "_");
 
+const SEEDS = /^\((\d+ seeds?)\)\s*/;
+
 function card(id: unknown, v: unknown): VerdictCard | null {
   const c = isObj(v) ? v : { verdict: v };
   if (typeof id !== "string" || typeof c.verdict !== "string") return null;
-  const why = c.why ?? c.note ?? c.reason;
+  const raw = c.why ?? c.note ?? c.reason;
+  let why = typeof raw === "string" ? raw : null;
+  let label = typeof c.label === "string" ? c.label : verdictLabel(norm(c.verdict)).label;
+  // CONTRACTS.md §5: with fewer than 3 seeds the note starts with "(1 seed)"; it belongs with the verdict.
+  const seeds = typeof c.label === "string" || !why ? null : SEEDS.exec(why);
+  if (seeds && why) {
+    label += ` (${seeds[1]})`;
+    why = why.slice(seeds[0].length) || null;
+  }
   return {
     claim_id: id,
     verdict: norm(c.verdict),
-    label: typeof c.label === "string" ? c.label : verdictLabel(norm(c.verdict)).label,
-    why: typeof why === "string" ? why : null,
+    label,
+    why,
     ours: num(c.ours),
     delta: num(c.delta),
     log_line: num(c.log_line),
     metric_name: typeof c.metric_name === "string" ? c.metric_name : null,
     model: typeof c.model === "string" ? c.model : null,
+    margin: num(c.margin),
+  };
+}
+
+export function parseExplanation(e: unknown): Explanation | null {
+  if (!isObj(e)) return null;
+  return {
+    text: typeof e.text === "string" && e.text ? e.text : null,
+    accepted: e.accepted === true,
+    problems: Array.isArray(e.problems) ? e.problems.filter((p): p is string => typeof p === "string") : [],
   };
 }
 
@@ -140,8 +161,9 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
   });
 }
 
-/** experiments.verdicts → Grade. The contract is the Analyst's object {claims: [card...], relative, explanation, ...};
- *  a bare list of cards and the older {claim_id: verdict | {verdict, note}} dict are still read. */
+/** experiments.verdicts → Grade. The contract (docs/CONTRACTS.md §5) is a list, one item per claim, relative claims as
+ *  "<method>_vs_<baseline>" items whose ours/paper are gaps. Still read as fallbacks: the Analyst's object
+ *  {claims: [...], relative, explanation, ...} and the old {claim_id: verdict | {verdict, note}} dict. */
 export function readVerdicts(json: unknown): Grade {
   const g: Grade = {
     cards: new Map(),
@@ -155,7 +177,19 @@ export function readVerdicts(json: unknown): Grade {
   const addAll = (list: unknown[]) => {
     for (const v of list) if (isObj(v)) {
       const c = card(v.claim_id ?? v.claim, v);
-      if (c) g.cards.set(c.claim_id, c);
+      if (!c) continue;
+      const vs = /^(.+)_vs_(.+)$/.exec(c.claim_id);
+      if (vs)
+        g.relative.push({
+          claim: `${vs[1]} beats ${vs[2]}`,
+          method: vs[1],
+          baseline: vs[2],
+          paper_gap: num(v.paper),
+          ours_gap: c.ours,
+          verdict: c.verdict,
+          label: c.label + (c.why ? ` ${c.why}` : ""),
+        });
+      else g.cards.set(c.claim_id, c);
     }
   };
   if (Array.isArray(json)) {
@@ -177,13 +211,7 @@ export function readVerdicts(json: unknown): Grade {
           ]
         : [],
     );
-    const e = json.explanation;
-    if (isObj(e))
-      g.explanation = {
-        text: typeof e.text === "string" && e.text ? e.text : null,
-        accepted: e.accepted === true,
-        problems: Array.isArray(e.problems) ? e.problems.filter((p): p is string => typeof p === "string") : [],
-      };
+    g.explanation = parseExplanation(json.explanation);
     g.marginNote = typeof json.margin_note === "string" ? json.margin_note : null;
     g.seeds = num(json.seeds);
     g.rules = typeof json.rules === "string" ? json.rules : null;
@@ -220,7 +248,9 @@ export type ExpRow = {
   status: string;
   pruned_reason: string | null;
 };
-export type MetricRow = { experiment_id: string; name: string; step: number; value: number; log_line: number };
+export type MetricRow = { experiment_id: string; name: string; step: number; value: number | null; log_line: number };
+/** From a `graded` event's data: grading detail lives there under the contract (CONTRACTS.md §5). */
+export type GradedEvent = { experiment_id: string; ts: string; explanation: unknown };
 export type TaskRow = { id: string; capability: string; status: string; created_at: string; finished_at: string | null };
 export type LlmRow = { task_id: string | null; tokens_in: number; tokens_out: number };
 export type EventRow = { id: string; type: string; message: string; ts: string };
@@ -279,10 +309,12 @@ export type ReportData = {
   memory: { current: RunStats; previous: RunStats | null } | null;
 };
 
+/** NaN or inf in the log is stored as NULL (CONTRACTS.md §5, migration 003). */
+export const valueText = (v: unknown) => (v === null || v === undefined ? "non-finite" : String(v));
 const point = (m: MetricRow): Point => ({
   step: m.step,
   value: num(m.value),
-  text: String(m.value),
+  text: valueText(m.value),
   log_line: m.log_line,
 });
 const finalName = (model: string) => (model.startsWith("final_") ? model : `final_${model}`);
@@ -325,6 +357,7 @@ export type ReportInput = {
   claims: Claim[];
   experiments: ExpRow[];
   metrics: MetricRow[];
+  graded?: GradedEvent[];
   memory?: {
     project: ProjectRow;
     tasks: TaskRow[];
@@ -373,12 +406,16 @@ export function buildReport(input: ReportInput): ReportData {
         metricName,
         experimentId: e.id,
         experimentLabel: e.label,
-        margin: e.margin,
+        margin: v?.margin ?? e.margin,
         ours,
         delta: v?.delta ?? null,
         verdict: v,
       });
     }
+    const latest = (input.graded ?? [])
+      .filter((x) => x.experiment_id === e.id)
+      .sort((a, b) => ms(b.ts) - ms(a.ts))[0];
+    g.explanation ??= latest ? parseExplanation(latest.explanation) : null;
     if (g.cards.size || g.relative.length || g.explanation) {
       graded.push({
         experimentId: e.id,

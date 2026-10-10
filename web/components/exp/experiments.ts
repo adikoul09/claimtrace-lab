@@ -25,7 +25,7 @@ export function buildTree<T extends ExpRow>(rows: T[]): TreeNode<T>[] {
   return roots;
 }
 
-type MetricRow = { id: string; name: string; step: number; value: number; log_line: number };
+type MetricRow = { id: string; name: string; step: number; value: number | null; log_line: number };
 /** value is null when the run logged a non-finite number (NaN, inf); text keeps what was stored. */
 export type Point = { step: number; value: number | null; text: string; log_line: number };
 export type Series = { name: string; points: Point[] };
@@ -36,7 +36,9 @@ export function groupMetrics(rows: MetricRow[]): { curves: Series[]; scalars: Se
   const byName = new Map<string, Point[]>();
   for (const r of rows) {
     const v = typeof r.value === "number" && Number.isFinite(r.value) ? r.value : null;
-    const p = { step: r.step, value: v, text: String(r.value), log_line: r.log_line };
+    // NaN or inf in the log is stored as NULL (CONTRACTS.md §5, migration 003).
+    const text = r.value === null || r.value === undefined ? "non-finite" : String(r.value);
+    const p = { step: r.step, value: v, text, log_line: r.log_line };
     byName.set(r.name, [...(byName.get(r.name) ?? []), p]);
   }
   const series = [...byName].map(([name, points]) => ({
