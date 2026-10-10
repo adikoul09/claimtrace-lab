@@ -56,3 +56,38 @@ def test_runtime_prompt_is_trimmed_under_the_request_limit():
     prompt = runtime.step_prompt("goal", transcript)
     assert len(prompt.encode("utf-8")) <= runtime.MAX_PROMPT_BYTES
     assert "[cut]" in prompt
+
+
+def test_claims_are_read_in_parts_and_merged_without_duplicates():
+    """Live run: one claims answer for the whole excerpt overran the gateway's 4000-token output cap; the excerpt is
+    read in parts of at most PART_BYTES, one compact claims call each, merged and de-duplicated by code."""
+    body = ("We trained the network for many epochs and measured the test error on the held-out set with care. " * 30)
+    text = paper.render([f"Abstract\nA result of 74 test errors.\n3\nExperiments on MNIST\n{body}\nTable 1: 67 errors",
+                         f"4\nResults on speech\n{body}\nTable 2: 58.9% accuracy",
+                         f"5\nAblations\n{body}\nTable 3: 61.1% accuracy"])
+    calls = []
+
+    class FakeLLM:
+        def call(self, req, **kw):
+            calls.append(req)
+            if "settings" in req.schema["properties"]:
+                out = {"settings": [{"key": "epochs", "applies_to": "all", "value": None, "quote": None, "page": None}]}
+            else:  # every part also reports the abstract's claim: the duplicates must merge
+                out = {"claims": [{"quote": "A result of 74 test errors.", "page": 1, "value": 74, "metric": "test errors",
+                                   "unit": "errors", "direction": "lower_is_better", "whose": "method",
+                                   "table_or_section": "Abstract", "model": "net"},
+                                  {"quote": f"Table {len(calls)}", "page": len(calls), "value": len(calls),
+                                   "metric": "x", "unit": "x", "direction": "lower_is_better", "whose": "method",
+                                   "table_or_section": "t", "model": f"m{len(calls)}"}]}
+            return type("R", (), {"output": out, "tokens_in": 10, "tokens_out": 5, "model": "m", "mode": "live",
+                                  "key": "k"})()
+
+    out = paper.extract(text, llm=FakeLLM(), agent={"name": "reader", "role_prompt": "x"})
+    claim_calls = [r for r in calls if "claims" in r.schema["properties"]]
+    assert len(claim_calls) >= 2 and len(calls) == len(claim_calls) + 1  # parts, then one settings call
+    assert all(len(r.prompt.encode("utf-8")) < len(text.encode("utf-8")) for r in claim_calls)
+    assert all("at most 20 words" in r.prompt and "page" in r.prompt for r in claim_calls)
+    values = [c["value"] for c in out["claims"]]
+    assert values.count(74) == 1 and len(values) == 1 + len(claim_calls)
+    assert [c["id"] for c in out["claims"]] == [f"c{i}" for i in range(1, len(values) + 1)]
+    assert out["tokens"] == 15 * len(calls)
