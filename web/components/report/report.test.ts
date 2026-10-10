@@ -495,3 +495,18 @@ test("buildReport falls back to verdicts.settings_diff when config.why has no ro
   assert.deepEqual(d.settingsDiff?.rows.map((r) => r.key), ["old"]);
   assert.equal(d.settingsDiff?.configLogLine, null);
 });
+
+test("parseClaims reads ANY-1's runnable tag (papers.claims[i].runnable) and leaves it null when absent", () => {
+  const out = parseClaims([
+    claim("c1", 60.8, { runnable: { status: "not_runnable", reason: "needs GPU: 2000 hours on a cluster", facts: {} } }),
+    claim("c2", 67, { runnable: { status: "runnable", reason: "MNIST is public and small" } }),
+    claim("c3", 74),
+    claim("c4", 1, { runnable: { status: "maybe" } }),
+  ]);
+  assert.deepEqual(out.map((c) => c.runnable), [
+    { runnable: false, reason: "needs GPU: 2000 hours on a cluster" },
+    { runnable: true, reason: "MNIST is public and small" },
+    null,
+    null,
+  ]);
+});

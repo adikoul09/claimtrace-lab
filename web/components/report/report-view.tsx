@@ -604,13 +604,12 @@ function UntestedClaims({ claims }: { claims: Claim[] }) {
     <div>
       <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
         {claims.map((c) => (
-          <li key={c.id} className="py-2">
+          <li key={c.id} className="space-y-1 py-2" title={`claim ${c.id}`}>
             <div className="flex flex-wrap items-baseline gap-x-2">
-              <span className="font-mono text-xs text-neutral-500">{c.id}</span>
-              <span className="break-words">
+              <span className="break-words font-medium">
                 {c.model} · {c.metric}
               </span>
-              <span className="font-medium tabular-nums">
+              <span className="tabular-nums">
                 {c.value} {c.unit}
               </span>
               {!c.valid && (
@@ -619,7 +618,19 @@ function UntestedClaims({ claims }: { claims: Claim[] }) {
                 </span>
               )}
             </div>
-            <Quote claim={c} />
+            {c.quote && (
+              <p className="break-words text-neutral-600 dark:text-neutral-400">
+                &ldquo;{c.quote}&rdquo; <span className="text-xs text-neutral-500">p. {c.page ?? "?"}</span>
+              </p>
+            )}
+            {c.runnable && (
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <Badge tone={c.runnable.runnable ? "good" : "neutral"}>
+                  {c.runnable.runnable ? "Runnable" : "Not runnable"}
+                </Badge>
+                {c.runnable.reason && <span className="break-words text-xs text-neutral-500">{c.runnable.reason}</span>}
+              </div>
+            )}
           </li>
         ))}
       </ul>
