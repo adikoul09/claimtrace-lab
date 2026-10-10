@@ -288,7 +288,9 @@ def envbuilder_goal(feedback: str | None = None) -> str:
             "wrong, pip's error lists the versions that exist. For PyTorch CPU wheels you may add the line "
             "--extra-index-url https://download.pytorch.org/whl/cpu\n"
             + (f"Pins known to install here (this executor's own Python runs them; prefer these): {', '.join(pins)}\n"
-               if pins else "")
+               "Call make_env FIRST with exactly the host pins listed (add nothing else unless train.py imports it "
+               "and it isn't installed); once make_env reports env ready, finish immediately; do not write "
+               "validation scripts.\n" if pins else "")
             + "Finish when make_env reports 'env ready'.")
     if feedback:
         goal += f"\n\nThe last run failed because of the environment:\n{feedback}"
