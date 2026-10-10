@@ -440,7 +440,7 @@ class Pipeline:
             title = "Write train.py" if not feedback else "REPAIR(code): fix train.py"
             try:
                 self.agent_step("write_code", title, implementer_goal(design, self.claims, self.settings, feedback),
-                                written, model="smart")
+                                written, model="fast")
                 return path.read_text(encoding="utf-8")
             except StepError as e:
                 if attempt == 2 or isinstance(e, AgentError):  # a quota or budget stop is not a code problem

@@ -165,7 +165,7 @@ def h_paper(ctx: Ctx) -> dict:
     if not arxiv:
         raise StepError("the project has no arxiv_id")
     res = read_paper(ctx.pid, arxiv, db=ctx.db, llm=ctx.llm or LLM(db=ctx.db), agent=ctx.agent, workdir=ctx.workdir,
-                     task_id=ctx.task["id"])
+                     task_id=ctx.task["id"], model="fast")  # fast at the 4000 cap: smart ran out reasoning
     cv = sum(bool(c.get("valid")) for c in res.get("claims", []))
     sv = sum(bool(s.get("valid")) for s in res.get("settings", []))
     return {"outcome": "passed" if cv else "failed", "agent_status": "finished", "tokens": res.get("tokens", 0),
@@ -193,7 +193,7 @@ def h_write_code(ctx: Ctx) -> dict:
         """train.py exists, compiles, meets the CLI/METRIC contract and never touches the golden reference"""
         info = check_written(ctx.workdir, names)
         return {**info, "files": {"train.py": (ctx.workdir / "train.py").read_text(encoding="utf-8")}}
-    return checked(ctx, implementer_goal(design, ctx.claims, ctx.settings) + ctx.notes(), written, model="smart")
+    return checked(ctx, implementer_goal(design, ctx.claims, ctx.settings) + ctx.notes(), written, model="fast")
 
 
 def h_setup_env(ctx: Ctx) -> dict:
