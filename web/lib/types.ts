@@ -98,7 +98,7 @@ export interface Metric {
   experiment_id: string;
   step: number;
   name: string;
-  value: number;
+  value: number | null; // NULL for a NaN/inf METRIC line (migration 003)
   log_line: number;
   ts: string;
 }
