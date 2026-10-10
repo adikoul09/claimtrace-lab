@@ -9,6 +9,7 @@
               approval-gated extend run and final compare are created in order (SPEC §7.4, CONTRACTS.md §5b)
   learn       after a failure-then-recovery or a finished project, the Reporter proposes lessons (SPEC §6)
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
+  engine      an engine_requested event (inbox "Send to engine") queues a new plan with the reviewer's points (T33)
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
   decisions   an awaiting task with a decision moves on (docs/CONTRACTS.md §6), in case the web did not move it
   advance     for each running project, the next ready step becomes a task: agent assigned, required_caps set;
@@ -23,7 +24,8 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, lifecycle, memory, planner, progress, reward, routing, spawn, whatif, wiring
+from lab.controller import (assign, inbox, lifecycle, memory, planner, progress, reward, routing, spawn, whatif,
+                            wiring)
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
 from lab.controller.rules import MAX_REFINES_PER_ROLE, ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
@@ -75,7 +77,8 @@ class Controller:
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
         for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
-                     self.apply_decisions, self.intake, self.plan_queued, self.advance, self.prepare_whatifs,
+                     self.apply_decisions, self.intake, self.engine_requests, self.plan_queued, self.advance,
+                     self.prepare_whatifs,
                      self.advance_whatifs, self.learn):
             try:
                 step(now)
@@ -395,6 +398,32 @@ class Controller:
                  f"arXiv {p.get('arxiv_id') or '?'}, budget {p.get('budget_cpu_min')} CPU-min; queued for planning",
                  project_id=p["id"])
 
+    def engine_requests(self, now: datetime) -> None:
+        """T33: each engine_requested event is acted on once: a plan_redirect event quoting the reviewer's points and a
+        queued plan task carrying them, or an engine_request_refused event with the reason."""
+        db = self.db
+        for r in self.q("events", "id,project_id,type,data,ts").eq("type", "engine_requested").order("ts") \
+                .execute().data:
+            if not self.once(("engine_request", r["id"])):
+                continue
+            done = db.table("events").select("id").in_("type", ["plan_redirect", "engine_request_refused"]) \
+                .eq("data->>engine_request_id", r["id"]).limit(1).execute().data
+            if done:
+                continue
+            eid = (r.get("data") or {}).get("email_event_id")
+            rows = db.table("events").select("id,project_id,type,data").eq("id", eid).execute().data if eid else []
+            email = rows[0] if rows else None
+            why = inbox.problem(r, email)
+            if why:
+                emit(db, "engine_request_refused", "reviewer email not sent to the engine", why,
+                     project_id=r.get("project_id"), data={"engine_request_id": r["id"], "email_event_id": eid})
+                continue
+            task, ev = inbox.plan_request(r, email)
+            row = db.table("tasks").insert(task).execute().data[0]
+            db.table("projects").update({"status": "planning"}).eq("id", r["project_id"]).execute()
+            emit(db, ev["type"], ev["message"], ev["reason"], project_id=r["project_id"], task_id=row["id"],
+                 data={**ev["data"], "plan_task_id": row["id"]})
+
     def plan_queued(self, now: datetime) -> None:
         for t in self.q("tasks", "id").eq("status", "queued").eq("capability", "plan").execute().data:
             claimed = self.db.table("tasks").update({"status": "running", "executor": CONTROLLER_NAME,
@@ -418,8 +447,10 @@ class Controller:
         if not (paper and paper.get("claims")) and project.get("arxiv_id"):
             _, abstract = planner.arxiv_abstract(project["arxiv_id"])
         try:
+            note = (task.get("input") or {}).get("redirect_note")
             plan, resp = planner.make_plan(self.llm, project, paper, lessons, agents, task_id=task["id"],
-                                           abstract=abstract, scores=scores)
+                                           abstract=abstract, scores=scores,
+                                           extra=inbox.planner_extra(note) if note else "")
         except Exception as e:
             reason = f"{type(e).__name__}: {e}"[:500]
             db.table("tasks").update({"status": "failed", "output": {"error": reason},
@@ -437,6 +468,8 @@ class Controller:
         memory.apply(db, lessons, tags, "planner", project_id=pid, task_id=task["id"])
         memory.skip(db, skipped_lessons, tags, "planner", project_id=pid, task_id=task["id"])
         reason = plan.reason or "the planner gave no reason"
+        if (task.get("input") or {}).get("redirect_note"):
+            reason = "redirected by a reviewer's email; " + reason
         if plan.dropped:
             reason += f" | code dropped {len(plan.dropped)} step(s): " + "; ".join(plan.dropped)
         emit(db, "plan", f"plan: {len(steps)} steps: " + " → ".join(s["capability"] for s in steps), reason,
