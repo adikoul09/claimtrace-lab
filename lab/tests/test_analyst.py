@@ -163,3 +163,24 @@ def test_explanation_failing_twice_is_rejected_and_not_shown(monkeypatch):
     out = an.explain(_DB(), g, "exp", None)
     assert out["accepted"] is False and out["text"] is None
     assert "45" in out["problems"][0]
+
+
+# ---- experiments.verdicts list (docs/CONTRACTS.md §5) -------------------------------------------------------------
+
+def test_verdict_items_follow_the_contract_list():
+    items = an.verdict_items(an.grade(CLAIMS, CLAIM_MAP, finals_from_golden(), margin=10, seeds=1))
+    by = {i["claim_id"]: i for i in items}
+    assert set(by) == {"c7", "c8", "c9", "c9_vs_c8"}
+    assert by["c8"] == {"claim_id": "c8", "verdict": "reproduced", "ours": 143, "paper": 146, "margin": 10,
+                        "note": by["c8"]["note"], "log_line": 101}
+    assert by["c9"]["verdict"] == "partially reproduced" and by["c9"]["note"].startswith("(1 seed)")
+    assert (by["c9_vs_c8"]["ours"], by["c9_vs_c8"]["paper"]) == (47, 72)
+    assert "gap smaller than reported" in by["c9_vs_c8"]["note"]
+
+
+def test_not_runnable_item_has_null_ours_and_no_log_line():
+    finals = finals_from_golden()
+    del finals["student_distilled"]
+    by = {i["claim_id"]: i for i in an.verdict_items(an.grade(CLAIMS, CLAIM_MAP, finals, margin=10, seeds=3))}
+    assert (by["c9"]["verdict"], by["c9"]["ours"], by["c9"]["log_line"]) == ("not runnable", None, None)
+    assert not by["c9"]["note"].startswith("(")  # 3 seeds: no seed note

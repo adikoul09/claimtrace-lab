@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from lab.db import ROOT, client, emit, setting
-from lab.executor.logparse import error_signature, last_traceback, parse_metric
+from lab.executor.logparse import error_signature, last_traceback, parse_divergence, parse_metric
 
 RUNS = ROOT / "runs"
 HEARTBEAT_S = 10
@@ -147,6 +147,16 @@ class LogSink:
         self.local.close()
 
 
+def advertised_caps(name: str, caps: list[str]) -> list[str]:
+    """EXECUTOR_CAPS plus 'agent' (this worker runs agent tasks) and 'host:<name>' (tasks pinned to this machine,
+    e.g. a full run that must use the run folder a smoke run left here)."""
+    out = list(dict.fromkeys(caps))
+    for extra in ("agent", f"host:{name}"):
+        if extra not in out:
+            out.append(extra)
+    return out
+
+
 def write_files(files: dict, cwd: Path) -> list[str]:
     """Write a task's code into its run dir. Every path must stay inside cwd. Returns the paths written, sorted."""
     root = Path(cwd).resolve()
@@ -209,11 +219,14 @@ class Worker:
         rows = self.db.rpc("claim_task", {"executor_name": self.name, "caps": self.caps}).execute().data
         return rows[0] if rows else None
 
-    def finish(self, task: dict, ok: bool, output: dict, message: str, reason: str, cpu: float = 0.0) -> None:
+    def finish(self, task: dict, ok: bool, output: dict, message: str, reason: str, cpu: float = 0.0,
+               tokens: int | None = None) -> None:
         db, tid = self.db, task["id"]
-        db.table("tasks").update({"status": "done" if ok else "failed", "output": output, "cpu_seconds": cpu,
-                                  "finished_at": utc_now()}).eq("id", tid).execute()
-        if output.get("experiment_id"):
+        patch = {"status": "done" if ok else "failed", "output": output, "cpu_seconds": cpu, "finished_at": utc_now()}
+        if tokens is not None:
+            patch["tokens"] = tokens
+        db.table("tasks").update(patch).eq("id", tid).execute()
+        if task["capability"] == "run" and output.get("experiment_id"):
             db.table("experiments").update({"status": "done" if ok else "failed"}) \
                 .eq("id", output["experiment_id"]).execute()
         emit(db, "task_finished" if ok else "task_failed", message, reason, project_id=task.get("project_id"),
@@ -223,8 +236,6 @@ class Worker:
     def run_task(self, task: dict) -> None:
         db, tid, inp = self.db, task["id"], task.get("input") or {}
         try:
-            if task["capability"] != "run":
-                raise ValueError(f"this worker only runs capability 'run', not {task['capability']!r}")
             if not inp.get("cmd"):
                 raise ValueError("input.cmd is missing")
             python = inp.get("python") or sys.executable
@@ -286,13 +297,20 @@ class Worker:
         timer = threading.Timer(timeout_s, on_timeout)
         timer.daemon = True
         timer.start()
-        n_metrics, unsent = 0, []
+        n_metrics, unsent, n_diverged = 0, [], 0
+        diverged: set[str] = set()
         try:
             for raw in p.stdout:
                 line = raw.rstrip("\r\n")
                 n = sink.add(line)
                 print(f"  | {line}", flush=True)
                 m = parse_metric(line, n)
+                d = None if m else parse_divergence(line, n)
+                if d:
+                    n_diverged += 1
+                    if d.name not in diverged:  # the first per metric; a NaN run repeats it every epoch
+                        diverged.add(d.name)
+                        self.divergence(task, exp_id, d)
                 if m:
                     try:
                         db.table("metrics").insert(m.as_row(exp_id)).execute()
@@ -327,7 +345,7 @@ class Worker:
         sig = None if ok else error_signature(sink.lines)
         output = {"experiment_id": exp_id, "log_path": log_path, "log_lines": len(sink.lines), "exit_code": code,
                   "wall_s": wall, "cpu_s": cpu, "cpu_seconds_source": "rusage" if cpu is not None else "wall_clock",
-                  "metrics": n_metrics, "metrics_unsent": len(unsent),
+                  "metrics": n_metrics, "metrics_unsent": len(unsent), "divergences": n_diverged,
                   "error_signature": sig, "error_log_line": tb.log_line if tb else None,
                   "log_upload_error": sink.error}
         if timed_out.is_set():
@@ -340,6 +358,47 @@ class Worker:
                     f"run {'finished' if ok else 'failed'} on {self.name} in {wall:.0f} s: "
                     f"{n_metrics} metrics, {len(sink.lines)} log lines", reason,
                     cpu=cpu if cpu is not None else wall)
+
+    def run_agent_task(self, task: dict) -> None:
+        """Any capability but `run`: the task's agent through the runtime, via its stage handler
+        (lab/agents/stages.py). tasks.output carries the code-checked outcome (docs/CONTRACTS.md §4)."""
+        from lab.agents.stages import handle
+
+        tid, cap = task["id"], task["capability"]
+        emit(self.db, "task_started", f"{self.name} started {cap}: {(task.get('input') or {}).get('title') or tid[:8]}",
+             f"claimed by {self.name}: required caps {task.get('required_caps') or []} within {self.caps}",
+             project_id=task.get("project_id"), agent_id=task.get("agent_id"), task_id=tid)
+        t0 = time.monotonic()
+        try:
+            out = handle(self.db, task, executor=self.name)
+        except Exception as e:  # a database or programming error: the task fails with it, the worker goes on
+            out = {"outcome": "failed", "agent_status": "failed", "error": f"{type(e).__name__}: {e}"[:1000]}
+        wall = round(time.monotonic() - t0, 1)
+        cpu = out.get("cpu_s")
+        out.update(wall_s=wall, cpu_seconds_source="agent runtime (process CPU + tool wall time)" if cpu is not None
+                   else "wall_clock")
+        ok = out.get("outcome") != "failed"
+        reason = out.get("error") or f"outcome {out.get('outcome')} by the {cap} code check"
+        self.finish(task, ok, out, f"{cap} {'finished' if ok else 'failed'} on {self.name} in {wall:.0f} s "
+                                   f"({out.get('outcome')})", reason,
+                    cpu=cpu if cpu is not None else wall, tokens=out.get("tokens"))
+
+    def divergence(self, task: dict, exp_id: str, d) -> None:
+        """A NaN/inf METRIC line: a metrics row with value NULL and its log line (migration 003; before it the
+        insert is refused and only the event stays), plus a divergence_detected event for the controller."""
+        try:
+            self.db.table("metrics").insert({"experiment_id": exp_id, "name": d.name, "value": None,
+                                             "step": d.step, "log_line": d.log_line}).execute()
+        except Exception:
+            pass  # metrics.value still NOT NULL here; the event below keeps the line
+        try:
+            emit(self.db, "divergence_detected", f"{d.name}={d.raw} at step {d.step}",
+                 f"non-finite METRIC value at log line {d.log_line}: the run diverged",
+                 project_id=task.get("project_id"), agent_id=task.get("agent_id"), task_id=task["id"],
+                 data={"experiment_id": exp_id, "name": d.name, "raw": d.raw, "step": d.step,
+                       "log_line": d.log_line})
+        except Exception as e:  # never stop the run over an event
+            print(f"[worker] divergence event failed: {type(e).__name__}: {e}", flush=True)
 
     # -- main loop ------------------------------------------------------------------------------------------------
     def serve(self, once: bool = False) -> None:
@@ -361,7 +420,7 @@ class Worker:
                 self.busy = True
                 self.beat()
                 try:
-                    self.run_task(task)
+                    (self.run_task if task["capability"] == "run" else self.run_agent_task)(task)
                 finally:
                     self.busy = False
                     self.beat()
@@ -381,7 +440,7 @@ def main(argv=None) -> None:
     caps = [c.strip() for c in (setting("EXECUTOR_CAPS") or "").split(",") if c.strip()]
     if not name or not caps:
         sys.exit("set EXECUTOR_NAME and EXECUTOR_CAPS (env or .env)")
-    Worker(name, caps).serve(once=a.once)
+    Worker(name, advertised_caps(name, caps)).serve(once=a.once)
 
 
 if __name__ == "__main__":

@@ -162,6 +162,31 @@ def number_check(text: str, tables: dict, allowed_extra=()) -> list[str]:
     return unknown
 
 
+def _note(seeds: int, why: str) -> str:
+    """The contract's note: starts with the seed count under 3 seeds."""
+    if seeds >= MIN_SEEDS_FOR_NO_NOTE:
+        return why
+    return f"({seeds} seed{'s' if seeds != 1 else ''}) {why}"
+
+
+def verdict_items(g: dict) -> list[dict]:
+    """experiments.verdicts (docs/CONTRACTS.md §5): one item per claim, lower-case verdict, ours/paper/margin numbers,
+    a note (starting with the seed note under 3 seeds) and the log line of the METRIC that gave `ours`. Relative
+    claims are items '<method>_vs_<baseline>' with the gaps as ours/paper."""
+    items = []
+    for r in g["claims"]:
+        items.append({"claim_id": r["claim_id"], "verdict": r["verdict"].lower(), "ours": r["ours"],
+                      "paper": r["paper"], "margin": r["margin"], "note": _note(g["seeds"], r["why"]),
+                      "log_line": r["log_line"]})
+    for r in g["relative"]:
+        why = (f"gap = baseline minus method; {r['size_note']}" if r.get("size_note") else
+               "gap = baseline minus method")
+        items.append({"claim_id": f"{r['method']}_vs_{r['baseline']}", "verdict": r["verdict"].lower(),
+                      "ours": r.get("ours_gap"), "paper": r["paper_gap"], "margin": r["margin"],
+                      "note": _note(g["seeds"], why), "log_line": None})
+    return items
+
+
 def tables_text(g: dict) -> str:
     lines = ["Claims (paper vs ours; verdicts computed by code):",
              "claim | model | metric | paper | ours | delta | margin | verdict | our log line"]
@@ -176,8 +201,74 @@ def tables_text(g: dict) -> str:
         lines.append("\nOrderings reported by the paper, and whether ours keep them:")
         lines += [f"{r['relation']}: {'holds' if r['holds'] else 'broken' if r['holds'] is False else 'n/a'}"
                   for r in g["relations"]]
+    diff = (g.get("why") or {}).get("settings_diff") or []
+    if diff:
+        lines.append("\nSettings, paper vs ours (labels computed by code):")
+        for r in diff:
+            effs = "; ".join(
+                f"branch {b['branch_id']} set {r['our_key']}={json.dumps(b['value'])}: smoke effect "
+                f"{b['smoke_effect']} on {b['model']} ({b['decision']})"
+                + (f", full-budget effect {b['full_effect']}" if b.get("full_effect") is not None else "")
+                for b in r.get("branch_effects") or [])
+            paper_v = r["paper"] if r["paper"] is not None else "not stated"
+            lines.append(f"{r['key']} | paper: {paper_v} | ours: {r['our_key']} = {json.dumps(r['ours'])} | "
+                         f"{r['label']}" + (f" | {effs}" if effs else ""))
     lines.append(f"\nSeeds: {g['seeds']}")
     return "\n".join(lines)
+
+
+# ---- why it differs (T19): settings diff and branch effects --------------------------------------------------------
+
+def read_log(db, experiment_id: str) -> list[str]:
+    """An experiment's log: the worker's local copy on this machine, else Storage."""
+    from lab.agents.tools import RUNS
+
+    local = RUNS / "logs" / f"{experiment_id}.log"
+    if local.is_file():
+        return local.read_text(encoding="utf-8", errors="replace").splitlines()
+    return db.storage.from_("logs").download(f"{experiment_id}.log").decode("utf-8", "replace").splitlines()
+
+
+def _finals_of(db, experiment_id: str) -> dict:
+    rows = db.table("metrics").select("name,value").eq("experiment_id", experiment_id).execute().data
+    return {r["name"][len("final_"):]: r["value"] for r in rows
+            if r["name"].startswith("final_") and r["value"] is not None}
+
+
+def why_tables(db, exp: dict, settings: list[dict], read=None) -> dict:
+    """The settings diff of a reproduction experiment and the effects of the what-if branches made from it."""
+    from lab.agents import whatif as wi, why
+    from lab.agents.reproduce import StepError
+
+    cfg = exp.get("config") or {}
+    try:
+        config, line = wi.parse_config((read or (lambda e: read_log(db, e)))(exp["id"]))
+    except Exception as e:  # StepError or a missing log: the table says why it is empty
+        return {"settings_diff": [], "error": str(e) if isinstance(e, StepError) else f"log: {type(e).__name__}"}
+    budget = cfg.get("budget") or {k: cfg[k] for k in ("epochs", "subset", "seeds") if cfg.get(k) is not None}
+    su = (cfg.get("design") or {}).get("settings_used")
+    rows = why.settings_diff(settings, config, budget, set(su) if su is not None else None)
+    exps = db.table("experiments").select("*").eq("project_id", exp["project_id"]).execute().data
+    parent_finals, branches = _finals_of(db, exp["id"]), []
+    for e in exps:
+        w = (e.get("config") or {}).get("whatif") or {}
+        if e.get("parent_id") != exp["id"] or not w or (e.get("config") or {}).get("scale") != "smoke":
+            continue
+        full = next((x for x in exps if ((x.get("config") or {}).get("whatif") or {}).get("task_id") == w.get(
+            "task_id") and x["config"]["whatif"].get("branch_id") == w.get("branch_id")
+            and x["config"].get("scale") == "full" and x.get("status") == "done"), None)
+        full_effect = None
+        if full and w.get("model") in parent_finals:
+            v = _finals_of(db, full["id"]).get(w["model"])
+            full_effect = None if v is None else round(v - parent_finals[w["model"]], 4)
+        branches.append({"id": w.get("branch_id"), "key": w.get("key"), "value": w.get("value"),
+                         "decision": w.get("decision"), "effect": w.get("effect"), "score": w.get("score"),
+                         "model": w.get("model"), "experiment_id": e["id"], "full_effect": full_effect})
+    rows = why.attach_effects(rows, branches)
+    labels: dict[str, int] = {}
+    for r in rows:
+        labels[r["label"]] = labels.get(r["label"], 0) + 1
+    return {"settings_diff": rows, "config_log_line": line, "labels": labels}
 
 
 EXPLAIN_GOAL = ("Explain in plain language, in 3 to 6 sentences, what these verdicts mean for the paper's claims and "
@@ -186,19 +277,23 @@ EXPLAIN_GOAL = ("Explain in plain language, in 3 to 6 sentences, what these verd
                 "rejects the text if it contains any other number.\n\n")
 
 
-def explain(db, g: dict, experiment_id: str, project_id: str | None, llm=None) -> dict:
-    """The Analyst agent writes the text; code checks every number. One retry with the unknown numbers listed."""
+def explain(db, g: dict, experiment_id: str, project_id: str | None, llm=None, agent: dict | None = None,
+            task_id=None) -> dict:
+    """The Analyst agent writes the text; code checks every number. One retry with the unknown numbers listed.
+    agent: the task's assigned agent (worker path); otherwise the best active explain_diff agent."""
     from lab.agents.runtime import run_agent
 
-    rows = db.table("agents").select("*").eq("status", "active").contains("capabilities", ["explain_diff"]) \
-        .order("version", desc=True).execute().data
-    if not rows:
-        return {"text": None, "accepted": False, "problems": ["no active agent has capability explain_diff"]}
-    agent, feedback, tries = rows[0], "", []
+    if agent is None:
+        rows = db.table("agents").select("*").eq("status", "active").contains("capabilities", ["explain_diff"]) \
+            .order("version", desc=True).execute().data
+        if not rows:
+            return {"text": None, "accepted": False, "problems": ["no active agent has capability explain_diff"]}
+        agent = rows[0]
+    feedback, tries = "", []
     workdir = Path(__file__).resolve().parents[2] / "runs" / (project_id or "analyst") / "analyst"
     for attempt in (1, 2):
         res = run_agent(agent, EXPLAIN_GOAL + tables_text(g) + feedback, workdir, db=db, llm=llm,
-                        project_id=project_id)
+                        project_id=project_id, task_id=task_id)
         if res.status != "finished":
             tries.append({"status": res.status, "reason": res.reason})
             return {"text": None, "accepted": False, "agent": agent["name"], "tries": tries,
@@ -214,13 +309,13 @@ def explain(db, g: dict, experiment_id: str, project_id: str | None, llm=None) -
 
 
 def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict | None = None,
-        with_explanation: bool = True) -> dict:
+        with_explanation: bool = True, agent: dict | None = None, task_id=None, llm=None, log_reader=None) -> dict:
     exp = db.table("experiments").select("*").eq("id", experiment_id).single().execute().data
     cfg = exp.get("config") or {}
     claim_map = claim_map or cfg.get("claim_map")
     if not claim_map:
         raise SystemExit("the experiment has no config.claim_map; pass --claim-map name=claim_id,...")
-    paper = db.table("papers").select("claims").eq("project_id", exp["project_id"]).single().execute().data
+    paper = db.table("papers").select("claims,settings").eq("project_id", exp["project_id"]).single().execute().data
     margin = exp.get("margin")
     margin_note = None
     if margin is None:
@@ -241,15 +336,20 @@ def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict |
     if margin_note:
         g["margin_note"] = f"margin not set on the experiment; graded with the floor: {margin_note}"
     g["log_path"] = exp.get("log_path")
-    g["explanation"] = (explain(db, g, experiment_id, exp["project_id"]) if with_explanation else
+    if not cfg.get("whatif"):  # a branch is explained through its parent's table
+        g["why"] = why_tables(db, exp, paper.get("settings") or [], read=log_reader)
+        db.table("experiments").update({"config": {**cfg, "why": g["why"]}}).eq("id", experiment_id).execute()
+    g["explanation"] = (explain(db, g, experiment_id, exp["project_id"], llm=llm, agent=agent, task_id=task_id)
+                        if with_explanation else
                         {"text": None, "accepted": False, "problems": ["not requested"]})
-    db.table("experiments").update({"verdicts": g}).eq("id", experiment_id).execute()
+    db.table("experiments").update({"verdicts": verdict_items(g)}).eq("id", experiment_id).execute()
     summary = ", ".join(f"{r['claim_id']} {r['label']}" for r in g["claims"])
     emit(db, "graded", f"graded: {summary}",
          f"code verdicts ({RULES}); margin {g['margin']}; explanation "
          + ("accepted by the number check" if g["explanation"]["accepted"] else
             f"not shown: {'; '.join(g['explanation']['problems'])}"[:600]),
-         project_id=exp["project_id"], data={"experiment_id": experiment_id})
+         project_id=exp["project_id"], task_id=task_id, agent_id=(agent or {}).get("id"),
+         data={"experiment_id": experiment_id, "grade": g})  # rules, relations, explanation and its check
     return g
 
 

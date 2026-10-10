@@ -43,6 +43,26 @@ def parse_metric(line: str, log_line: int) -> Optional[Metric]:
     return Metric(m["name"], value, int(m["step"]), log_line)
 
 
+@dataclass(frozen=True)
+class Divergence:
+    name: str
+    raw: str          # the value as printed: nan, inf, -inf, ...
+    step: int
+    log_line: int
+
+
+def parse_divergence(line: str, log_line: int) -> Optional[Divergence]:
+    """A METRIC line whose value is NaN or infinite (a diverged run), or None."""
+    m = METRIC_RE.match(line)
+    if not m:
+        return None
+    try:
+        value = float(m["value"])
+    except ValueError:
+        return None
+    return None if math.isfinite(value) else Divergence(m["name"], m["value"], int(m["step"]), log_line)
+
+
 def parse_log(lines: Iterable[str]) -> list[Metric]:
     return [m for i, l in enumerate(lines, 1) if (m := parse_metric(l, i))]
 

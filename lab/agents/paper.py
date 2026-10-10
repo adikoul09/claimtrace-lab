@@ -236,14 +236,129 @@ def compare_with_reference(claims: list[dict], reference: dict, suffix: str = "_
     return out
 
 
+# ---- relevant sections (paper text per request stays under 40 KB; never the whole PDF text) -----------------------
+
+MAX_REQUEST_BYTES = 40_000
+SECTION_BUDGET = 20_000  # bytes of paper text per request (measured: keeps all of 1503.02531 section 3)
+CHUNK_BYTES = 3_000
+NAMED_HEADINGS = ("abstract", "introduction", "references", "bibliography", "acknowledgments", "acknowledgements",
+                  "appendix", "conclusion", "conclusions", "related work", "discussion")
+DROP_TITLES = ("references", "bibliography", "acknowledg", "related work")
+KEYWORDS = ("experiment", "result", "setup", "train", "test", "error", "accuracy", "dataset", "table", "epoch",
+            "learning rate", "batch", "hidden", "layer", "units", "dropout", "temperature", "baseline", "evaluat",
+            "optimi", "regulari", "augment", "implementation", "hyperparameter", "seed", "loss")
+TITLE_BONUS = ("experiment", "result", "setup", "evaluat", "implementation", "training", "mnist", "abstract")
+NUM_RE_SIMPLE = re.compile(r"\d+(?:[.,]\d+)?")
+HEAD_NUM_RE = re.compile(r"^(?:\d+(?:\.\d+)*|[A-Z](?:\.\d+)*)\.?$")
+HEAD_TITLE_RE = re.compile(r"^[A-Z][A-Za-z0-9 ,:&()'/-]{1,70}$")
+
+
+def _heading(lines: list[str], i: int) -> Optional[tuple[str, int]]:
+    """(title, lines used) if a heading starts at lines[i]: a known name alone on its line, or a section number on
+    its own line followed by a short capitalised title (the way PyMuPDF splits '3 Experiments')."""
+    s = lines[i].strip()
+    if s.lower().rstrip(".:") in NAMED_HEADINGS:
+        return s.rstrip(".:"), 1
+    if HEAD_NUM_RE.match(s) and i + 1 < len(lines):
+        t = lines[i + 1].strip()
+        if HEAD_TITLE_RE.match(t) and not t.endswith(".") and len(t.split()) <= 8:
+            return f"{s.rstrip('.')} {t}", 2
+    m = re.match(r"^(\d+(?:\.\d+)*)\.?\s+([A-Z][A-Za-z0-9 ,:&()'/-]{1,70})$", s)
+    if m and not s.endswith(".") and len(m.group(2).split()) <= 8:
+        return f"{m.group(1)} {m.group(2)}", 1
+    return None
+
+
+def sections(text: str) -> list[dict]:
+    """The paper split at its headings: [{title, lines: [(page, line)]}], in order; '(front)' before the first."""
+    out = [{"title": "(front)", "lines": []}]
+    for page, body in sorted(parse_pages(text).items()):
+        lines = body.splitlines()
+        i = 0
+        while i < len(lines):
+            h = _heading(lines, i)
+            if h:
+                out.append({"title": h[0], "lines": []})
+                i += h[1]
+                continue
+            out[-1]["lines"].append((page, lines[i]))
+            i += 1
+    return [s for s in out if s["lines"] or s["title"] != "(front)"]
+
+
+def _score(title: str, body: str) -> float:
+    low, n = body.lower(), max(len(body), 1)
+    kw = sum(low.count(k) for k in KEYWORDS) * 1000 / n
+    nums = len(NUM_RE_SIMPLE.findall(body)) * 1000 / n
+    bonus = 10 if any(b in title.lower() for b in TITLE_BONUS) else 0
+    return kw * 2 + nums * 0.5 + bonus
+
+
+def _render_chunk(lines: list[tuple[int, str]], title: str) -> str:
+    out, page = [], None
+    for p, line in lines:
+        if p != page:
+            out.append(f"--- page {p} ---")
+            page = p
+        out.append(line)
+    return f"[section: {title}]\n" + "\n".join(out)
+
+
+def select_sections(text: str, budget: int = SECTION_BUDGET) -> tuple[str, dict]:
+    """The paper's relevant sections, under `budget` bytes, in paper order, page markers kept. Code decides: drop
+    references, acknowledgements and related work; always keep the abstract (or the front matter); rank the rest by
+    setup/results keywords and number density (results tables are number-dense); fill greedily."""
+    secs = sections(text)
+    chunks, dropped = [], []
+    for si, s in enumerate(secs):
+        if any(d in s["title"].lower() for d in DROP_TITLES):
+            dropped.append(s["title"])
+            continue
+        cur, size = [], 0
+        for pl in s["lines"] + [None]:
+            if pl is None or (size + len(pl[1].encode("utf-8")) + 1 > CHUNK_BYTES and cur):
+                if cur:
+                    body = "\n".join(l for _, l in cur)
+                    must = s["title"].lower() == "abstract" or (s["title"] == "(front)" and not chunks)
+                    chunks.append({"order": len(chunks), "title": s["title"], "lines": cur, "must": must,
+                                   "score": float("inf") if must else _score(s["title"], body)})
+                cur, size = [], 0
+                if pl is None:
+                    break
+            cur.append(pl)
+            size += len(pl[1].encode("utf-8")) + 1
+    chosen, used = [], 0
+    for c in sorted(chunks, key=lambda c: -c["score"]):
+        piece = _render_chunk(c["lines"], c["title"])
+        n = len(piece.encode("utf-8")) + 2
+        if used + n <= budget:
+            chosen.append((c, piece))
+            used += n
+    chosen.sort(key=lambda cp: cp[0]["order"])
+    sel = "\n\n".join(p for _, p in chosen)
+    kept = list(dict.fromkeys(c["title"] for c, _ in chosen))
+    return sel, {"sent_bytes": len(sel.encode("utf-8")), "total_bytes": len(text.encode("utf-8")),
+                 "sections": kept, "dropped": dropped,
+                 "skipped": sorted({c["title"] for c in chunks} - set(kept))}
+
+
+def check_request_size(prompt: str, system: str = "") -> None:
+    n = len((system + prompt).encode("utf-8"))
+    if n > MAX_REQUEST_BYTES:
+        raise ValueError(f"request is {n} bytes; paper text per request must stay under {MAX_REQUEST_BYTES} bytes")
+
+
 # ---- the Reader ---------------------------------------------------------------------------------------------------
 
 def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "", task_id=None,
             model: str = "smart") -> dict:
+    """The model sees only the selected sections; quotes are checked against every page of the full text."""
     from lab.llm import Request
 
+    sel, report = select_sections(text)
     prompt = PROMPT.format(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS),
-                           text=text)
+                           text=sel)
+    check_request_size(prompt, agent.get("role_prompt") or "")
     resp = llm.call(Request(agent=agent["name"], system=agent["role_prompt"], prompt=prompt, schema=EXTRACT_SCHEMA,
                             model=model), agent_id=agent.get("id"), task_id=task_id)
     pages = parse_pages(text)
@@ -251,7 +366,7 @@ def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "",
     return {"claims": check_claims(out.get("claims") or [], pages),
             "settings": [check_setting(s, pages) for s in out.get("settings") or []],
             "tokens": resp.tokens_in + resp.tokens_out, "model": resp.model, "mode": resp.mode,
-            "cache_key": resp.key}
+            "cache_key": resp.key, "sections": report}
 
 
 # ---- intake -------------------------------------------------------------------------------------------------------
@@ -293,6 +408,8 @@ def fetch_paper(arxiv_id: str, workdir: Path, *, db, project_id) -> dict:
         text = render([p.get_text() for p in doc])
         n_pages = doc.page_count
     (workdir / "paper.txt").write_text(text, encoding="utf-8")
+    sel, report = select_sections(text)
+    (workdir / "paper_sections.txt").write_text(sel, encoding="utf-8")  # what agents read; never the whole text
     try:
         title = arxiv_title(arxiv_id)
     except Exception:
@@ -306,7 +423,8 @@ def fetch_paper(arxiv_id: str, workdir: Path, *, db, project_id) -> dict:
     emit(db, "paper_fetched", f"paper fetched: {title or arxiv_id}",
          f"arXiv {arxiv_id}: {n_pages} pages, {len(text)} chars of text extracted with PyMuPDF",
          project_id=project_id, data={"pdf_path": pdf_path, "text_path": text_path, "pages": n_pages})
-    return {"title": title, "pages": n_pages, "chars": len(text), "pdf_path": pdf_path, "text_path": text_path}
+    return {"title": title, "pages": n_pages, "chars": len(text), "pdf_path": pdf_path, "text_path": text_path,
+            "sections": report}
 
 
 def read_paper(project_id: str, arxiv_id: str, *, db, llm, agent: dict, workdir: Path, task_id=None,
