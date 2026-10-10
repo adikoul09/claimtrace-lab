@@ -323,6 +323,9 @@ class Controller:
         """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task. None: no agent
         yet (the spawn failed; it is tried again later)."""
         db, pid = self.db, project["id"]
+        pin = routing.host_pin(db.table("tasks").select("capability,executor,started_at").eq("project_id", pid)
+                               .eq("capability", "run").execute().data)
+        caps = routing.with_pin(caps, pin)
         agents = db.table("agents").select("*").eq("status", "active").execute().data
         rewards = db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True).limit(1000).execute().data
         pick = assign.pick_agent(agents, capability, reward.rolling_means(rewards))
@@ -342,6 +345,8 @@ class Controller:
             "status": "awaiting_approval" if requires_approval else "queued"}).execute().data[0]
         where = (f"live executors that can take it: {', '.join(e['name'] for e in live)}" if live
                  else "no live executor has these caps yet; it waits in the queue")
+        if pin:
+            where += f" (pinned to {pin[5:]}, which claimed the project's first run)"
         emit(db, "task_assigned",
              f"{label} → {pick.agent['name']}" + (" (awaits approval)" if requires_approval else ""),
              f"{pick.reason}; needs executor caps {caps}; {where}", project_id=pid, agent_id=pick.agent["id"],

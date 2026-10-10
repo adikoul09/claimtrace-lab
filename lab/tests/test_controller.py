@@ -23,10 +23,22 @@ def test_every_capability_gets_non_empty_required_caps(cap):
     assert routing.required_caps(cap, scale="full")
 
 
-def test_full_runs_need_heavy_and_smoke_runs_do_not():
-    assert set(routing.required_caps("run", "full")) >= {"train", "heavy"}
-    assert "heavy" not in routing.required_caps("run", "smoke")
-    assert routing.required_caps("read_paper") == ["parse"]
+def test_caps_follow_the_contract():
+    assert routing.required_caps("run", "full") == ["train"]
+    assert routing.required_caps("run", "smoke") == ["smoke"]
+    assert routing.required_caps("read_paper") == ["agent"]
+    assert routing.required_caps("debug") == ["agent"]
+
+
+def test_host_pin_is_the_executor_of_the_first_claimed_run():
+    tasks = [{"capability": "write_code", "executor": "laptop-b", "started_at": "2026-10-10T09:00:00Z"},
+             {"capability": "run", "executor": "laptop-a", "started_at": "2026-10-10T10:00:00Z"},
+             {"capability": "run", "executor": "voroa-1", "started_at": "2026-10-10T11:00:00Z"},
+             {"capability": "run", "executor": None, "started_at": None}]
+    assert routing.host_pin(tasks) == "host:laptop-a"
+    assert routing.host_pin([{"capability": "run", "executor": None, "started_at": None}]) is None
+    assert routing.with_pin(["agent"], "host:laptop-a") == ["agent", "host:laptop-a"]
+    assert routing.with_pin(["agent"], None) == ["agent"]
 
 
 def test_plan_tasks_need_the_controller_cap_no_worker_has():
