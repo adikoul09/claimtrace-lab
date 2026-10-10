@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ExperimentsView } from "@/components/exp/experiments-view";
 import { EventStream } from "@/components/live/event-stream";
+import { NotesView } from "@/components/report/notes-view";
 import { ReportView } from "@/components/report/report-view";
 import { TeamView } from "@/components/team/team-view";
 import { supabase } from "@/lib/supabase";
@@ -68,7 +69,7 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
       ) : tab === "report" ? (
         <ReportView projectId={id} />
       ) : (
-        <p className="text-sm text-neutral-500">Not built yet (next).</p>
+        <NotesView projectId={id} />
       )}
     </>
   );

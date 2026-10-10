@@ -1,0 +1,150 @@
+// The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
+// so the export matches the screen. Every number of ours links to its log line.
+import { formatDuration } from "../exp/experiments.ts";
+import type { ReportData, RunStats } from "./report.ts";
+
+/** Wording shared by the screen and the export. */
+export const TEXT = {
+  claimsIntro:
+    "Verdicts are computed by code (the Analyst) against the margin declared before the run. Every number of ours links to the log line that printed it.",
+  noPaper: "No paper has been read for this project yet.",
+  noRows: "No run has targeted a claim yet. Rows appear when a reproduction maps its models to claims.",
+  notGraded: "not graded yet",
+  notMeasured: "not measured yet",
+  settingsIntro: "Paper value vs ours for each setting, labelled scale (budget), omission (the paper does not say), difference or same.",
+  noSettings: "Settings diff not computed yet.",
+  branchesIntro: "Each what-if branch changes one setting; the effect is branch minus parent on each final value both runs logged.",
+  noBranches: "No what-if branches yet.",
+  memoryIntro: "Run 2 of the same paper against run 1: retries before the first successful run, time to the first result, and LLM tokens.",
+  noMemory: "This is the first run of this paper; the memory effect needs a second run.",
+  explanationHidden: "Explanation not shown",
+  precomputed: "Precomputed — Round 0 audit",
+};
+
+export const DIFF_TEXT: Record<string, string> = {
+  scale: "scale reduction (budget)",
+  omission: "paper omission",
+  difference: "difference",
+  same: "same",
+};
+
+export const memoryRows = (s: RunStats) => [
+  [
+    "Retries before the first successful run",
+    s.failedBeforeFirstSuccess === null ? `no successful run yet (${s.failedRuns} failed)` : String(s.failedBeforeFirstSuccess),
+  ],
+  ["Time to the first result", s.secondsToFirstResult === null ? "—" : formatDuration(s.secondsToFirstResult)],
+  ["LLM tokens", `${s.llmTokens.toLocaleString("en-US")} (${s.llmCalls} calls)`],
+  ["Lessons applied", String(s.lessonsApplied.length)],
+];
+
+const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\s*\n\s*/g, " ");
+const row = (cells: string[]) => `| ${cells.map(cell).join(" | ")} |`;
+const table = (head: string[], body: string[][]) =>
+  [row(head), row(head.map(() => "---")), ...body.map(row)].join("\n");
+
+export function reportMarkdown(
+  project: { id: string; title: string; arxiv_id: string | null; precomputed?: boolean },
+  d: ReportData,
+  base: string,
+  hasPaper = true,
+): string {
+  const log = (exp: string, line: number, text: string) => `[${text}](${base}/logs/${exp}#L${line})`;
+  const out: string[] = [`# Report: ${project.title}`];
+  out.push(
+    [project.arxiv_id ? `arXiv ${project.arxiv_id}` : null, `project ${project.id}`, project.precomputed ? TEXT.precomputed : null]
+      .filter(Boolean)
+      .join(" · "),
+  );
+
+  out.push("## Claims vs ours", TEXT.claimsIntro);
+  if (!hasPaper) out.push(TEXT.noPaper);
+  else if (!d.rows.length) out.push(TEXT.noRows);
+  else
+    out.push(
+      table(
+        ["Claim", "Paper", "Ours", "Verdict"],
+        d.rows.map((r) => [
+          `${r.claim.id} ${r.claim.model} · ${r.claim.metric} (${r.claim.whose}) — ${r.experimentLabel}`,
+          `${r.claim.value} ${r.claim.unit} (p. ${r.claim.page ?? "?"})`,
+          (r.ours.length ? r.ours.map((p) => log(r.experimentId, p.log_line, p.text)).join(", ") : TEXT.notMeasured) +
+            (r.delta !== null ? ` (Δ ${r.delta > 0 ? "+" : ""}${r.delta})` : "") +
+            (r.margin !== null ? ` ± ${r.margin}` : ""),
+          r.verdict ? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "") : TEXT.notGraded,
+        ]),
+      ),
+    );
+
+  for (const g of d.graded) {
+    out.push(`### ${g.experimentLabel}`);
+    if (g.relative.length)
+      out.push(
+        table(
+          ["Relative claim", "Paper gap", "Our gap", "Verdict"],
+          g.relative.map((r) => [
+            r.claim,
+            r.paper_gap === null ? "—" : String(r.paper_gap),
+            (r.ours_gap === null ? "—" : String(r.ours_gap)) +
+              (r.lines.length ? ` (from ${r.lines.map((l) => log(l.exp, l.line, `L${l.line}`)).join(", ")})` : ""),
+            r.label,
+          ]),
+        ),
+      );
+    if (g.explanation?.accepted && g.explanation.text) out.push(g.explanation.text);
+    else if (g.explanation) out.push(`${TEXT.explanationHidden}: ${g.explanation.problems.join("; ") || "none written"}.`);
+    if (g.marginNote) out.push(`Note: ${g.marginNote}`);
+  }
+
+  out.push("## Why it differs", "### Settings diff", TEXT.settingsIntro);
+  if (!d.settingsDiff) out.push(TEXT.noSettings);
+  else
+    out.push(
+      table(
+        ["Setting", "Paper", "Ours", "Label", "Source"],
+        d.settingsDiff.rows.map((s) => [
+          s.key,
+          s.paper ?? "not stated",
+          s.ours ?? "—",
+          (s.label ? DIFF_TEXT[s.label] : s.rawLabel) + (s.reason ? `: ${s.reason}` : ""),
+          (s.quote ? `"${s.quote}" (p. ${s.page ?? "?"})` : "") + (s.config_key ? ` · config ${s.config_key}` : ""),
+        ]),
+      ),
+    );
+
+  out.push("### Branch effects", TEXT.branchesIntro);
+  if (!d.branches.length) out.push(TEXT.noBranches);
+  else
+    out.push(
+      table(
+        ["Branch", "Metric", "Parent", "Branch value", "Effect", "Status"],
+        d.branches.map((b) => [
+          `Δ ${b.key} — ${b.branchLabel}`,
+          b.metric || "—",
+          b.parent ? log(b.parentId, b.parent.log_line, b.parent.text) : "—",
+          b.branch ? log(b.branchId, b.branch.log_line, b.branch.text) : "—",
+          b.effect ?? "—",
+          b.status + (b.prunedReason ? `: ${b.prunedReason}` : ""),
+        ]),
+      ),
+    );
+
+  out.push("## Memory effect", TEXT.memoryIntro);
+  if (!d.memory?.previous) out.push(TEXT.noMemory);
+  else {
+    const cur = memoryRows(d.memory.current);
+    const prev = memoryRows(d.memory.previous);
+    out.push(table(["", "This run", `Previous run (${d.memory.previous.title})`], cur.map(([k, v], i) => [k, v, prev[i][1]])));
+  }
+  if (d.memory?.current.lessonsApplied.length)
+    out.push(d.memory.current.lessonsApplied.map((e) => `- Lesson applied: ${e.message}`).join("\n"));
+
+  if (hasPaper && d.untested.length) {
+    out.push(`## Other claims in the paper (${d.untested.length}, not run)`);
+    out.push(
+      d.untested
+        .map((c) => `- ${c.id} ${c.model} · ${c.metric}: ${c.value} ${c.unit} (p. ${c.page ?? "?"})${c.valid ? "" : " — failed code check"}`)
+        .join("\n"),
+    );
+  }
+  return out.join("\n\n") + "\n";
+}
