@@ -2,11 +2,13 @@
 
   EXECUTOR_NAME=laptop-b EXECUTOR_CAPS=smoke,parse,train  uv run python -m lab.executor.worker [--once]
 
-A `run` task's input: {cmd, cwd?, experiment_id?, label?, timeout_s?, network?, python?}
+A `run` task's input: {cmd, cwd?, experiment_id?, label?, timeout_s?, network?, python?, files?, requirements?}
   cmd            list of args, or one string split like a POSIX shell (use forward slashes); `python` -> the worker's
-                 interpreter unless input.python names another
+                 interpreter unless input.python names another (or input.requirements gives the env)
   cwd            a folder under runs/, relative to the repo root (default runs/<task_id>/); created if missing
   experiment_id  where the metrics go; without it a new experiments row is made for the task's project
+  files          {relative path: text}: the code to run, written into cwd first, so any executor can claim the task
+  requirements   pinned requirements text: the worker builds (or reuses) that venv here and runs `python` from it
 Every stdout/stderr line goes to Storage `logs/<experiment_id>.log` (and runs/logs/ locally); every METRIC line becomes
 a metrics row with its 1-based log line; events are written when the task starts and when it ends.
 
@@ -145,6 +147,23 @@ class LogSink:
         self.local.close()
 
 
+def write_files(files: dict, cwd: Path) -> list[str]:
+    """Write a task's code into its run dir. Every path must stay inside cwd. Returns the paths written, sorted."""
+    root = Path(cwd).resolve()
+    targets = {}
+    for rel, text in files.items():
+        if not isinstance(text, str):
+            raise ValueError(f"files[{rel!r}] must be text")
+        target = (root / rel).resolve() if rel and not Path(rel).is_absolute() and ":" not in rel else None
+        if target is None or target == root or not target.is_relative_to(root):
+            raise ValueError(f"file path {rel!r} is outside the run dir")
+        targets[target.relative_to(root).as_posix()] = (target, text)
+    for target, text in targets.values():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+    return sorted(targets)
+
+
 def ensure_bucket(db) -> None:
     try:
         db.storage.get_bucket(LOG_BUCKET)
@@ -209,14 +228,29 @@ class Worker:
             if not inp.get("cmd"):
                 raise ValueError("input.cmd is missing")
             python = inp.get("python") or sys.executable
-            argv = resolve_argv(inp["cmd"], python)
             cwd = resolve_cwd(inp.get("cwd"), tid)
+            written = write_files(inp["files"], cwd) if inp.get("files") else []
             timeout_s = float(inp.get("timeout_s") or DEFAULT_TIMEOUT_S)
             exp_id = experiment_for(db, task)
         except Exception as e:
             self.finish(task, False, {"error": str(e)}, f"{self.name} could not start task {tid[:8]}",
                         f"bad task: {e}")
             return
+        env_info = None
+        if inp.get("requirements") is not None:
+            from lab.agents.tools import make_env
+            try:
+                env = make_env(inp["requirements"], RUNS / "envs")
+            except Exception as e:
+                self.finish(task, False, {"experiment_id": exp_id, "error": str(e)[-2000:]},
+                            f"environment build failed on {self.name}", f"make_env: {str(e).splitlines()[0]}")
+                return
+            python, env_info = env.python, env.as_dict()
+            emit(db, "env_ready", f"{self.name}: env {env.key} " + ("reused" if env.cached else
+                                                                     f"built in {env.seconds:.0f} s"),
+                 f"run needs pinned requirements; {env.tool} venv keyed by their hash",
+                 project_id=task.get("project_id"), agent_id=task.get("agent_id"), task_id=tid, data=env_info)
+        argv = resolve_argv(inp["cmd"], python)
 
         log_path = f"{LOG_BUCKET}/{exp_id}.log"
         db.table("experiments").update({"status": "running", "executor": self.name, "log_path": log_path}) \
@@ -226,7 +260,7 @@ class Worker:
              f"claimed by {self.name}: required caps {task.get('required_caps') or []} within {self.caps}",
              project_id=task.get("project_id"), agent_id=task.get("agent_id"), task_id=tid,
              data={"experiment_id": exp_id, "cwd": cwd.relative_to(ROOT).as_posix(), "timeout_s": timeout_s,
-                   "network": bool(inp.get("network"))})
+                   "network": bool(inp.get("network")), "files": written, "env": env_info})
 
         sink = LogSink(db, exp_id)
         rusage = None

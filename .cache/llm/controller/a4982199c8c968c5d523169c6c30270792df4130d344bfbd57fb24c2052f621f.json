@@ -1,0 +1,120 @@
+{
+ "key": "a4982199c8c968c5d523169c6c30270792df4130d344bfbd57fb24c2052f621f",
+ "agent": "controller",
+ "provider": "gemini",
+ "model": "gemini-flash-latest",
+ "created_utc": "2026-10-10T09:27:38Z",
+ "request": {
+  "system": "You design agents for an AI research team.",
+  "prompt": "The research team needs a new agent.\n\nWhy: gap: no active agent has the capability debug.\nCapability it must have: debug\n\nWhat happened:\nPlan step 1 (smoke run that needs a missing package, capability run) crashed on t09-probe: ModuleNotFoundError:torchvision_t09_missing at log line 3 of logs/cf4d96d3-ee16-49fc-97af-d8d7b00cdc6f.log. Command: python -c \"import torchvision_t09_missing; print('METRIC x=1 step=0')\".\n\nCurrent active team:\n- reader-v1: read_paper, extract_claims, extract_settings\n- designer-v1: design_experiment, budget, design_whatif\n- implementer-v1: write_code\n- envbuilder-v1: setup_env\n- analyst-v1: compare, explain_diff\n- reporter-v1: write_report, write_notes\n- runner-v1: run\n\nTools that exist (choose only from these):\n- fetch_paper {\"arxiv_id\": str}: download the arXiv PDF, save paper.txt (text with \"--- page N ---\" markers) in the run dir\n- fetch_repo {\"url\": str, \"commit\": str?}: clone a repository into the run dir\n- read_file {\"path\": str}: read a text file in the run dir (long files are cut at 20000 chars)\n- write_file {\"path\": str, \"content\": str}: write a text file in the run dir\n- list_dir {\"path\": str}: list a folder in the run dir (\".\" for the top)\n- make_env {\"requirements\": str}: create a venv in the run dir from pinned requirements\n- run {\"cmd\": str, \"timeout_s\": int}: run a command in the run dir, no network, no secrets; returns exit code and output tail\n- query_memory {\"tags\": [str]}: lessons from earlier projects with any of these tags\n- emit {\"event\": str, \"reason\": str}: record a note on the live event stream\n\nDraft the agent: a short role name, a role prompt (its system prompt: what it does, how it works step by step, what it\nmust never do), the tools it needs, its capabilities, and a budget (max_tokens, max_cpu_s up to 1200,\nmax_steps).",
+  "schema": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "description": "short role name, e.g. debugger"
+    },
+    "role_prompt": {
+     "type": "string",
+     "description": "the system prompt: who the agent is and how it works"
+    },
+    "tools": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "fetch_paper",
+       "fetch_repo",
+       "read_file",
+       "write_file",
+       "list_dir",
+       "make_env",
+       "run",
+       "query_memory",
+       "emit"
+      ]
+     }
+    },
+    "capabilities": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "read_paper",
+       "extract_claims",
+       "extract_settings",
+       "design_experiment",
+       "budget",
+       "write_code",
+       "setup_env",
+       "run",
+       "debug",
+       "compare",
+       "explain_diff",
+       "design_whatif",
+       "write_report",
+       "write_notes"
+      ]
+     }
+    },
+    "budget": {
+     "type": "object",
+     "properties": {
+      "max_tokens": {
+       "type": "integer"
+      },
+      "max_cpu_s": {
+       "type": "integer"
+      },
+      "max_steps": {
+       "type": "integer"
+      }
+     }
+    },
+    "reason": {
+     "type": "string",
+     "description": "one sentence: why this agent, for this gap"
+    }
+   },
+   "required": [
+    "name",
+    "role_prompt",
+    "tools",
+    "capabilities",
+    "reason"
+   ]
+  },
+  "inputs": {}
+ },
+ "response": {
+  "output": {
+   "name": "debugger-v1",
+   "role_prompt": "You are debugger-v1, an expert research debugging agent responsible for analyzing crashes, failures, and unexpected behaviors in experiments and reproduction pipelines. Your workflow: 1) Inspect crash logs and environment specifications using read_file and list_dir to pinpoint the root cause of the error. 2) Check historical failure patterns and resolutions using query_memory. 3) Formulate minimal, targeted patches for code, configuration files, or environment definitions, applying them using write_file or make_env. 4) Verify the fix by reproducing the execution with run. 5) Emit the diagnostic findings and fix summary using emit. What you must never do: Never perform unguided speculative changes without inspecting the relevant log files first. Never alter experiment metrics, fake outputs, or bypass validation checks to mask underlying runtime failures.",
+   "tools": [
+    "read_file",
+    "write_file",
+    "list_dir",
+    "make_env",
+    "run",
+    "query_memory",
+    "emit"
+   ],
+   "capabilities": [
+    "debug"
+   ],
+   "budget": {
+    "max_tokens": 40000,
+    "max_cpu_s": 600,
+    "max_steps": 25
+   },
+   "reason": "Fills the critical gap in the team by providing dedicated error diagnosis, environment/code patching, and verification capabilities to resolve execution crashes like missing dependencies."
+  },
+  "text": "{\"name\":\"debugger-v1\",\"role_prompt\":\"You are debugger-v1, an expert research debugging agent responsible for analyzing crashes, failures, and unexpected behaviors in experiments and reproduction pipelines. Your workflow: 1) Inspect crash logs and environment specifications using read_file and list_dir to pinpoint the root cause of the error. 2) Check historical failure patterns and resolutions using query_memory. 3) Formulate minimal, targeted patches for code, configuration files, or environment definitions, applying them using write_file or make_env. 4) Verify the fix by reproducing the execution with run. 5) Emit the diagnostic findings and fix summary using emit. What you must never do: Never perform unguided speculative changes without inspecting the relevant log files first. Never alter experiment metrics, fake outputs, or bypass validation checks to mask underlying runtime failures.\",\"tools\":[\"read_file\",\"write_file\",\"list_dir\",\"make_env\",\"run\",\"query_memory\",\"emit\"],\"capabilities\":[\"debug\"],\"budget\":{\"max_tokens\":40000,\"max_cpu_s\":600,\"max_steps\":25},\"reason\":\"Fills the critical gap in the team by providing dedicated error diagnosis, environment/code patching, and verification capabilities to resolve execution crashes like missing dependencies.\"}",
+  "tokens_in": 558,
+  "tokens_out": 924,
+  "models": [
+   "gemini-3.8-flash"
+  ],
+  "wall_seconds": 21.6
+ }
+}
