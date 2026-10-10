@@ -1,9 +1,12 @@
 "use client";
 
-// Header "tokens today: N / 800k" from llm_calls since 05:30 IST. llm_calls is not on Realtime, so this polls.
+// Header "AI tokens today: N / 700k cap" from live llm_calls since 05:30 IST (replayed calls use no quota).
+// llm_calls is not on Realtime, so this polls.
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { formatTokens, sumTokens, TOKEN_BUDGET, tokenDayStart, tokenLevel } from "./tokens";
+import { sumTokens, TOKEN_CAP, tokenDayStart, tokenLevel, tokenMeterText } from "./tokens";
+
+const TOOLTIP = "Daily gateway quota 800k; we stop new AI work at 600k. Resets 05:30 IST.";
 
 const POLL_MS = 30_000;
 const PAGE = 1000; // PostgREST's default max rows per request
@@ -22,6 +25,7 @@ async function tokensSince(startIso: string): Promise<number | null> {
       .from("llm_calls")
       .select("tokens_in,tokens_out")
       .gte("ts", startIso)
+      .eq("mode", "live")
       .order("ts")
       .range(page * PAGE, page * PAGE + PAGE - 1);
     if (error) return null;
@@ -51,22 +55,21 @@ export function TokenMeter() {
 
   if (tokens === null) return null;
   const level = tokenLevel(tokens);
-  const pct = Math.min(100, (tokens / TOKEN_BUDGET) * 100);
+  const pct = Math.min(100, (tokens / TOKEN_CAP) * 100);
 
   return (
     <span
       className={`flex items-center gap-1.5 whitespace-nowrap ${STYLE[level].text}`}
-      title={`${tokens.toLocaleString("en-US")} LLM tokens (in + out) since 05:30 IST; budget ${TOKEN_BUDGET.toLocaleString("en-US")}`}
+      title={`${TOOLTIP} (${tokens.toLocaleString("en-US")} live tokens so far.)`}
     >
-      <span className={level === "ok" ? "text-neutral-500" : ""}>tokens today:</span>
-      <span className="tabular-nums">
-        {formatTokens(tokens)} / {formatTokens(TOKEN_BUDGET)}
+      <span className={`tabular-nums ${level === "ok" ? "text-neutral-600 dark:text-neutral-400" : ""}`}>
+        {tokenMeterText(tokens)}
       </span>
       <span
         role="meter"
-        aria-label="LLM tokens used today"
+        aria-label="Live AI tokens used today, against our cap"
         aria-valuemin={0}
-        aria-valuemax={TOKEN_BUDGET}
+        aria-valuemax={TOKEN_CAP}
         aria-valuenow={tokens}
         className="inline-block h-1.5 w-12 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800"
       >
