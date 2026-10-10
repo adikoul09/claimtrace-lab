@@ -9,3 +9,4 @@ runs/
 data/
 .DS_Store
 .fuse_hidden*
+uv.lock
