@@ -219,11 +219,14 @@ class Worker:
         rows = self.db.rpc("claim_task", {"executor_name": self.name, "caps": self.caps}).execute().data
         return rows[0] if rows else None
 
-    def finish(self, task: dict, ok: bool, output: dict, message: str, reason: str, cpu: float = 0.0) -> None:
+    def finish(self, task: dict, ok: bool, output: dict, message: str, reason: str, cpu: float = 0.0,
+               tokens: int | None = None) -> None:
         db, tid = self.db, task["id"]
-        db.table("tasks").update({"status": "done" if ok else "failed", "output": output, "cpu_seconds": cpu,
-                                  "finished_at": utc_now()}).eq("id", tid).execute()
-        if output.get("experiment_id"):
+        patch = {"status": "done" if ok else "failed", "output": output, "cpu_seconds": cpu, "finished_at": utc_now()}
+        if tokens is not None:
+            patch["tokens"] = tokens
+        db.table("tasks").update(patch).eq("id", tid).execute()
+        if task["capability"] == "run" and output.get("experiment_id"):
             db.table("experiments").update({"status": "done" if ok else "failed"}) \
                 .eq("id", output["experiment_id"]).execute()
         emit(db, "task_finished" if ok else "task_failed", message, reason, project_id=task.get("project_id"),
@@ -233,8 +236,6 @@ class Worker:
     def run_task(self, task: dict) -> None:
         db, tid, inp = self.db, task["id"], task.get("input") or {}
         try:
-            if task["capability"] != "run":
-                raise ValueError(f"this worker only runs capability 'run', not {task['capability']!r}")
             if not inp.get("cmd"):
                 raise ValueError("input.cmd is missing")
             python = inp.get("python") or sys.executable
@@ -358,9 +359,38 @@ class Worker:
                     f"{n_metrics} metrics, {len(sink.lines)} log lines", reason,
                     cpu=cpu if cpu is not None else wall)
 
+    def run_agent_task(self, task: dict) -> None:
+        """Any capability but `run`: the task's agent through the runtime, via its stage handler
+        (lab/agents/stages.py). tasks.output carries the code-checked outcome (docs/CONTRACTS.md §4)."""
+        from lab.agents.stages import handle
+
+        tid, cap = task["id"], task["capability"]
+        emit(self.db, "task_started", f"{self.name} started {cap}: {(task.get('input') or {}).get('title') or tid[:8]}",
+             f"claimed by {self.name}: required caps {task.get('required_caps') or []} within {self.caps}",
+             project_id=task.get("project_id"), agent_id=task.get("agent_id"), task_id=tid)
+        t0 = time.monotonic()
+        try:
+            out = handle(self.db, task, executor=self.name)
+        except Exception as e:  # a database or programming error: the task fails with it, the worker goes on
+            out = {"outcome": "failed", "agent_status": "failed", "error": f"{type(e).__name__}: {e}"[:1000]}
+        wall = round(time.monotonic() - t0, 1)
+        cpu = out.get("cpu_s")
+        out.update(wall_s=wall, cpu_seconds_source="agent runtime (process CPU + tool wall time)" if cpu is not None
+                   else "wall_clock")
+        ok = out.get("outcome") != "failed"
+        reason = out.get("error") or f"outcome {out.get('outcome')} by the {cap} code check"
+        self.finish(task, ok, out, f"{cap} {'finished' if ok else 'failed'} on {self.name} in {wall:.0f} s "
+                                   f"({out.get('outcome')})", reason,
+                    cpu=cpu if cpu is not None else wall, tokens=out.get("tokens"))
+
     def divergence(self, task: dict, exp_id: str, d) -> None:
-        """A NaN/inf METRIC line. metrics.value is NOT NULL until B1's migration, so no row yet: the event carries
-        the name, raw value, step and log line, and the controller's debug/spawn path reacts to it."""
+        """A NaN/inf METRIC line: a metrics row with value NULL and its log line (migration 003; before it the
+        insert is refused and only the event stays), plus a divergence_detected event for the controller."""
+        try:
+            self.db.table("metrics").insert({"experiment_id": exp_id, "name": d.name, "value": None,
+                                             "step": d.step, "log_line": d.log_line}).execute()
+        except Exception:
+            pass  # metrics.value still NOT NULL here; the event below keeps the line
         try:
             emit(self.db, "divergence_detected", f"{d.name}={d.raw} at step {d.step}",
                  f"non-finite METRIC value at log line {d.log_line}: the run diverged",
@@ -390,7 +420,7 @@ class Worker:
                 self.busy = True
                 self.beat()
                 try:
-                    self.run_task(task)
+                    (self.run_task if task["capability"] == "run" else self.run_agent_task)(task)
                 finally:
                     self.busy = False
                     self.beat()

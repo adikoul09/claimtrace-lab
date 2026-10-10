@@ -111,9 +111,12 @@ class ToolBox:
         from lab.executor.worker import child_env, kill_tree, resolve_argv, start
 
         timeout_s = min(float(timeout_s), RUN_MAX_TIMEOUT_S)
-        argv = resolve_argv(cmd, sys.executable)
+        env_file = self.workdir / "env.json"  # the run folder's own venv (make_env), else the worker's python
+        python = json.loads(env_file.read_text(encoding="utf-8")).get("python") if env_file.is_file() else None
+        python = python if python and Path(python).is_file() else sys.executable
+        argv = resolve_argv(cmd, python)
         try:
-            p = start(argv, self.workdir, child_env(sys.executable))
+            p = start(argv, self.workdir, child_env(python))
         except OSError as e:
             raise ToolError(f"could not start {argv[0]!r}: {e}") from None
         timer = threading.Timer(timeout_s, kill_tree, args=(p,))

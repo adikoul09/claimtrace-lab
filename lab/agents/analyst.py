@@ -162,6 +162,31 @@ def number_check(text: str, tables: dict, allowed_extra=()) -> list[str]:
     return unknown
 
 
+def _note(seeds: int, why: str) -> str:
+    """The contract's note: starts with the seed count under 3 seeds."""
+    if seeds >= MIN_SEEDS_FOR_NO_NOTE:
+        return why
+    return f"({seeds} seed{'s' if seeds != 1 else ''}) {why}"
+
+
+def verdict_items(g: dict) -> list[dict]:
+    """experiments.verdicts (docs/CONTRACTS.md §5): one item per claim, lower-case verdict, ours/paper/margin numbers,
+    a note (starting with the seed note under 3 seeds) and the log line of the METRIC that gave `ours`. Relative
+    claims are items '<method>_vs_<baseline>' with the gaps as ours/paper."""
+    items = []
+    for r in g["claims"]:
+        items.append({"claim_id": r["claim_id"], "verdict": r["verdict"].lower(), "ours": r["ours"],
+                      "paper": r["paper"], "margin": r["margin"], "note": _note(g["seeds"], r["why"]),
+                      "log_line": r["log_line"]})
+    for r in g["relative"]:
+        why = (f"gap = baseline minus method; {r['size_note']}" if r.get("size_note") else
+               "gap = baseline minus method")
+        items.append({"claim_id": f"{r['method']}_vs_{r['baseline']}", "verdict": r["verdict"].lower(),
+                      "ours": r.get("ours_gap"), "paper": r["paper_gap"], "margin": r["margin"],
+                      "note": _note(g["seeds"], why), "log_line": None})
+    return items
+
+
 def tables_text(g: dict) -> str:
     lines = ["Claims (paper vs ours; verdicts computed by code):",
              "claim | model | metric | paper | ours | delta | margin | verdict | our log line"]
@@ -186,19 +211,23 @@ EXPLAIN_GOAL = ("Explain in plain language, in 3 to 6 sentences, what these verd
                 "rejects the text if it contains any other number.\n\n")
 
 
-def explain(db, g: dict, experiment_id: str, project_id: str | None, llm=None) -> dict:
-    """The Analyst agent writes the text; code checks every number. One retry with the unknown numbers listed."""
+def explain(db, g: dict, experiment_id: str, project_id: str | None, llm=None, agent: dict | None = None,
+            task_id=None) -> dict:
+    """The Analyst agent writes the text; code checks every number. One retry with the unknown numbers listed.
+    agent: the task's assigned agent (worker path); otherwise the best active explain_diff agent."""
     from lab.agents.runtime import run_agent
 
-    rows = db.table("agents").select("*").eq("status", "active").contains("capabilities", ["explain_diff"]) \
-        .order("version", desc=True).execute().data
-    if not rows:
-        return {"text": None, "accepted": False, "problems": ["no active agent has capability explain_diff"]}
-    agent, feedback, tries = rows[0], "", []
+    if agent is None:
+        rows = db.table("agents").select("*").eq("status", "active").contains("capabilities", ["explain_diff"]) \
+            .order("version", desc=True).execute().data
+        if not rows:
+            return {"text": None, "accepted": False, "problems": ["no active agent has capability explain_diff"]}
+        agent = rows[0]
+    feedback, tries = "", []
     workdir = Path(__file__).resolve().parents[2] / "runs" / (project_id or "analyst") / "analyst"
     for attempt in (1, 2):
         res = run_agent(agent, EXPLAIN_GOAL + tables_text(g) + feedback, workdir, db=db, llm=llm,
-                        project_id=project_id)
+                        project_id=project_id, task_id=task_id)
         if res.status != "finished":
             tries.append({"status": res.status, "reason": res.reason})
             return {"text": None, "accepted": False, "agent": agent["name"], "tries": tries,
@@ -214,7 +243,7 @@ def explain(db, g: dict, experiment_id: str, project_id: str | None, llm=None) -
 
 
 def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict | None = None,
-        with_explanation: bool = True) -> dict:
+        with_explanation: bool = True, agent: dict | None = None, task_id=None, llm=None) -> dict:
     exp = db.table("experiments").select("*").eq("id", experiment_id).single().execute().data
     cfg = exp.get("config") or {}
     claim_map = claim_map or cfg.get("claim_map")
@@ -241,15 +270,17 @@ def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict |
     if margin_note:
         g["margin_note"] = f"margin not set on the experiment; graded with the floor: {margin_note}"
     g["log_path"] = exp.get("log_path")
-    g["explanation"] = (explain(db, g, experiment_id, exp["project_id"]) if with_explanation else
+    g["explanation"] = (explain(db, g, experiment_id, exp["project_id"], llm=llm, agent=agent, task_id=task_id)
+                        if with_explanation else
                         {"text": None, "accepted": False, "problems": ["not requested"]})
-    db.table("experiments").update({"verdicts": g}).eq("id", experiment_id).execute()
+    db.table("experiments").update({"verdicts": verdict_items(g)}).eq("id", experiment_id).execute()
     summary = ", ".join(f"{r['claim_id']} {r['label']}" for r in g["claims"])
     emit(db, "graded", f"graded: {summary}",
          f"code verdicts ({RULES}); margin {g['margin']}; explanation "
          + ("accepted by the number check" if g["explanation"]["accepted"] else
             f"not shown: {'; '.join(g['explanation']['problems'])}"[:600]),
-         project_id=exp["project_id"], data={"experiment_id": experiment_id})
+         project_id=exp["project_id"], task_id=task_id, agent_id=(agent or {}).get("id"),
+         data={"experiment_id": experiment_id, "grade": g})  # rules, relations, explanation and its check
     return g
 
 

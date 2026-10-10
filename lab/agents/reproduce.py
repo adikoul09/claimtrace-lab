@@ -264,6 +264,40 @@ def budget_goal(design: dict, timing: dict, cap_s: float, executor: str, setting
             "Code checks it against the cap.")
 
 
+# ---- stage checks shared by the one-shot pipeline and the worker's stage handlers (lab/agents/stages.py) ---------
+
+def check_designed(answer: str, claims: list[dict], workdir: Path) -> dict:
+    """the answer is a JSON design whose models each map to one valid claim"""
+    d = check_design(parse_answer(answer), claims)
+    (workdir / "design.json").write_text(json.dumps(d, indent=2), encoding="utf-8")
+    return d
+
+
+def check_written(workdir: Path, names: list[str]) -> dict:
+    """train.py exists, compiles, meets the CLI/METRIC contract and never touches the golden reference"""
+    path = workdir / "train.py"
+    if not path.is_file():
+        raise StepError("the agent wrote no train.py")
+    code = path.read_text(encoding="utf-8")
+    problems = check_train_script(code, names)
+    if problems:
+        raise StepError("; ".join(problems))
+    return {"lines": len(code.splitlines())}
+
+
+def check_built(workdir: Path) -> dict:
+    """make_env succeeded: env.json and pinned requirements.txt exist in the run dir"""
+    env, req = workdir / "env.json", workdir / "requirements.txt"
+    if not env.is_file() or not req.is_file():
+        raise StepError("make_env never reported 'env ready'")
+    return {"env": json.loads(env.read_text(encoding="utf-8"))}
+
+
+def data_dir_from(workdir: Path) -> str:
+    """The shared data/ folder, relative to a run folder (the run step has no network guarantee for absolute paths)."""
+    return os.path.relpath(RUNS.parent / "data", workdir).replace(os.sep, "/")
+
+
 # ---- orchestration (Supabase + agents; verified end to end) ------------------------------------------------------
 
 class Pipeline:
@@ -368,9 +402,7 @@ class Pipeline:
     def design(self) -> dict:
         def designed(res):
             """the answer is a JSON design whose models each map to one valid claim"""
-            d = check_design(parse_answer(res.answer), self.claims)
-            (self.workdir / "design.json").write_text(json.dumps(d, indent=2), encoding="utf-8")
-            return {"design": d}
+            return {"design": check_designed(res.answer, self.claims, self.workdir)}
         out, _ = self.agent_step("design_experiment", "Choose the experiment and target claims",
                                  designer_goal(self.claims, self.settings, self.cap_s / 60), designed)
         return out["design"]
@@ -381,12 +413,7 @@ class Pipeline:
             path = self.workdir / "train.py"
             def written(res):
                 """train.py exists, compiles, meets the CLI/METRIC contract and never touches the golden reference"""
-                if not path.is_file():
-                    raise StepError("the agent wrote no train.py")
-                problems = check_train_script(path.read_text(encoding="utf-8"), names)
-                if problems:
-                    raise StepError("; ".join(problems))
-                return {"lines": len(path.read_text(encoding="utf-8").splitlines())}
+                return check_written(self.workdir, names)
             title = "Write train.py" if not feedback else "REPAIR(code): fix train.py"
             try:
                 self.agent_step("write_code", title, implementer_goal(design, self.claims, self.settings, feedback),
@@ -401,10 +428,7 @@ class Pipeline:
     def setup_env(self, feedback: str | None = None) -> str:
         def built(res):
             """make_env succeeded: env.json and pinned requirements.txt exist in the run dir"""
-            env, req = self.workdir / "env.json", self.workdir / "requirements.txt"
-            if not env.is_file() or not req.is_file():
-                raise StepError("make_env never reported 'env ready'")
-            return {"env": json.loads(env.read_text(encoding="utf-8"))}
+            return check_built(self.workdir)
         for f in ("env.json", "requirements.txt"):
             (self.workdir / f).unlink(missing_ok=True)
         self.agent_step("setup_env", "Build the environment" if not feedback else "REPAIR(env): fix requirements",
