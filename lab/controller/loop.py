@@ -6,6 +6,7 @@
   score       a finished agent task gets its rewards row (SPEC §5); a new 👍/👎 feedback event rescores it
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
+  decisions   an awaiting task with a decision moves on (docs/CONTRACTS.md §6), in case the web did not move it
   advance     for each running project, the next ready step becomes a task: agent assigned, required_caps set;
               a crashed step gets a debug task, then a retry; a gap or a repeated failure spawns an agent
 
@@ -18,7 +19,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, planner, progress, reward, routing, spawn
+from lab.controller import assign, planner, progress, reward, routing, spawn, wiring
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
 from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
@@ -36,6 +37,7 @@ class Controller:
         self.project_id = project_id  # set: act only on this project (tests, demos); None: all projects
         self._noted: set = set()  # (kind, key) of conditions already reported, so a waiting state is logged once
         self._spawn_failed: dict = {}  # (trigger task, capability, kind) -> time of the last failed spawn
+        self._replan_failed: dict = {}  # redirected task id -> time of the last failed replan
 
     @property
     def llm(self):
@@ -65,8 +67,8 @@ class Controller:
 
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
-        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.intake,
-                     self.plan_queued, self.advance):
+        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.apply_decisions,
+                     self.intake, self.plan_queued, self.advance):
             try:
                 step(now)
             except Exception as e:  # one failing step must not stop the loop
@@ -151,6 +153,23 @@ class Controller:
                  project_id=t.get("project_id"), agent_id=t["agent_id"], task_id=t["id"],
                  data={**s.row, "rolling_mean": round(mean, 4), "rolling_n": len(recent)})
 
+    # ---- decisions --------------------------------------------------------------------------------------------------
+    def apply_decisions(self, now: datetime) -> None:
+        """The web moves a decided task itself; this catches a decision written without the status change."""
+        rows = self.q("tasks", "id,project_id,agent_id,capability,decision,decision_note") \
+            .eq("status", "awaiting_approval").not_.is_("decision", "null").execute().data
+        for t in rows:
+            if t["decision"] not in wiring.DECISION_STATUS:
+                continue
+            status = wiring.status_after(t["decision"])
+            moved = self.db.table("tasks").update({"status": status}).eq("id", t["id"]) \
+                .eq("status", "awaiting_approval").execute().data
+            if moved:
+                emit(self.db, "decision_applied", f"{t['capability']} task {t['decision']}d → {status}",
+                     f"decision '{t['decision']}' was recorded on the task" +
+                     (f": {t['decision_note']}" if t.get("decision_note") else ""), project_id=t.get("project_id"),
+                     agent_id=t.get("agent_id"), task_id=t["id"], data={"decision": t["decision"], "status": status})
+
     # ---- intake and plan --------------------------------------------------------------------------------------------
     def intake(self, now: datetime) -> None:
         for p in self.q("projects", key="id").eq("status", "new").execute().data:
@@ -182,12 +201,14 @@ class Controller:
         lessons = db.table("lessons").select("id,kind,text,tags").overlaps("tags", tags).limit(10).execute().data \
             if tags else []
         agents = db.table("agents").select("*").eq("status", "active").execute().data
+        scores = reward.rolling_means(db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True)
+                                      .limit(1000).execute().data)
         abstract = None
         if not (paper and paper.get("claims")) and project.get("arxiv_id"):
             _, abstract = planner.arxiv_abstract(project["arxiv_id"])
         try:
             plan, resp = planner.make_plan(self.llm, project, paper, lessons, agents, task_id=task["id"],
-                                           abstract=abstract)
+                                           abstract=abstract, scores=scores)
         except Exception as e:
             reason = f"{type(e).__name__}: {e}"[:500]
             db.table("tasks").update({"status": "failed", "output": {"error": reason},
@@ -222,28 +243,35 @@ class Controller:
             plan_task = plans[0]
             steps = (plan_task.get("output") or {}).get("steps") or []
             tasks = self.db.table("tasks").select("id,status,capability,input,created_at,output,agent_id,executor,"
-                                                  "parent_task_id").eq("project_id", p["id"]).execute().data
+                                                  "parent_task_id,decision,decision_note") \
+                .eq("project_id", p["id"]).execute().data
             step_tasks = [t for t in tasks if t.get("parent_task_id") == plan_task["id"]
                           and (t.get("input") or {}).get("step") is not None]
             debugs = [t for t in tasks if t["capability"] == "debug"
                       and (t.get("input") or {}).get("plan_task_id") == plan_task["id"]]
             action, i = progress.next_action(len(steps), step_tasks)
             if action == "create":
-                self.create_step(p, plan_task, steps, i, now)
+                self.create_step(p, plan_task, steps, i, now, step_tasks=step_tasks, debugs=debugs)
             elif action == "done":
                 self.db.table("projects").update({"status": "done"}).eq("id", p["id"]).execute()
                 emit(self.db, "project_done", f"all {len(steps)} plan steps finished",
                      "the last step's task is done", project_id=p["id"], task_id=plan_task["id"])
             elif action == "rejected":
-                self.stop_project(p, progress.latest_per_step(step_tasks)[i], "stopped", "its task was rejected")
+                last = progress.latest_per_step(step_tasks)[i]
+                if last.get("decision") == "redirect":
+                    self.redirect_step(p, plan_task, steps, i, last, step_tasks, debugs, now)
+                else:
+                    self.stop_project(p, last, "stopped", "a researcher rejected its task"
+                                      + (f": {last['decision_note']}" if last.get("decision_note") else ""))
             elif action == "failed":
                 attempts = [t for t in step_tasks if t["input"]["step"] == i]
                 last = progress.latest_per_step(attempts)[i]
                 kind, why = progress.failure_action(attempts, debugs)
                 if kind == "debug":
-                    self.create_debug(p, plan_task, steps, i, last, debugs, now)
+                    self.create_debug(p, plan_task, steps, i, last, debugs, now, step_tasks=step_tasks)
                 elif kind == "retry":
-                    self.create_step(p, plan_task, steps, i, now, attempts=attempts, debugs=debugs)
+                    self.create_step(p, plan_task, steps, i, now, attempts=attempts, debugs=debugs,
+                                     step_tasks=step_tasks)
                 elif kind == "blocked":
                     self.stop_project(p, last, "blocked", why)
 
@@ -254,11 +282,43 @@ class Controller:
         emit(self.db, f"project_{status}", f"step {task['input']['step'] + 1} cannot go on; the project is {status}",
              why + (f"; last error: {detail}" if detail else ""), project_id=project["id"], task_id=task["id"])
 
+    def redirect_step(self, project: dict, plan_task: dict, steps: list[dict], i: int, task: dict,
+                      step_tasks: list[dict], debugs: list[dict], now: datetime) -> None:
+        """SPEC §9: replan step i with the researcher's note, store it in the plan, then create the new attempt."""
+        if time.monotonic() - self._replan_failed.get(task["id"], -1e9) < self.SPAWN_RETRY_S:
+            return
+        note = task.get("decision_note") or ""
+        plan_steps = [PlanStep(**s) for s in steps]
+        try:
+            new, why, resp = planner.replan_step(self.llm, project, plan_steps, i, note, task_id=task["id"])
+        except Exception as e:
+            self._replan_failed[task["id"]] = time.monotonic()
+            emit(self.db, "replan_failed", f"could not replan step {i + 1} after the redirect",
+                 f"note: {note}; {type(e).__name__}: {e}"[:1000], project_id=project["id"], task_id=task["id"])
+            return
+        out = dict(plan_task.get("output") or {})
+        out["steps"] = [*steps[:i], new.model_dump(), *steps[i + 1:]]
+        out.setdefault("redirects", []).append({"step": i, "task_id": task["id"], "note": note, "reason": why,
+                                                "before": steps[i]})
+        self.db.table("tasks").update({"output": out}).eq("id", plan_task["id"]).execute()
+        emit(self.db, "step_redirected", f"step {i + 1} replanned after a redirect: {new.title}",
+             f"researcher's note: {note}; planner: {why or 'no reason given'}", project_id=project["id"],
+             task_id=task["id"], data={"step": i, "before": steps[i], "after": new.model_dump(), "model": resp.model,
+                                       "mode": resp.mode})
+        attempts = [t for t in step_tasks if t["input"].get("step") == i]
+        self.create_step(project, plan_task, out["steps"], i, now, attempts=attempts, debugs=debugs,
+                         step_tasks=step_tasks, redirect_note=note)
+
     def create_step(self, project: dict, plan_task: dict, steps: list[dict], i: int, now: datetime,
-                    attempts: list[dict] = (), debugs: list[dict] = ()) -> None:
+                    attempts: list[dict] = (), debugs: list[dict] = (), step_tasks: list[dict] = (),
+                    redirect_note: Optional[str] = None) -> None:
         step = PlanStep(**steps[i])
+        plan_steps = [PlanStep(**s) for s in steps]
         workdir = f"runs/{project['id']}"
         goal = step.instructions
+        if redirect_note:
+            goal += f"\n\nA researcher redirected this step: {redirect_note}"
+            attempts = [t for t in attempts if t.get("status") == "failed"]
         if attempts:
             last = progress.latest_per_step(attempts)[i]
             out = last.get("output") or {}
@@ -268,9 +328,25 @@ class Controller:
             if fixed:
                 goal += f" A debug task worked on it: {str((fixed[-1].get('output') or {}).get('answer'))[:500]}"
         inp = {"goal": goal, "title": step.title, "step": i, "of": len(steps), "attempt": len(attempts) + 1,
-               "plan_task_id": plan_task["id"], "workdir": workdir, "budget": {"max_cpu_s": step.budget_cpu_s}}
+               "plan_task_id": plan_task["id"], "workdir": workdir, "budget": {"max_cpu_s": step.budget_cpu_s},
+               "upstream": wiring.upstream(plan_steps, list(step_tasks), i, debugs)}
+        if redirect_note:
+            inp["redirect_note"] = redirect_note
         if step.capability == "run":
-            inp.update({"scale": step.scale, "cmd": step.cmd, "cwd": workdir,
+            fields, problems = wiring.run_input(plan_steps, list(step_tasks), list(debugs), i, workdir)
+            if problems:
+                if self.once(("run_inputs", plan_task["id"], i, len(attempts))):
+                    self.db.table("projects").update({"status": "blocked"}).eq("id", project["id"]).execute()
+                    emit(self.db, "project_blocked", f"step {i + 1} ({step.title}) cannot be queued",
+                         "earlier steps did not provide what the run needs: " + "; ".join(problems),
+                         project_id=project["id"], task_id=plan_task["id"], data={"problems": problems})
+                return
+            exp = fields.pop("experiment")
+            exp_row = self.db.table("experiments").insert({
+                "project_id": project["id"], "label": exp["label"], "config": exp["config"], "margin": exp["margin"],
+                "budget_reason": exp["budget_reason"], "status": "planned"}).execute().data[0]
+            inp.update(fields)
+            inp.update({"scale": step.scale, "experiment_id": exp_row["id"], "label": step.title,
                         "timeout_s": max(step.budget_cpu_s, RUN_TIMEOUT_FLOOR_S)})
         fails = Counter(t.get("agent_id") for t in attempts if t["status"] == "failed")
         context = f"Plan step {i + 1} of {len(steps)}: {step.title}\nInstructions: {step.instructions}"
@@ -278,7 +354,7 @@ class Controller:
             context += "\nEarlier attempts failed: " + "; ".join(
                 str((t.get("output") or {}).get("error_signature") or (t.get("output") or {}).get("error"))
                 for t in attempts)
-        self.create_task(project, step.capability, inp, now, parent_task_id=plan_task["id"],
+        self.create_task(project, step.capability, inp, now, parent_task_id=plan_task["id"], preferred=step.agent,
                          caps=routing.required_caps(step.capability, step.scale), acceptance=step.acceptance,
                          requires_approval=step.requires_approval, fails=fails,
                          trigger_task=attempts[-1] if attempts else plan_task, context=context,
@@ -286,7 +362,7 @@ class Controller:
                                + (f" (attempt {len(attempts) + 1})" if attempts else ""))
 
     def create_debug(self, project: dict, plan_task: dict, steps: list[dict], i: int, failed: dict,
-                     debugs: list[dict], now: datetime) -> None:
+                     debugs: list[dict], now: datetime, step_tasks: list[dict] = ()) -> None:
         """SPEC §7.2: a crash is handed to a Debugger before the step is retried."""
         step = PlanStep(**steps[i])
         out, fin = failed.get("output") or {}, failed.get("input") or {}
@@ -306,7 +382,11 @@ class Controller:
                "plan_task_id": plan_task["id"], "workdir": workdir, "error_signature": sig,
                "error_log_line": out.get("error_log_line"), "log_path": out.get("log_path"),
                "experiment_id": out.get("experiment_id"), "cmd": cmd, "attempt": len(mine) + 1,
-               "budget": {"max_cpu_s": step.budget_cpu_s}}
+               "budget": {"max_cpu_s": step.budget_cpu_s},
+               "upstream": wiring.upstream([PlanStep(**s) for s in steps], list(step_tasks), i, debugs)}
+        for k in ("files", "requirements"):  # what the failed run ran, so the Debugger can patch it
+            if fin.get(k):
+                inp[k] = fin[k]
         context = (f"Plan step {i + 1} ({step.title}, capability {step.capability}) crashed on "
                    f"{failed.get('executor') or 'an executor'}: {sig} {where}."
                    + (f" Command: {cmd_text}." if cmd_text else ""))
@@ -319,7 +399,7 @@ class Controller:
 
     def create_task(self, project: dict, capability: str, inp: dict, now: datetime, *, parent_task_id: str,
                     caps: list[str], acceptance: str, requires_approval: bool, fails: Counter, trigger_task: dict,
-                    context: str, label: str) -> Optional[dict]:
+                    context: str, label: str, preferred: Optional[str] = None) -> Optional[dict]:
         """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task. None: no agent
         yet (the spawn failed; it is tried again later)."""
         db, pid = self.db, project["id"]
@@ -328,7 +408,7 @@ class Controller:
         caps = routing.with_pin(caps, pin)
         agents = db.table("agents").select("*").eq("status", "active").execute().data
         rewards = db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True).limit(1000).execute().data
-        pick = assign.pick_agent(agents, capability, reward.rolling_means(rewards))
+        pick = assign.pick_agent(agents, capability, reward.rolling_means(rewards), preferred=preferred)
         trig = spawn.trigger(pick, capability, fails)
         if trig:
             agent = self.spawn_agent(project, capability, trig, context, trigger_task, agents)

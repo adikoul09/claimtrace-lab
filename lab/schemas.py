@@ -40,8 +40,9 @@ class PlanStep(BaseModel):
     acceptance: str
     budget_cpu_s: int = Field(ge=1)
     scale: Optional[Scale] = None
-    cmd: Optional[str] = None
+    cmd: Optional[str] = None       # not asked of the planner any more: code builds run commands (wiring.py)
     requires_approval: bool = False
+    agent: Optional[str] = None     # the agent the planner chose; code checks it at assignment
 
 
 # What the planner LLM must return (JSON schema for structured output; kept flat for Gemini).
@@ -59,8 +60,8 @@ PLAN_SCHEMA = {
                 "acceptance": {"type": "string", "description": "how code can check the step succeeded"},
                 "budget_cpu_s": _I,
                 "scale": {"type": "string", "enum": ["smoke", "full"], "description": "run steps only"},
-                "cmd": {"type": "string", "description": "run steps only: the command, run in the project folder"},
                 "requires_approval": _B,
+                "agent": {"type": "string", "description": "name of the team agent you choose for this step"},
             },
             "required": ["capability", "title", "instructions", "acceptance", "budget_cpu_s"],
         }},

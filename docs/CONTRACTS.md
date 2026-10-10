@@ -25,8 +25,9 @@ The controller heartbeats as executor `controller` (caps `['controller']`).
 
 ## 2. Plan order (reproduction goal)
 
-The controller's plan for a reproduction is these capabilities in this order (code rejects any other order; the LLM
-picks titles, instructions, acceptance checks, budgets and reasons; agents are picked by rolling reward):
+The controller's plan for a reproduction is these capabilities in this order (code rejects any other order and gives
+the planner one more try with the reason; the LLM picks titles, instructions, acceptance checks, budgets, reasons and
+the agent per step; code uses that agent if it is active and has the capability, else the highest rolling reward):
 
 `read_paper` (or `extract_claims`) → `design_experiment` → `write_code` → `setup_env` → `run` (smoke) → `budget` →
 `run` (full) → `compare` (or `explain_diff`) → `write_report`
@@ -45,7 +46,7 @@ Every step:
 | `plan_task_id` | the `plan` task (also `tasks.parent_task_id`) |
 | `workdir` | `runs/<project_id>` (relative to the repo root, on the executor) |
 | `budget` | `{max_cpu_s, max_tokens}`: CPU from the plan (clipped to the project cap), tokens from the agent's row |
-| `upstream` | `{capability: task_id}`: the latest `done` task of each earlier step; read its `output` for what you need |
+| `upstream` | `{capability: task_id}`: the latest `done` task of each earlier step (a later step of the same capability wins, so at `compare` `upstream['run']` is the full run), plus the latest `done` `debug` task; read their `output` for what you need |
 | `redirect_note` | present when a researcher redirected this step (§6) |
 
 `run` steps also carry what the worker needs, filled by the controller from upstream outputs:
@@ -53,15 +54,18 @@ Every step:
 | Field | Source |
 |---|---|
 | `scale` | `smoke` or `full` |
-| `cmd` | smoke: `python train.py --data-dir ../../../data --epochs 1 --subset 5000 --seed 0`; full: `--epochs`, `--subset`, `--seed` from the `budget` output |
+| `cmd` | smoke: `python train.py --data-dir ../../data --epochs 1 --subset 5000 --seed 0`; full: `--epochs`, `--subset`, `--seed` from the `budget` output |
 | `cwd` | `runs/<project_id>` |
 | `files` | `{"train.py": ...}` from the latest `write_code` output, or a later `debug` output that changed it |
 | `requirements` | from the latest `setup_env` output, or a later `debug` output that changed it |
-| `experiment_id` | an `experiments` row the controller creates for the run (`label`, `config`, `margin`, `budget_reason`) |
+| `experiment_id` | an `experiments` row the controller creates for the run: `config` = the `design_experiment` output's `config` (with `claim_map`) plus `scale`, `cmd` and, for full runs, `budget`; `margin` from that output; `budget_reason` from the `budget` output |
 | `timeout_s`, `network` | at least 300 s; `network: true` for the dataset download |
 
 `debug` tasks: `failed_task_id`, `for_step`, `error_signature`, `error_log_line`, `log_path`, `experiment_id`, `cmd`,
-plus the common fields. `tasks.parent_task_id` is the failed task.
+`files` and `requirements` (what the failed run ran), plus the common fields. `tasks.parent_task_id` is the failed task.
+
+If an earlier step's output lacks what a run needs (`files['train.py']`, `requirements`, the budget's `epochs`/`subset`),
+the controller does not invent it: the project goes to `blocked` with a `project_blocked` event naming what is missing.
 
 ## 4. `tasks.output` (written by whoever ran the task)
 

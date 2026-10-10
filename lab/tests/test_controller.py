@@ -118,7 +118,7 @@ def step(cap, **kw):
 
 def test_plan_check_drops_unknown_capabilities_with_a_reason():
     res = planner.check_plan({"reason": "r", "steps": [step("read_paper"), step("teleport"), step("write_code")]},
-                             budget_cpu_min=20)
+                             budget_cpu_min=20, order=None)
     assert [s.capability for s in res.steps] == ["read_paper", "write_code"]
     assert len(res.dropped) == 1 and "teleport" in res.dropped[0]
 
@@ -126,7 +126,7 @@ def test_plan_check_drops_unknown_capabilities_with_a_reason():
 def test_plan_check_defaults_run_scale_to_smoke_and_clips_budget_to_the_project_cap():
     res = planner.check_plan({"reason": "r", "steps": [step("run", budget_cpu_s=99_999),
                                                        step("run", scale="full", cmd="python train.py")]},
-                             budget_cpu_min=20)
+                             budget_cpu_min=20, order=None)
     a, b = res.steps
     assert a.scale == "smoke" and a.budget_cpu_s == 20 * 60
     assert b.scale == "full" and b.cmd == "python train.py"
@@ -135,11 +135,11 @@ def test_plan_check_defaults_run_scale_to_smoke_and_clips_budget_to_the_project_
 
 def test_plan_check_rejects_an_empty_plan():
     with pytest.raises(planner.PlanError):
-        planner.check_plan({"reason": "r", "steps": [step("teleport")]}, budget_cpu_min=20)
+        planner.check_plan({"reason": "r", "steps": [step("teleport")]}, budget_cpu_min=20, order=None)
 
 
 def test_plan_check_caps_the_number_of_steps():
-    res = planner.check_plan({"reason": "r", "steps": [step("read_paper")] * 40}, budget_cpu_min=20)
+    res = planner.check_plan({"reason": "r", "steps": [step("read_paper")] * 40}, budget_cpu_min=20, order=None)
     assert len(res.steps) == planner.MAX_STEPS and res.notes
 
 
