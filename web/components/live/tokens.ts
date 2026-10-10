@@ -1,6 +1,7 @@
-// Pure helpers for the header's "tokens today" meter (from llm_calls).
+// Pure helpers for the header's "AI tokens today" meter (live llm_calls only; replayed calls cost nothing).
 
-export const TOKEN_BUDGET = 800_000;
+/** Our own daily cap on live AI tokens (the gateway's quota is 800k; see the meter's tooltip). */
+export const TOKEN_CAP = 700_000;
 const AMBER_ABOVE = 500_000;
 const RED_ABOVE = 700_000;
 
@@ -29,4 +30,9 @@ export function formatTokens(n: number): string {
   if (n < 1000) return String(n);
   if (n < 100_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
   return `${Math.round(n / 1000)}k`;
+}
+
+/** "AI tokens today: 473k / 700k cap" */
+export function tokenMeterText(tokens: number): string {
+  return `AI tokens today: ${formatTokens(tokens)} / ${formatTokens(TOKEN_CAP)} cap`;
 }

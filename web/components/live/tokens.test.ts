@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formatTokens, sumTokens, TOKEN_BUDGET, tokenDayStart, tokenLevel } from "./tokens.ts";
+import { TOKEN_CAP, formatTokens, sumTokens, tokenDayStart, tokenLevel, tokenMeterText } from "./tokens.ts";
 
 test("the token day starts at 05:30 IST (00:00 UTC) on the same day once it has passed", () => {
   // 06:00 IST on 10 Oct = 00:30 UTC
@@ -14,8 +14,8 @@ test("before 05:30 IST the token day is still yesterday's", () => {
   assert.equal(tokenDayStart(Date.parse("2026-10-09T23:50:00Z")), Date.parse("2026-10-09T00:00:00Z"));
 });
 
-test("levels: amber above 500k, red above 700k of the 800k budget", () => {
-  assert.equal(TOKEN_BUDGET, 800_000);
+test("levels: amber above 500k, red above our 700k cap", () => {
+  assert.equal(TOKEN_CAP, 700_000);
   assert.equal(tokenLevel(500_000), "ok");
   assert.equal(tokenLevel(500_001), "amber");
   assert.equal(tokenLevel(700_000), "amber");
@@ -30,4 +30,9 @@ test("formatTokens is compact: 950, 12.3k, 532k", () => {
   assert.equal(formatTokens(950), "950");
   assert.equal(formatTokens(12_345), "12.3k");
   assert.equal(formatTokens(532_400), "532k");
+});
+
+test("the meter shows live tokens against our 700k cap", () => {
+  assert.equal(tokenMeterText(473_210), "AI tokens today: 473k / 700k cap");
+  assert.equal(tokenMeterText(950), "AI tokens today: 950 / 700k cap");
 });

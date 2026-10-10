@@ -15,6 +15,9 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
+      <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+        Checks whether a paper&apos;s claims hold up by re-running them, with an AI agent team that improves itself.
+      </p>
       <div className="mb-6">
         <NewResearchForm />
       </div>
