@@ -3,7 +3,7 @@
 // Header live-data check (SPEC §10): when did the newest event and metric land?
 // Global on purpose: it proves the whole bus is alive, on every page.
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
@@ -39,10 +39,35 @@ function Stamp({ label, ts, now }: { label: string; ts: string | null; now: numb
   );
 }
 
+const TAB_TITLE: Record<string, string> = {
+  live: "Live",
+  team: "Team",
+  experiments: "Experiments",
+  report: "Report",
+  notes: "Notes",
+  inbox: "Inbox",
+};
+
 // On a project page (any tab), the newest journal email for that project, and a toast when a new one arrives. The pathname is request data, so the
 // caller wraps this in <Suspense> (cacheComponents).
 function ProjectInbox() {
   const projectId = projectIdFromPath(usePathname());
+  const tab = TAB_TITLE[useSearchParams().get("tab") ?? ""] ?? "Live"; // unknown tabs show Live, like the page
+
+  // "ClaimTrace Lab · Report": the tab lives in ?tab=, which static metadata cannot see. Next streams the metadata
+  // <title> in after hydration, so re-apply whenever the head's title changes while this page is open.
+  useEffect(() => {
+    if (!projectId) return;
+    const want = `ClaimTrace Lab · ${tab}`;
+    const apply = () => {
+      if (document.title !== want) document.title = want;
+    };
+    apply();
+    const watch = new MutationObserver(apply);
+    watch.observe(document.head, { subtree: true, childList: true, characterData: true });
+    return () => watch.disconnect();
+  }, [projectId, tab]);
+
   if (!projectId) return null;
   return (
     <div className="mx-auto max-w-5xl px-4">
