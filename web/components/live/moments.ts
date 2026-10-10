@@ -1,7 +1,8 @@
 // "Key moments" filter for the Live tab: the events that show the team changing and the researcher's gates.
 // Budget hold and approval needed have no event type of their own; they are matched on what the controller writes.
 
-const KEY_TYPES = new Set(["agent_spawned", "agent_refined", "agent_retired", "lesson_applied", "llm_daily_cap"]);
+const BUDGET_HOLD = new Set(["budget_hold", "llm_daily_cap"]); // budget_hold: B's token guard (PR #12)
+const KEY_TYPES = new Set(["agent_spawned", "agent_refined", "agent_retired", "lesson_applied", ...BUDGET_HOLD]);
 const AWAITS_APPROVAL = "(awaits approval)"; // lab/controller/loop.py: the task_assigned message of a gated task
 
 type EventLike = { type: string; message: string };
@@ -15,7 +16,7 @@ export function isKeyMoment(e: EventLike): boolean {
 /** A plain name for moments whose event type says something else (null: use the event type's label). */
 export function momentLabel(e: EventLike): string | null {
   if (needsApproval(e)) return "Approval needed";
-  if (e.type === "llm_daily_cap") return "Budget hold"; // LLM calls pause at the daily token cap
+  if (BUDGET_HOLD.has(e.type)) return "Budget hold"; // new AI work pauses at the daily token cap
   return null;
 }
 

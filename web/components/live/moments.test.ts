@@ -5,7 +5,7 @@ import { isKeyMoment, keyMomentsByDefault, momentLabel } from "./moments.ts";
 const ev = (type: string, message = "m") => ({ type, message });
 
 test("key moments: agent spawned, refined, retired, lesson applied, budget hold, approval needed", () => {
-  for (const t of ["agent_spawned", "agent_refined", "agent_retired", "lesson_applied", "llm_daily_cap"])
+  for (const t of ["agent_spawned", "agent_refined", "agent_retired", "lesson_applied", "llm_daily_cap", "budget_hold"])
     assert.equal(isKeyMoment(ev(t)), true, t);
   assert.equal(isKeyMoment(ev("task_assigned", "write code → implementer-v1 (awaits approval)")), true);
 });
@@ -18,6 +18,7 @@ test("everything else is not a key moment", () => {
 test("moments that have no event type of their own get a plain name", () => {
   assert.equal(momentLabel(ev("task_assigned", "run → runner-v1 (awaits approval)")), "Approval needed");
   assert.equal(momentLabel(ev("llm_daily_cap")), "Budget hold");
+  assert.equal(momentLabel(ev("budget_hold")), "Budget hold");
   assert.equal(momentLabel(ev("agent_spawned")), null);
 });
 

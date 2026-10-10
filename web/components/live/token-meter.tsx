@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { sumTokens, TOKEN_CAP, tokenDayStart, tokenLevel, tokenMeterText } from "./tokens";
 
-const TOOLTIP = "Daily gateway quota 800k; we stop new AI work at 600k. Resets 05:30 IST.";
+const TOOLTIP = "Daily gateway quota 800k. New AI work pauses at our safety cap; runs and grading continue. Resets 05:30 IST.";
 
 const POLL_MS = 30_000;
 const PAGE = 1000; // PostgREST's default max rows per request
