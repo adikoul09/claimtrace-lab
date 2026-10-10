@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { mergeEvents } from "@/lib/live";
 import type { Agent, Event } from "@/lib/types";
+import { WhatIfForm } from "./whatif-form";
 
 const LIMIT = 200;
 
@@ -58,6 +59,9 @@ export function EventStream({ projectId }: { projectId: string }) {
 
   return (
     <section aria-labelledby="live-heading">
+      <div className="mb-4">
+        <WhatIfForm projectId={projectId} />
+      </div>
       <div className="mb-3 flex items-center gap-2">
         <h2 id="live-heading" className="text-sm font-semibold">
           Events

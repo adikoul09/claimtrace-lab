@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Agent, Event, Json, Project, Reward, Task } from "@/lib/types";
+import { PasscodeForm, post, useAuthed } from "@/components/live/write";
 
 type Row = Pick<
   Task,
@@ -13,22 +14,11 @@ type Row = Pick<
 const FIELDS = "id,project_id,agent_id,capability,status,input,created_at,finished_at";
 const FINISHED_LIMIT = 15;
 
-async function post(path: string, body: unknown): Promise<string | null> {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (res.ok) return null;
-  const j = (await res.json().catch(() => ({}))) as { error?: string };
-  return j.error ?? `request failed (${res.status})`;
-}
-
 const obj = (j: Json | null | undefined) =>
   j && typeof j === "object" && !Array.isArray(j) ? (j as Record<string, Json>) : {};
 
 export function ApprovalsView() {
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [authed, setAuthed] = useAuthed();
   const [awaiting, setAwaiting] = useState<Row[]>([]);
   const [finished, setFinished] = useState<Row[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -78,10 +68,6 @@ export function ApprovalsView() {
 
   useEffect(() => {
     const db = supabase();
-    fetch("/api/login")
-      .then((r) => r.json())
-      .then((j: { authed?: boolean }) => setAuthed(!!j.authed))
-      .catch(() => setAuthed(false));
     db.from("agents")
       .select("id,name")
       .then(({ data }) =>
@@ -116,7 +102,9 @@ export function ApprovalsView() {
 
   return (
     <div className="space-y-6">
-      {authed === false && <Login onDone={() => setAuthed(true)} />}
+      {authed === false && (
+        <PasscodeForm onDone={() => setAuthed(true)} why="Needed to approve, reject, redirect or give feedback." />
+      )}
       {error && <p className="text-sm text-red-600">Could not load tasks: {error}</p>}
 
       <section aria-labelledby="awaiting-heading">
@@ -170,48 +158,6 @@ export function ApprovalsView() {
   );
 }
 
-function Login({ onDone }: { onDone: () => void }) {
-  const [passcode, setPasscode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <form
-      className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        setBusy(true);
-        const err = await post("/api/login", { passcode });
-        setBusy(false);
-        if (err) setError(err);
-        else onDone();
-      }}
-    >
-      <label htmlFor="passcode" className="block text-sm font-medium">
-        Demo passcode
-      </label>
-      <p className="text-xs text-neutral-500">Needed to approve, reject, redirect or give feedback.</p>
-      <div className="mt-2 flex gap-2">
-        <input
-          id="passcode"
-          type="password"
-          autoComplete="current-password"
-          value={passcode}
-          onChange={(e) => setPasscode(e.target.value)}
-          className="min-h-11 min-w-0 flex-1 rounded border border-neutral-300 bg-transparent px-3 text-base dark:border-neutral-700"
-        />
-        <button
-          type="submit"
-          disabled={busy || !passcode}
-          className="min-h-11 rounded bg-neutral-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-        >
-          {busy ? "…" : "Log in"}
-        </button>
-      </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-    </form>
-  );
-}
-
 function ApprovalCard({
   task: t,
   agent,
@@ -237,10 +183,14 @@ function ApprovalCard({
   const decide = async (decision: "approve" | "reject" | "redirect") => {
     setBusy(true);
     setError(null);
-    const err = await post(`/api/tasks/${t.id}/decision`, { decision, note: note || undefined });
-    setBusy(false);
-    if (err) setError(err);
-    else onDone();
+    try {
+      await post(`/api/tasks/${t.id}/decision`, { decision, note: note || undefined });
+      onDone();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -335,10 +285,14 @@ function FeedbackRow({
   const send = async (value: "up" | "down") => {
     setBusy(true);
     setError(null);
-    const err = await post(`/api/tasks/${t.id}/feedback`, { value });
-    setBusy(false);
-    if (err) setError(err);
-    else onDone();
+    try {
+      await post(`/api/tasks/${t.id}/feedback`, { value });
+      onDone();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
   const thumb = (value: "up" | "down", label: string, emoji: string) => (
     <button

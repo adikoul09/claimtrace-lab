@@ -120,3 +120,83 @@ export function planFeedback(task: TaskRow, body: { value?: unknown }): { ok: tr
     },
   };
 }
+
+// --- new research and what-if (SPEC §12: POST /api/projects, POST /api/projects/[id]/whatif) ---------
+
+const BUDGET_MIN = 1;
+const BUDGET_MAX = 240;
+const DEFAULT_BUDGET_CPU_MIN = 20; // SPEC §7.3 project cap
+const QUESTION_MAX = 500;
+
+/** "1503.02531", "arXiv:1503.02531v2", arxiv.org/abs|pdf URLs, or old-style "hep-th/9901001" → the id; else null. */
+export function parseArxivId(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  let s = raw.trim();
+  const url = s.match(/^https?:\/\/(?:www\.)?arxiv\.org\/(?:abs|pdf)\/(.+?)(?:\.pdf)?\/?$/i);
+  if (url) s = url[1];
+  else if (/^[a-z]+:\/\//i.test(s)) return null;
+  s = s.replace(/^arxiv:/i, "");
+  return /^(\d{4}\.\d{4,5}|[a-z-]+(\.[A-Z]{2})?\/\d{7})(v\d+)?$/.test(s) ? s : null;
+}
+
+export function planProject(body: { arxiv_id?: unknown; repo_url?: unknown; budget_cpu_min?: unknown }):
+  | {
+      ok: true;
+      row: { title: string; arxiv_id: string; repo_url: string | null; budget_cpu_min: number; status: "new" };
+    }
+  | Refusal {
+  const arxiv = parseArxivId(body.arxiv_id);
+  if (!arxiv) return refuse(400, "arxiv_id must be an arXiv id like 1503.02531 or an arxiv.org link");
+
+  let repo: string | null = null;
+  if (body.repo_url !== undefined && body.repo_url !== null && body.repo_url !== "") {
+    if (typeof body.repo_url !== "string" || body.repo_url.length > 300) return refuse(400, "repo_url is not a URL");
+    const r = body.repo_url.trim();
+    let u: URL;
+    try {
+      u = new URL(r);
+    } catch {
+      return refuse(400, "repo_url is not a URL");
+    }
+    if (u.protocol !== "https:") return refuse(400, "repo_url must be an https link"); // fetch_repo is https only
+    repo = r;
+  }
+
+  const b = body.budget_cpu_min ?? DEFAULT_BUDGET_CPU_MIN;
+  if (typeof b !== "number" || !Number.isInteger(b) || b < BUDGET_MIN || b > BUDGET_MAX)
+    return refuse(400, `budget_cpu_min must be a whole number from ${BUDGET_MIN} to ${BUDGET_MAX}`);
+
+  // status 'new': the controller's intake queues the plan task (lab/controller/loop.py).
+  return { ok: true, row: { title: `arXiv ${arxiv}`, arxiv_id: arxiv, repo_url: repo, budget_cpu_min: b, status: "new" } };
+}
+
+export function planWhatIf(
+  projectId: string,
+  body: { question?: unknown },
+):
+  | {
+      ok: true;
+      task: {
+        project_id: string;
+        capability: "design_whatif";
+        required_caps: string[];
+        status: "queued";
+        input: { question: string };
+      };
+    }
+  | Refusal {
+  const q = typeof body.question === "string" ? body.question.trim() : "";
+  if (!q) return refuse(400, "ask a question");
+  if (q.length > QUESTION_MAX) return refuse(400, `the question is longer than ${QUESTION_MAX} characters`);
+  return {
+    ok: true,
+    task: {
+      project_id: projectId,
+      capability: "design_whatif",
+      // Same caps as routing.required_caps("design_whatif") in lab/controller/routing.py.
+      required_caps: ["parse"],
+      status: "queued",
+      input: { question: q },
+    },
+  };
+}

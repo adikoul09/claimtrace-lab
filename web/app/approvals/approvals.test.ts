@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { demoToken, checkDemoToken, planDecision, planFeedback } from "./approvals.ts";
+import {
+  demoToken,
+  checkDemoToken,
+  parseArxivId,
+  planDecision,
+  planFeedback,
+  planProject,
+  planWhatIf,
+} from "./approvals.ts";
 
 const task = (status: string, over: Record<string, unknown> = {}) => ({
   id: "t1",
@@ -82,4 +90,61 @@ test("feedback on an unfinished task, or with an unknown value, is refused", () 
   assert.equal(!running.ok && running.status, 409);
   const bad = planFeedback(task("done"), { value: "meh" });
   assert.equal(!bad.ok && bad.status, 400);
+});
+
+// --- new research and what-if ----------------------------------------------------------------------
+
+test("parseArxivId accepts bare ids, prefixes and arxiv.org URLs", () => {
+  assert.equal(parseArxivId("1503.02531"), "1503.02531");
+  assert.equal(parseArxivId(" arXiv:1503.02531v2 "), "1503.02531v2");
+  assert.equal(parseArxivId("https://arxiv.org/abs/1503.02531"), "1503.02531");
+  assert.equal(parseArxivId("https://arxiv.org/pdf/1503.02531v1.pdf"), "1503.02531v1");
+  assert.equal(parseArxivId("hep-th/9901001"), "hep-th/9901001");
+});
+
+test("parseArxivId rejects anything else", () => {
+  assert.equal(parseArxivId("not a paper"), null);
+  assert.equal(parseArxivId("https://example.com/abs/1503.02531"), null);
+  assert.equal(parseArxivId(""), null);
+});
+
+test("planProject builds a 'new' project row the controller's intake will plan", () => {
+  const p = planProject({ arxiv_id: "arXiv:1503.02531" });
+  assert.ok(p.ok);
+  assert.deepEqual(p.row, {
+    title: "arXiv 1503.02531",
+    arxiv_id: "1503.02531",
+    repo_url: null,
+    budget_cpu_min: 20,
+    status: "new",
+  });
+});
+
+test("planProject keeps an https repo URL and a budget in range, and refuses others", () => {
+  const ok = planProject({ arxiv_id: "1503.02531", repo_url: "https://github.com/a/b", budget_cpu_min: 30 });
+  assert.ok(ok.ok);
+  assert.equal(ok.row.repo_url, "https://github.com/a/b");
+  assert.equal(ok.row.budget_cpu_min, 30);
+  assert.equal(planProject({ arxiv_id: "1503.02531", repo_url: "http://github.com/a/b" }).ok, false);
+  assert.equal(planProject({ arxiv_id: "1503.02531", budget_cpu_min: 0 }).ok, false);
+  assert.equal(planProject({ arxiv_id: "1503.02531", budget_cpu_min: 2.5 }).ok, false);
+  assert.equal(planProject({ arxiv_id: "nope" }).ok, false);
+});
+
+test("planWhatIf queues a design_whatif task with the question and parse caps", () => {
+  const p = planWhatIf("p1", { question: "  What if T = 5?  " });
+  assert.ok(p.ok);
+  assert.deepEqual(p.task, {
+    project_id: "p1",
+    capability: "design_whatif",
+    required_caps: ["parse"],
+    status: "queued",
+    input: { question: "What if T = 5?" },
+  });
+});
+
+test("planWhatIf refuses an empty or over-long question", () => {
+  assert.equal(planWhatIf("p1", { question: "  " }).ok, false);
+  assert.equal(planWhatIf("p1", { question: "x".repeat(501) }).ok, false);
+  assert.equal(planWhatIf("p1", {}).ok, false);
 });
