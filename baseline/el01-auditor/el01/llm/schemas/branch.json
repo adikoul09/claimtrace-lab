@@ -1,0 +1,35 @@
+{
+ "type": "object",
+ "properties": {
+  "readings": {
+   "type": "array",
+   "minItems": 1,
+   "maxItems": 3,
+   "items": {
+    "type": "object",
+    "properties": {
+     "label": {"type": "string", "description": "a short name for this reading, a few words"},
+     "paper_value": {"type": "string", "description": "the paper's setting as this reading implements it, a short phrase"},
+     "edits": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "file": {"type": "string", "description": "path relative to the repository root, e.g. utils/io.py"},
+        "old": {"type": "string", "description": "exact current text: one or more whole lines, unique in the file"},
+        "new": {"type": "string", "description": "replacement text for those lines"}
+       },
+       "required": ["file", "old", "new"],
+       "additionalProperties": false
+      }
+     },
+     "rationale": {"type": "string", "description": "one or two sentences"}
+    },
+    "required": ["label", "paper_value", "edits", "rationale"],
+    "additionalProperties": false
+   }
+  }
+ },
+ "required": ["readings"],
+ "additionalProperties": false
+}

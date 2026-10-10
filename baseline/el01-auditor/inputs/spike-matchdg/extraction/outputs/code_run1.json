@@ -1,0 +1,175 @@
+{
+  "experiment": "Slab (synthetic) dataset, Table 1: methods erm, mmd, coral, dann, c-mmd, c-coral, c-dann, rand, perf; train domains spur_corr 0.0 and 0.10, test domain spur_corr 1.0, slab_noise 0.1",
+  "command": {
+    "documented_in": "docs/notebooks/reproduce_results.ipynb:32-44  \"# Table 1: Slab Dataset\" ... \"`python3 data_gen_syn.py`\" ... \"`python3 reproduce_scripts/reproduce_slab.py train`\"",
+    "data_generation": "python3 data_gen_syn.py",
+    "training": "python3 reproduce_scripts/reproduce_slab.py train",
+    "expanded_base_command": "python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1  --n_runs 10",
+    "expanded_base_command_evidence": "reproduce_scripts/reproduce_slab.py:13  base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)",
+    "per_method_suffix": {
+      "erm":     {"suffix": "--method_name erm_match --match_case 0.0 --penalty_ws 0.0", "evidence": "reproduce_scripts/reproduce_slab.py:45  script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 0.0 '"},
+      "mmd":     {"suffix": "--method_name mmd --gaussian 1 --conditional 0 --penalty_ws 0.1", "evidence": "reproduce_scripts/reproduce_slab.py:27  script= base_script + ' --method_name mmd --gaussian 1 --conditional 0 --penalty_ws 0.1 '"},
+      "coral":   {"suffix": "--method_name mmd --gaussian 0 --conditional 0 --penalty_ws 0.1", "evidence": "reproduce_scripts/reproduce_slab.py:33  script= base_script + ' --method_name mmd --gaussian 0 --conditional 0  --penalty_ws 0.1 '"},
+      "dann":    {"suffix": "--method_name dann --conditional 0 --penalty_ws 0.01 --grad_penalty 0.1 --d_steps_per_g_step 4", "evidence": "reproduce_scripts/reproduce_slab.py:39  script= base_script + ' --method_name dann --conditional 0 --penalty_ws 0.01 --grad_penalty 0.1 --d_steps_per_g_step 4 '"},
+      "c-mmd":   {"suffix": "--method_name mmd --gaussian 1 --conditional 1 --penalty_ws 0.1", "evidence": "reproduce_scripts/reproduce_slab.py:30  script= base_script + ' --method_name mmd --gaussian 1 --conditional 1 --penalty_ws 0.1 '"},
+      "c-coral": {"suffix": "--method_name mmd --gaussian 0 --conditional 1 --penalty_ws 0.1", "evidence": "reproduce_scripts/reproduce_slab.py:36  script= base_script + ' --method_name mmd --gaussian 0 --conditional 1  --penalty_ws 0.1 '"},
+      "c-dann":  {"suffix": "--method_name dann --conditional 1 --penalty_ws 0.01 --grad_penalty 1.0 --d_steps_per_g_step 2", "evidence": "reproduce_scripts/reproduce_slab.py:42  script= base_script + ' --method_name dann --conditional 1 --penalty_ws 0.01 --grad_penalty 1.0 --d_steps_per_g_step 2 '"},
+      "rand":    {"suffix": "--method_name erm_match --match_case 0.0 --penalty_ws 1.0", "evidence": "reproduce_scripts/reproduce_slab.py:48  script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 1.0 '"},
+      "perf":    {"suffix": "--method_name erm_match --match_case 1.0 --penalty_ws 1.0", "evidence": "reproduce_scripts/reproduce_slab.py:51  script= base_script + ' --method_name erm_match --match_case 1.0 --penalty_ws 1.0 '"}
+    },
+    "output": "stdout of each method redirected to results/slab/logs/<method>.txt (reproduce_scripts/reproduce_slab.py:53  script= script + ' > ' + res_dir + str(method) + '.txt')",
+    "argparse_note": "'--dataset slab' is not a declared flag; train.py declares '--dataset_name' (train.py:31) and argparse's default prefix-abbreviation resolves '--dataset' to '--dataset_name' (it is the only flag with that prefix), so dataset_name='slab'.",
+    "other_case": "reproduce_slab.py 'evaluate' (line 16) runs test.py --test_metric per_domain_acc --acc_data_case train on the saved checkpoints; this is per-domain TRAIN accuracy and is not what the notebook lists for Table 1."
+  },
+  "settings": {
+    "data.source_domains": {
+      "value": ["0.0", "0.10"],
+      "evidence": "reproduce_scripts/reproduce_slab.py:13  ... --train_domains 0.0 0.10 ... ; data/slab_loader.py:43  self.spur_probs= [ float(domain) for domain in self.list_domains ]  (domain value = spur_corr = fraction of samples whose linear/spurious coordinate is corrupted)"
+    },
+    "data.target_domains": {
+      "value": ["1.0"],
+      "evidence": "reproduce_scripts/reproduce_slab.py:13  ... --test_domains 1.0 ... ; train.py:221  test_dataset= get_dataloader( args, run, test_domains, 'test', 0, kwargs )"
+    },
+    "data.domains_data_available": {
+      "value": [0.0, 0.1, 0.2, 0.9],
+      "evidence": "data_gen_syn.py:42  spur_corr_list= [0.0, 0.10, 0.20, 0.90]  (for slab_noise in [0.0, 0.10] (line 41), cases ['train','val','test'] (line 48), seeds range(10) (line 44)). Test domain 1.0 requested by the command is NOT generated; utils/slab_data.py:76-78 opens '..._spur_corr_' + str(spur_corr) + '_case_' + str(data_case) + '_seed_' + str(seed) + '.pickle', so '_spur_corr_1.0_case_test_seed_*.pickle' does not exist."
+    },
+    "data.train_samples_per_domain": {
+      "value": 1000,
+      "evidence": "train.py:138  parser.add_argument('--slab_num_samples', type=int, default=1000) ; utils/helper.py:277  data_obj= SlabData(args, domains, '/slab/', ..., base_size=args.slab_num_samples, ...) ; data/slab_loader.py:41  self.domain_size = len(self.list_domains)*[self.base_size] ; utils/slab_data.py:89  X, Y = data['X'][:num_samples], data['Y'][:num_samples]  (first 1000 of the 10000 generated per file, data_gen_syn.py:39 num_samples= 10000)"
+    },
+    "data.val_samples_per_domain": {
+      "value": 250,
+      "evidence": "data/slab_loader.py:46  self.domain_size = len(self.list_domains)*[int(self.base_size/4)]  (base_size=1000 -> 250 per train domain, drawn from the separate '_case_val_' pickle; val set = train domains: train.py:220 val_dataset= get_dataloader( args, run, train_domains, 'val', 0, kwargs ))"
+    },
+    "data.generation_params": {
+      "value": {
+        "num_samples_per_file": 10000,
+        "dim": 2,
+        "lin_margin": 0.1,
+        "slab_margin": 0.1,
+        "width": 1,
+        "num_lin": 1,
+        "total_slabs": 7,
+        "slab7_pval": 0.875,
+        "corrupt_lin (= domain spur_corr)": "0.0 / 0.1 / 0.2 / 0.9",
+        "corrupt_lin_margin": true,
+        "corrupt_slab7 (= slab_noise)": "0.0 or 0.1 (command uses 0.1)",
+        "random_transform": false,
+        "num_test": 0,
+        "test_samples_per_domain_used": 1000,
+        "generation_seed": "np.random.seed(seed*10), seed in 0..9; file seed index = run"
+      },
+      "evidence": "data_gen_syn.py:39-45  num_samples= 10000 / total_slabs= 7 / slab_noise_list= [0.0, 0.10] / spur_corr_list= [0.0, 0.10, 0.20, 0.90] / for seed in range(10): np.random.seed(seed*10) ; data_gen_syn.py:64-81  'num_train': num_samples, 'dim': 2, 'lin_margin': 0.1, 'slab_margin': 0.1, 'same_margin': True, 'random_transform': False, 'width': 1, 'num_lin': 1, ... 'num_slabs7': slab_7_flag, ... 'corrupt_lin': spur_corr, 'corrupt_lin_margin': True, ... 'corrupt_slab7': slab_noise_7, 'num_test': 0 ; utils/scripts/gendata.py:275  slab3_pval=1/2., slab7_pval=7/8. ; utils/scripts/gendata.py:107-108  if corrupt_lin_margin: X[corrupt_sample, 0] = np.random.uniform(low=-lin_margin, high=lin_margin, size=total_corrupt) ; utils/scripts/gendata.py:222  total_corrupt = int(round(N*corrupt_slab7)) ; data/slab_loader.py:50 test domain_size = base_size (1000) ; utils/helper.py:277 seed=run"
+    },
+    "model.architecture": {
+      "value": "SlabClf MLP: Linear(2,100) -> ReLU -> Linear(100,100) -> Linear(100,2) (no nonlinearity between the last two linear layers); features for MMD/CORAL/DANN = output of Linear(2,100)+ReLU; DANN discriminator Linear(100,100)->Linear(100,2) plus nn.Embedding(2,100) class embedding for conditional DANN",
+      "evidence": "models/slab.py:17-26  self.hidden_dim = 100 / self.feat_net= nn.Sequential( nn.Linear( self.inp_shape, self.hidden_dim), nn.ReLU(), ) / self.fc= nn.Sequential( nn.Linear( self.hidden_dim, self.hidden_dim), nn.Linear( self.hidden_dim, self.out_shape), ) ; models/slab.py:28-33 self.disc= ... self.embedding = nn.Embedding(2, self.hidden_dim) ; algorithms/algo.py:124  phi= SlabClf(self.args.slab_data_dim, self.args.out_classes, fc_layer)  (fc_layer=1 by default, train.py:49)"
+    },
+    "optim.name": {
+      "value": {"erm": "sgd", "rand": "sgd", "perf": "sgd", "mmd": "sgd", "coral": "sgd", "c-mmd": "sgd", "c-coral": "sgd", "dann": "sgd (two optimizers: disc_opt, gen_opt)", "c-dann": "sgd (two optimizers: disc_opt, gen_opt)"},
+      "evidence": "train.py:61  parser.add_argument('--opt', type=str, default='sgd', ... ; algorithms/algo.py:183-185  opt= optim.SGD([ {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True ) ; algorithms/dann.py:41-51  self.disc_opt = torch.optim.SGD( ..., lr=self.initial_lr, weight_decay=5e-4) / self.gen_opt = torch.optim.SGD( ..., lr=self.initial_lr, weight_decay=5e-4)"
+    },
+    "optim.momentum": {
+      "value": {"erm": 0.9, "rand": 0.9, "perf": 0.9, "mmd": 0.9, "coral": 0.9, "c-mmd": 0.9, "c-coral": 0.9, "dann": 0.0, "c-dann": 0.0},
+      "evidence": "algorithms/algo.py:185  ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )  ; algorithms/dann.py:41-45  self.disc_opt = torch.optim.SGD( (list(self.discriminator.parameters()) + list(self.class_embeddings.parameters())), lr=self.initial_lr, weight_decay=5e-4)  (no momentum arg -> torch default 0; same for gen_opt at dann.py:47-51)"
+    },
+    "optim.nesterov": {
+      "value": {"erm": true, "rand": true, "perf": true, "mmd": true, "coral": true, "c-mmd": true, "c-coral": true, "dann": false, "c-dann": false},
+      "evidence": "algorithms/algo.py:185  ... momentum= 0.9,  nesterov=True ) ; algorithms/dann.py:47-51  self.gen_opt = torch.optim.SGD( (list(self.featurizer.parameters()) + list(self.classifier.parameters())), lr=self.initial_lr, weight_decay=5e-4)  (no nesterov arg -> False)"
+    },
+    "optim.lr": {
+      "value": {"erm": 0.1, "rand": 0.1, "perf": 0.1, "mmd": 0.1, "coral": 0.1, "c-mmd": 0.1, "c-coral": 0.1, "dann": 0.01, "c-dann": 0.01},
+      "evidence": "reproduce_scripts/reproduce_slab.py:13  ... --lr 0.1 ... ; algorithms/algo.py:185  lr= self.args.lr ; algorithms/dann.py:38  self.initial_lr= 0.01  (hard-coded; --lr 0.1 is ignored by DANN's disc_opt/gen_opt, dann.py:44 and :50 lr=self.initial_lr)"
+    },
+    "optim.lr_schedule": {
+      "value": "constant",
+      "evidence": "algorithms/algo.py:102  self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, step_size=25)  is constructed but scheduler.step() is never called anywhere (grep 'scheduler' finds only this line plus an unrelated utils/scripts/utils.py:639 comment); the only manual LR decay is algorithms/erm_match.py:162  if epoch > 0 and self.args.model_name in ['domain_bed_mnist', 'lenet']:  which does not apply to model_name 'slab'"
+    },
+    "optim.weight_decay": {
+      "value": 0.0005,
+      "evidence": "train.py:63  parser.add_argument('--weight_decay', type=float, default=5e-4,  (not overridden by the command; used at algorithms/algo.py:185 weight_decay= self.args.weight_decay) ; algorithms/dann.py:45,51  weight_decay=5e-4)"
+    },
+    "train.batch_size": {
+      "value": {"erm": "128 matched tuples x 2 domains = 256 samples per step", "rand": "128 matched tuples x 2 domains = 256 samples per step", "perf": "128 matched tuples x 2 domains = 256 samples per step", "mmd": 128, "coral": 128, "c-mmd": 128, "c-coral": 128, "dann": 128, "c-dann": 128},
+      "evidence": "reproduce_scripts/reproduce_slab.py:13  --batch_size 128 ; utils/helper.py:243-245  if data_case == 'train': match_func=True / batch_size= args.batch_size ; utils/helper.py:298  data_utils.DataLoader(data_obj, batch_size=batch_size, shuffle=True, **kwargs ) (mixed-domain batches used by mmd.py:97 and dann.py:65) ; algorithms/algo.py:212  data_matched= list(chunked(data_matched, self.args.batch_size))  and algorithms/erm_match.py:70  data_match= data_match.flatten(start_dim=0, end_dim=1)  (each chunk element holds one sample per domain); val/test loaders use batch_size= 512 (utils/helper.py:255)"
+    },
+    "train.epochs": {
+      "value": 100,
+      "evidence": "reproduce_scripts/reproduce_slab.py:13  ... --epochs 100 ... ; algorithms/erm_match.py:31  for epoch in range(self.args.epochs):"
+    },
+    "train.model_selection": {
+      "value": "best_val_accuracy",
+      "evidence": "train.py:306-308  idx= np.argmax(train_method.val_acc) / final_acc= train_method.final_acc[idx] / final_accuracy_source_val.append( final_acc ) ; val_acc is accuracy on the val split of the TRAIN domains (train.py:220), evaluated every epoch (algorithms/erm_match.py:149 self.val_acc.append( self.get_test_accuracy('val') )); checkpoint saved on strict improvement: algorithms/erm_match.py:155-158  if self.val_acc[-1] > self.max_val_acc: ... self.save_model() (same in mmd.py:167-170, dann.py:144-147)"
+    },
+    "loss.terms": {
+      "value": {
+        "erm": [
+          {"name": "cross_entropy on matched batch (both domains)", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "L2 logit-matching penalty (random same-class cross-domain match)", "weight": 0.0, "weight_schedule": "linear_ramp: penalty_ws*(epoch+1)/101 with penalty_ws=0 -> always 0"}
+        ],
+        "rand": [
+          {"name": "cross_entropy on matched batch (both domains)", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "mean squared L2 distance between logits of cross-domain matched pairs, matches = random same-class point (match_case 0.0)", "weight": 1.0, "weight_schedule": "linear_ramp: 1.0*(epoch+1)/101, i.e. from ~0.0099 at epoch 0 to ~0.990 at epoch 99"}
+        ],
+        "perf": [
+          {"name": "cross_entropy on matched batch (both domains)", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "mean squared L2 distance between logits of cross-domain matched pairs, matches = same class and same slab id (match_case 1.0)", "weight": 1.0, "weight_schedule": "linear_ramp: 1.0*(epoch+1)/101, i.e. from ~0.0099 at epoch 0 to ~0.990 at epoch 99"}
+        ],
+        "mmd": [
+          {"name": "cross_entropy", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "unconditional MMD (sum of Gaussian kernels, gammas [0.001..1000]) between the two domains' 100-d features, averaged over domain pairs", "weight": 0.1, "weight_schedule": "constant"}
+        ],
+        "coral": [
+          {"name": "cross_entropy", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "unconditional CORAL (mean-diff^2 mean + covariance-diff^2 mean) between domains' features", "weight": 0.1, "weight_schedule": "constant"}
+        ],
+        "c-mmd": [
+          {"name": "cross_entropy", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "class-conditional MMD (summed over classes) between domains' features", "weight": 0.1, "weight_schedule": "constant"}
+        ],
+        "c-coral": [
+          {"name": "cross_entropy", "weight": 1.0, "weight_schedule": "constant"},
+          {"name": "class-conditional CORAL (summed over classes) between domains' features", "weight": 0.1, "weight_schedule": "constant"}
+        ],
+        "dann": [
+          {"name": "generator: cross_entropy (classifier)", "weight": 1.0, "weight_schedule": "constant; generator updated only in epochs where epoch % 5 == 4 (20 of 100 epochs)"},
+          {"name": "generator: -(domain-discriminator cross_entropy + 0.1 * input-gradient penalty)", "weight": 0.01, "weight_schedule": "constant; applied only in generator epochs"},
+          {"name": "discriminator: domain cross_entropy + grad_penalty * input-gradient penalty", "weight": {"disc_ce": 1.0, "grad_penalty": 0.1}, "weight_schedule": "constant; discriminator-only updates in epochs where epoch % 5 in {0,1,2,3}"}
+        ],
+        "c-dann": [
+          {"name": "generator: cross_entropy (classifier)", "weight": 1.0, "weight_schedule": "constant; generator updated only in epochs where epoch % 3 == 2 (33 of 100 epochs)"},
+          {"name": "generator: -(class-conditional domain-discriminator cross_entropy + 1.0 * input-gradient penalty); disc input = features + class embedding", "weight": 0.01, "weight_schedule": "constant; applied only in generator epochs"},
+          {"name": "discriminator: domain cross_entropy + grad_penalty * input-gradient penalty", "weight": {"disc_ce": 1.0, "grad_penalty": 1.0}, "weight_schedule": "constant; discriminator-only updates in epochs where epoch % 3 in {0,1}"}
+        ]
+      },
+      "evidence": "algorithms/erm_match.py:77  erm_loss+= F.cross_entropy(feat_match, label_match.long()).to(self.cuda) ; :95  wasserstein_loss+= torch.sum( torch.sum( (feat_match[:, d_i, :] - feat_match[:, d_j, :])**2, dim=1 ) ) (pos_metric default 'l2', train.py:53) ; :103  wasserstein_loss = wasserstein_loss / pos_match_counter ; :106-109  if epoch >= self.args.match_interrupt and self.args.match_flag==1: ... else: loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss  (match_flag default 0 train.py:83, penalty_s default -1 train.py:71 -> weight = penalty_ws*(epoch+1)/101) ; utils/match_function.py:118  perm_prob= 1.0-match_case ; :258-260 perfect match by obj (slab id, utils/slab_data.py:100-109) ; algorithms/mmd.py:26  self.mmd_gamma= self.args.penalty_ws ; :47-48 gamma=[0.001, 0.01, 0.1, 1, 10, 100, 1000] ; :64-74 mean_cov (CORAL) ; :122-132 conditional vs unconditional ; :134-135  mmd_loss /= (nmb * (nmb - 1) / 2) ; :140  loss_e+= self.mmd_gamma*mmd_loss ; algorithms/dann.py:35-37  self.grad_penalty= self.args.grad_penalty / self.lambda_= self.args.penalty_ws / self.d_steps_per_g_step= self.args.d_steps_per_g_step ; :96  disc_loss += self.grad_penalty * grad_penalty ; :101-102  gen_loss = (classifier_loss + (self.lambda_ * -disc_loss)) ; :108  if (epoch % (1+d_steps_per_g) < d_steps_per_g):  (disc step) else gen step (:112-116)"
+    },
+    "eval.n_seeds": {
+      "value": 10,
+      "evidence": "reproduce_scripts/reproduce_slab.py:10  total_seed= 10  and :13 ' --n_runs ' + str(total_seed) ; train.py:206-213  for run in range(args.n_runs): random.seed(run*10) / np.random.seed(run*10) / torch.manual_seed(run*10) / torch.cuda.manual_seed_all(run*10) ; utils/helper.py:277 seed=run selects data file '_seed_<run>' (generated with np.random.seed(seed*10), data_gen_syn.py:45)"
+    },
+    "eval.metric": {
+      "value": "classification accuracy (%) on the test domain (spur_corr 1.0, 1000 samples per seed) at the epoch with the highest source-domain validation accuracy",
+      "evidence": "algorithms/algo.py:266  test_acc+= torch.sum( torch.argmax(out, dim=1) == y_e ).item() ; :277  return 100*test_acc/test_size ; train.py:314  print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) )"
+    },
+    "eval.aggregation": {
+      "value": "mean_sd_over_seeds (np.mean and np.std with ddof=0, i.e. population SD, over 10 runs)",
+      "evidence": "train.py:314  print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) ) ; a second line train.py:315 prints 'Final Test Accuracy (Target Validation)' = mean/std over runs of np.max(train_method.final_acc) (train.py:303, oracle best-test-epoch)"
+    }
+  },
+  "notes": [
+    "The command as shipped cannot complete: (a) the test domain 1.0 is never generated by data_gen_syn.py (spur_corr_list= [0.0, 0.10, 0.20, 0.90], data_gen_syn.py:42), so loading '..._spur_corr_1.0_case_test_seed_0.pickle' raises FileNotFoundError at train.py:221 before training starts; (b) utils/slab_data.py:75 hard-codes base_dir= '/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/' while data_gen_syn.py:35 writes to the relative 'data/datasets/slab/'. Neither is a flag; both need code edits (e.g. add 1.0 to spur_corr_list and fix the path) for the command to run.",
+    "Domain semantics: the domain value is corrupt_lin = fraction of samples whose linear (spurious, coordinate 0) feature is replaced by Uniform[-0.1, 0.1] (corrupt_lin_margin=True, utils/scripts/gendata.py:105-108); uncorrupted samples have X0 = (2Y-1)*(0.1+0.9U) (gendata.py:102). So train domains 0.0/0.1 have a 100%/90% predictive linear feature; test domain 1.0 would have an uninformative linear feature. The slab feature (coordinate 1, 7 slabs) has 10% label noise (slab_noise 0.1 -> corrupt_slab7, gendata.py:221-249).",
+    "Model selection and reported number: per run, the test accuracy at np.argmax(val_acc) over the 100 epochs (val = 250+250 samples from the train domains' val split); mean and population SD over 10 runs printed as 'Final Test Accuracy (Source Validation)'. The 'Target Validation' line (oracle: max test acc over epochs) is also printed. Logs go to results/slab/logs/<method>.txt.",
+    "Hyperparameters in reproduce_slab.py correspond to the grids in reproduce_scripts/slab-tune.py (penalty in [0.1,1,10] for rand/perf/mmd/coral variants, [0.01,0.1,1,10,100] for dann variants; grad_penalty in [0.01,0.1,1,10]; d_steps in [1,2,4,8]; 3 seeds). slab-tune.py selects the best config by data[-4] of the log (slab-tune.py:83,95), which is the 'Final Test Accuracy (Source Validation)' line, i.e. the TEST-domain (1.0) accuracy at the source-val-selected epoch, despite the comment '# Source validation accuracy'. So the provided tuning procedure picks hyperparameters using target-domain test accuracy.",
+    "DANN specifics: DANN ignores --lr and the base SGD(momentum 0.9, nesterov) optimizer; it uses two plain SGD optimizers with hard-coded lr 0.01, wd 5e-4, no momentum (algorithms/dann.py:38-51). Discriminator/generator alternation is decided per EPOCH, not per step: 'if (epoch % (1+d_steps_per_g) < d_steps_per_g)' (dann.py:108), so dann (d_steps 4) trains the classifier/featurizer only in epochs 4,9,...,99 and c-dann (d_steps 2) only in epochs 2,5,...,98. The gradient penalty uses disc_softmax[:, disc_labels].sum() (dann.py:91), and the generator loss subtracts lambda*(disc CE + grad_penalty*gp).",
+    "ERM/Rand/Perf (method erm_match) do not train on the shuffled train loader batches: they iterate it only for step count and train on matched tuples built once at epoch 0 (match_flag 0, erm_match.py:33-38) from utils/match_function.py:get_matched_pairs. For each class the domain with more samples is the base; every base point is paired with one point of the other domain (random same-class point for match_case 0.0; a random same-class point from the same slab id, re-drawn each batch, for match_case 1.0). The epoch loop breaks after len(data_matched) chunks of 128 (erm_match.py:62-64), i.e. about 8 steps per epoch, each with ~256 samples. For erm the matching weight is 0, so its CE is over base-domain points plus resampled points of the other domain.",
+    "MMD/CORAL variants and DANN variants train on standard shuffled mixed-domain batches of 128 (utils/helper.py:298) and apply the penalty on the 100-d ReLU feature (phi.feat_net), not on logits. For 2 train domains, the pair normalisation nmb*(nmb-1)/2 equals 1.",
+    "Weight decay in training is 5e-4 (train.py:63 default); the 'weight_decay': 5e-5 and 'lr': 0.1 entries in data_gen_syn.py's config (lines 86-87) are unused by training.",
+    "Checkpoint file names (algorithms/algo.py:98 post_string) do not include --gaussian/--conditional/--grad_penalty/--d_steps_per_g_step, and base_res_dir uses method_name (train.py:193-200). So mmd, c-mmd, coral and c-coral (all method_name 'mmd', penalty_ws 0.1) overwrite each other's saved models, as do dann and c-dann. This does not affect the numbers printed by the 'train' case (computed in-process), only the 'evaluate' case of reproduce_slab.py.",
+    "reproduce_slab.py 'evaluate' runs test.py with --test_metric per_domain_acc --acc_data_case train (per-domain accuracy on training data) and aggregates as mean and np.std/sqrt(n) (standard error, test.py:399); this is not the Table 1 path in the notebook.",
+    "Runtime requirements visible in code: a CUDA device is assumed (train.py:169 cuda= torch.device('cuda:' ...), model moved with .to(cuda)); algorithms/algo.py:240 imports opacus inside get_test_accuracy and calls opacus.autograd_grad_sample.enable_hooks() every evaluation (opacus is in requirements_new.txt as opacus==0.13.0 but not in requirements.txt); algorithms/algo.py:8 needs more_itertools.",
+    "Seeding: training seeds are run*10 for python random, numpy and torch (train.py:209-213); the data file used is seed index = run (0..9), generated by data_gen_syn.py with np.random.seed(seed*10) once per seed, then drawn sequentially for all (slab_noise, spur_corr, case) combinations. No cudnn determinism flags are set in train.py."
+  ]
+}

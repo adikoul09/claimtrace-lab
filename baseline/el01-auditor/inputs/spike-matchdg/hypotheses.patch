@@ -1,0 +1,427 @@
+### h0: paper's target domain (baseline)   (45e7771..7dde854)
+diff --git a/data_gen_syn.py b/data_gen_syn.py
+index dce0dd9..0f63a4d 100644
+--- a/data_gen_syn.py
++++ b/data_gen_syn.py
+@@ -39,7 +39,7 @@ if not os.path.exists(base_dir):
+ num_samples= 10000
+ total_slabs= 7
+ slab_noise_list= [0.0, 0.10]
+-spur_corr_list= [0.0, 0.10, 0.20, 0.90]
++spur_corr_list= [0.0, 0.10, 0.20, 0.90, 1.0]
+ 
+ for seed in range(10):
+     np.random.seed(seed*10)                     
+
+### h1: select by validation cross-entropy   (7dde854..be16a6f)
+diff --git a/algorithms/algo.py b/algorithms/algo.py
+index b976dd5..fc6ab19 100644
+--- a/algorithms/algo.py
++++ b/algorithms/algo.py
+@@ -277,6 +277,20 @@ class BaseAlgo():
+             opacus.autograd_grad_sample.enable_hooks()        
+         return 100*test_acc/test_size
+     
++    def get_val_loss(self):
++        # AUDIT HYPOTHESIS: paper App. A.1 says "early stopping based on the validation loss"
++        val_loss= 0.0
++        val_size= 0
++        for batch_idx, (x_e, y_e ,d_e, idx_e, obj_e) in enumerate(self.val_dataset):
++            with torch.no_grad():
++                x_e= x_e.to(self.cuda)
++                y_e= torch.argmax(y_e, dim=1).to(self.cuda)
++                out= self.phi(x_e)
++                val_loss+= F.cross_entropy(out, y_e.long(), reduction='sum').item()
++                val_size+= y_e.shape[0]
++        print(' Loss: val', val_loss/val_size)
++        return val_loss/val_size
++
+     def get_dp_noise(self):
+         
+         print('Privacy Engine')
+diff --git a/algorithms/erm_match.py b/algorithms/erm_match.py
+index 552e01b..c2e8bdc 100644
+--- a/algorithms/erm_match.py
++++ b/algorithms/erm_match.py
+@@ -28,6 +28,7 @@ class ErmMatch(BaseAlgo):
+         
+         self.max_epoch= -1
+         self.max_val_acc= 0.0
++        self.min_val_loss= float('inf')
+         for epoch in range(self.args.epochs):   
+             
+             if epoch ==0:
+@@ -152,8 +153,9 @@ class ErmMatch(BaseAlgo):
+             self.final_acc.append( self.get_test_accuracy('test') )
+             
+             #Save the model if current best epoch as per validation loss
+-            if self.val_acc[-1] > self.max_val_acc:
+-                self.max_val_acc=self.val_acc[-1]
++            curr_val_loss= self.get_val_loss()
++            if curr_val_loss < self.min_val_loss:
++                self.min_val_loss= curr_val_loss
+                 self.max_epoch= epoch
+                 self.save_model()
+                 
+
+### harness: --seed_offset for fresh-seed confirmation (no effect on seeds 0-9)   (be16a6f..12460e5)
+diff --git a/data_gen_syn.py b/data_gen_syn.py
+index 0f63a4d..d021698 100644
+--- a/data_gen_syn.py
++++ b/data_gen_syn.py
+@@ -41,7 +41,7 @@ total_slabs= 7
+ slab_noise_list= [0.0, 0.10]
+ spur_corr_list= [0.0, 0.10, 0.20, 0.90, 1.0]
+ 
+-for seed in range(10):
++for seed in range(20):
+     np.random.seed(seed*10)                     
+     for slab_noise in slab_noise_list:
+         for spur_corr in spur_corr_list: 
+diff --git a/train.py b/train.py
+index 77d0708..4508edc 100644
+--- a/train.py
++++ b/train.py
+@@ -90,6 +90,7 @@ parser.add_argument('--ctr_abl', type=int, default=0,
+                     help='0: Randomization til class level ; 1: Randomization completely')
+ parser.add_argument('--match_abl', type=int, default=0, 
+                     help='0: Randomization til class level ; 1: Randomization completely')
++parser.add_argument('--seed_offset', type=int, default=0, help='AUDIT: first run index, for confirmation runs on fresh seeds')
+ parser.add_argument('--n_runs', type=int, default=3, 
+                     help='Number of iterations to repeat the training process')
+ parser.add_argument('--n_runs_matchdg_erm', type=int, default=1, 
+@@ -203,7 +204,7 @@ if not os.path.exists(base_res_dir):
+     os.makedirs(base_res_dir)    
+ 
+ #Execute the method for multiple runs ( total args.n_runs )
+-for run in range(args.n_runs):
++for run in range(args.seed_offset, args.seed_offset + args.n_runs):
+     print('Run', run)
+     #Seed for repoduability
+     random.seed(run*10)
+
+### h1b: select by validation total objective   (7dde854..6805a5f)
+diff --git a/algorithms/algo.py b/algorithms/algo.py
+index b976dd5..a8e8a70 100644
+--- a/algorithms/algo.py
++++ b/algorithms/algo.py
+@@ -84,6 +84,7 @@ class BaseAlgo():
+             self.val_dataset= val_dataset
+         else:
+             self.val_dataset= val_dataset['data_loader']
++            self.val_meta= val_dataset  # AUDIT h1b: sizes needed to build matched validation pairs
+         self.test_dataset= test_dataset['data_loader']
+         
+         self.train_domains= train_dataset['domain_list']
+@@ -277,6 +278,52 @@ class BaseAlgo():
+             opacus.autograd_grad_sample.enable_hooks()        
+         return 100*test_acc/test_size
+     
++    def get_val_loss(self):
++        # AUDIT HYPOTHESIS: paper App. A.1 says "early stopping based on the validation loss"
++        val_loss= 0.0
++        val_size= 0
++        for batch_idx, (x_e, y_e ,d_e, idx_e, obj_e) in enumerate(self.val_dataset):
++            with torch.no_grad():
++                x_e= x_e.to(self.cuda)
++                y_e= torch.argmax(y_e, dim=1).to(self.cuda)
++                out= self.phi(x_e)
++                val_loss+= F.cross_entropy(out, y_e.long(), reduction='sum').item()
++                val_size+= y_e.shape[0]
++        print(' Loss: val', val_loss/val_size)
++        return val_loss/val_size
++
++    def get_val_loss_total(self):
++        # AUDIT HYPOTHESIS h1b: "validation loss" read as the full training objective:
++        # cross-entropy + penalty_ws * matching penalty on matched validation pairs.
++        # The weight is the final (un-ramped) penalty_ws so that epochs are comparable.
++        # RNG state is saved and restored so training is identical to the baseline on every seed.
++        state= (random.getstate(), np.random.get_state(), torch.get_rng_state())
++        if not hasattr(self, 'val_matched'):
++            vm= self.val_meta
++            self.val_matched, self.val_domain_data, _= get_matched_pairs( self.args, self.cuda, self.val_dataset, vm['base_domain_size'], vm['total_domains'], vm['domain_size_list'], self.phi, self.args.match_case, self.args.perfect_match, 0 )
++        ce= self.get_val_loss()
++        pen= 0.0
++        if self.args.penalty_ws > 0:
++            assert self.args.pos_metric == 'l2'
++            total, count= 0.0, 0
++            with torch.no_grad():
++                for m in self.val_matched:
++                    if any(len(m[d]) == 0 for d in range(len(m))):
++                        continue
++                    x= torch.stack([ self.val_domain_data[d]['data'][m[d][0]] for d in range(len(m)) ]).float().to(self.cuda)
++                    f= self.phi(x)
++                    for d_i in range(len(m)):
++                        for d_j in range(d_i+1, len(m)):
++                            total+= torch.sum( (f[d_i] - f[d_j])**2 ).item()
++                            count+= 1
++            pen= total/count
++            if not hasattr(self, 'val_pairs_logged'):
++                self.val_pairs_logged= 1
++                print(' Val matched pairs used', count, 'of', len(self.val_matched))
++        random.setstate(state[0]); np.random.set_state(state[1]); torch.set_rng_state(state[2])
++        print(' Loss: val_total', ce + self.args.penalty_ws*pen, ' penalty', pen)
++        return ce + self.args.penalty_ws*pen
++
+     def get_dp_noise(self):
+         
+         print('Privacy Engine')
+diff --git a/algorithms/erm_match.py b/algorithms/erm_match.py
+index 552e01b..1eeb2db 100644
+--- a/algorithms/erm_match.py
++++ b/algorithms/erm_match.py
+@@ -28,6 +28,7 @@ class ErmMatch(BaseAlgo):
+         
+         self.max_epoch= -1
+         self.max_val_acc= 0.0
++        self.min_val_loss= float('inf')
+         for epoch in range(self.args.epochs):   
+             
+             if epoch ==0:
+@@ -152,8 +153,9 @@ class ErmMatch(BaseAlgo):
+             self.final_acc.append( self.get_test_accuracy('test') )
+             
+             #Save the model if current best epoch as per validation loss
+-            if self.val_acc[-1] > self.max_val_acc:
+-                self.max_val_acc=self.val_acc[-1]
++            curr_val_loss= self.get_val_loss_total()
++            if curr_val_loss < self.min_val_loss:
++                self.min_val_loss= curr_val_loss
+                 self.max_epoch= epoch
+                 self.save_model()
+                 
+diff --git a/data_gen_syn.py b/data_gen_syn.py
+index 0f63a4d..d021698 100644
+--- a/data_gen_syn.py
++++ b/data_gen_syn.py
+@@ -41,7 +41,7 @@ total_slabs= 7
+ slab_noise_list= [0.0, 0.10]
+ spur_corr_list= [0.0, 0.10, 0.20, 0.90, 1.0]
+ 
+-for seed in range(10):
++for seed in range(20):
+     np.random.seed(seed*10)                     
+     for slab_noise in slab_noise_list:
+         for spur_corr in spur_corr_list: 
+diff --git a/train.py b/train.py
+index 77d0708..4508edc 100644
+--- a/train.py
++++ b/train.py
+@@ -90,6 +90,7 @@ parser.add_argument('--ctr_abl', type=int, default=0,
+                     help='0: Randomization til class level ; 1: Randomization completely')
+ parser.add_argument('--match_abl', type=int, default=0, 
+                     help='0: Randomization til class level ; 1: Randomization completely')
++parser.add_argument('--seed_offset', type=int, default=0, help='AUDIT: first run index, for confirmation runs on fresh seeds')
+ parser.add_argument('--n_runs', type=int, default=3, 
+                     help='Number of iterations to repeat the training process')
+ parser.add_argument('--n_runs_matchdg_erm', type=int, default=1, 
+@@ -203,7 +204,7 @@ if not os.path.exists(base_res_dir):
+     os.makedirs(base_res_dir)    
+ 
+ #Execute the method for multiple runs ( total args.n_runs )
+-for run in range(args.n_runs):
++for run in range(args.seed_offset, args.seed_offset + args.n_runs):
+     print('Run', run)
+     #Seed for repoduability
+     random.seed(run*10)
+
+### h2: plain SGD   (7dde854..4b37d3d)
+diff --git a/algorithms/algo.py b/algorithms/algo.py
+index b976dd5..b1eac8a 100644
+--- a/algorithms/algo.py
++++ b/algorithms/algo.py
+@@ -182,7 +182,7 @@ class BaseAlgo():
+         if self.args.opt == 'sgd':
+             opt= optim.SGD([
+                          {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, 
+-                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        
++                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.0,  nesterov=False )        
+         elif self.args.opt == 'adam':
+             opt= optim.Adam([
+                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters())},
+
+### h1 + h2   (12460e5..bcf47a8)
+diff --git a/algorithms/algo.py b/algorithms/algo.py
+index fc6ab19..f96634a 100644
+--- a/algorithms/algo.py
++++ b/algorithms/algo.py
+@@ -182,7 +182,7 @@ class BaseAlgo():
+         if self.args.opt == 'sgd':
+             opt= optim.SGD([
+                          {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, 
+-                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        
++                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.0,  nesterov=False )        
+         elif self.args.opt == 'adam':
+             opt= optim.Adam([
+                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters())},
+
+### h4: constant matching weight   (7dde854..3130d46)
+diff --git a/algorithms/erm_match.py b/algorithms/erm_match.py
+index 552e01b..ee715cc 100644
+--- a/algorithms/erm_match.py
++++ b/algorithms/erm_match.py
+@@ -104,9 +104,9 @@ class ErmMatch(BaseAlgo):
+                     penalty_ws+= float(wasserstein_loss)                            
+                 
+                     if epoch >= self.args.match_interrupt and self.args.match_flag==1:
+-                        loss_e += ( self.args.penalty_ws*( epoch - self.args.penalty_s - self.args.match_interrupt )/(self.args.epochs - self.args.penalty_s - self.args.match_interrupt) )*wasserstein_loss
++                        loss_e += self.args.penalty_ws*wasserstein_loss  # AUDIT h4: constant weight; code ramps it linearly from 0, not stated in paper Sec 3.2 / App. A.1
+                     else:
+-                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss
++                        loss_e += self.args.penalty_ws*wasserstein_loss  # AUDIT h4: constant weight; code ramps it linearly from 0, not stated in paper Sec 3.2 / App. A.1
+ 
+                         
+                 loss_e.backward(retain_graph=False)
+diff --git a/data_gen_syn.py b/data_gen_syn.py
+index 0f63a4d..d021698 100644
+--- a/data_gen_syn.py
++++ b/data_gen_syn.py
+@@ -41,7 +41,7 @@ total_slabs= 7
+ slab_noise_list= [0.0, 0.10]
+ spur_corr_list= [0.0, 0.10, 0.20, 0.90, 1.0]
+ 
+-for seed in range(10):
++for seed in range(20):
+     np.random.seed(seed*10)                     
+     for slab_noise in slab_noise_list:
+         for spur_corr in spur_corr_list: 
+diff --git a/train.py b/train.py
+index 77d0708..4508edc 100644
+--- a/train.py
++++ b/train.py
+@@ -90,6 +90,7 @@ parser.add_argument('--ctr_abl', type=int, default=0,
+                     help='0: Randomization til class level ; 1: Randomization completely')
+ parser.add_argument('--match_abl', type=int, default=0, 
+                     help='0: Randomization til class level ; 1: Randomization completely')
++parser.add_argument('--seed_offset', type=int, default=0, help='AUDIT: first run index, for confirmation runs on fresh seeds')
+ parser.add_argument('--n_runs', type=int, default=3, 
+                     help='Number of iterations to repeat the training process')
+ parser.add_argument('--n_runs_matchdg_erm', type=int, default=1, 
+@@ -203,7 +204,7 @@ if not os.path.exists(base_res_dir):
+     os.makedirs(base_res_dir)    
+ 
+ #Execute the method for multiple runs ( total args.n_runs )
+-for run in range(args.n_runs):
++for run in range(args.seed_offset, args.seed_offset + args.n_runs):
+     print('Run', run)
+     #Seed for repoduability
+     random.seed(run*10)
+
+### h6: DANN/CDANN learning rate from args   (7dde854..3ea3d95)
+diff --git a/algorithms/dann.py b/algorithms/dann.py
+index 878de68..5b763fa 100644
+--- a/algorithms/dann.py
++++ b/algorithms/dann.py
+@@ -35,7 +35,7 @@ class DANN(BaseAlgo):
+         self.grad_penalty= self.args.grad_penalty
+         self.lambda_= self.args.penalty_ws
+         self.d_steps_per_g_step= self.args.d_steps_per_g_step
+-        self.initial_lr= 0.01
++        self.initial_lr= self.args.lr  # AUDIT h6: paper App. A.1 states lr 0.1 for all methods; code hard-codes 0.01 here
+         
+         # Optimizers
+         self.disc_opt = torch.optim.SGD(
+
+### harness: --seed_offset and --train_seeds for the Table 11 confirmation (no effect on subsets 0-2)   (45e7771..4c2dfd2)
+diff --git a/data/data_gen_mnist.py b/data/data_gen_mnist.py
+index bf32d51..c82f30e 100644
+--- a/data/data_gen_mnist.py
++++ b/data/data_gen_mnist.py
+@@ -110,6 +110,8 @@ parser.add_argument('--subset_size', type=int, default=2000)
+ parser.add_argument('--img_w', type=int, default=224)
+ parser.add_argument('--img_h', type=int, default=224)
+ parser.add_argument('--cmnist_permute', type=int, default=0)
++parser.add_argument('--train_seeds', type=str, default='0,1,2',
++                    help='AUDIT(harness): MNIST subsets to build for lenet; fresh subsets for confirmation runs')
+ 
+ args = parser.parse_args()
+ 
+@@ -172,7 +174,8 @@ elif dataset == 'fashion_mnist':
+ 
+ # For testing over different base objects; seed 9
+ # Seed 9 only for test data, See 0:3 for train data
+-seed_list= [0, 1, 2, 9]    
++TRAIN_SEEDS= [int(x) for x in args.train_seeds.split(',')]
++seed_list= sorted(set(TRAIN_SEEDS) | {9})    
+ domains= [0, 15, 30, 45, 60, 75, 90]
+ 
+ for seed in seed_list:
+@@ -212,7 +215,7 @@ for seed in seed_list:
+             if seed in [0, 1, 2] and domain in [15, 30, 45, 60, 75]:
+                 generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)                   
+         elif model in ['lenet']:
+-            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:
++            if seed in TRAIN_SEEDS and domain in [0, 15, 30, 45, 60, 75]:
+                 generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)                   
+                     
+         #Val 
+@@ -227,7 +230,7 @@ for seed in seed_list:
+             if seed in [0, 1, 2] and domain in [15, 30, 45, 60, 75]:
+                 generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)                
+         elif model in ['lenet']:
+-            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:
++            if seed in TRAIN_SEEDS and domain in [0, 15, 30, 45, 60, 75]:
+                 generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)                
+             
+         #Test
+@@ -242,7 +245,7 @@ for seed in seed_list:
+             if seed in [0, 1, 2, 9] and domain in [0, 90]:
+                 generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)             
+         elif model in ['lenet', 'lenet_mdg']:
+-            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:
++            if seed in TRAIN_SEEDS and domain in [0, 15, 30, 45, 60, 75]:
+                 generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)
+ 
+                 
+diff --git a/train.py b/train.py
+index 77d0708..9207a52 100644
+--- a/train.py
++++ b/train.py
+@@ -90,6 +90,8 @@ parser.add_argument('--ctr_abl', type=int, default=0,
+                     help='0: Randomization til class level ; 1: Randomization completely')
+ parser.add_argument('--match_abl', type=int, default=0, 
+                     help='0: Randomization til class level ; 1: Randomization completely')
++parser.add_argument('--seed_offset', type=int, default=0,
++                    help='AUDIT(harness): first run index; run r uses seed r*10 and MNIST subset r')
+ parser.add_argument('--n_runs', type=int, default=3, 
+                     help='Number of iterations to repeat the training process')
+ parser.add_argument('--n_runs_matchdg_erm', type=int, default=1, 
+@@ -203,7 +205,7 @@ if not os.path.exists(base_res_dir):
+     os.makedirs(base_res_dir)    
+ 
+ #Execute the method for multiple runs ( total args.n_runs )
+-for run in range(args.n_runs):
++for run in range(args.seed_offset, args.seed_offset + args.n_runs):
+     print('Run', run)
+     #Seed for repoduability
+     random.seed(run*10)
+
+### h7 (F7): no horizontal flip in the augmented Rotated MNIST copy, same random draws   (4657d6a..2a57284)
+diff --git a/data/data_gen_mnist.py b/data/data_gen_mnist.py
+index c82f30e..f9d7f1f 100644
+--- a/data/data_gen_mnist.py
++++ b/data/data_gen_mnist.py
+@@ -18,6 +18,13 @@ import torch
+ import torch.utils.data as data_utils
+ from torchvision import datasets, transforms
+ 
++class _NoFlipSameDraw(torch.nn.Module):
++    """HYPOTHESIS(F7): never flip the augmented copy, but draw the same random number RandomHorizontalFlip draws,
++    so every random crop stays identical and only the flips are removed (SciCoQA row 67: a flipped +θ digit is a mirrored digit at −θ)."""
++    def forward(self, img):
++        torch.rand(1)
++        return img
++
+ def generate_rotated_domain_data(imgs, labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute):    
+ 
+     # Get total number of labeled examples
+@@ -32,7 +39,7 @@ def generate_rotated_domain_data(imgs, labels, data_case, dataset, indices, doma
+ 
+     to_augment= transforms.Compose([
+             transforms.RandomResizedCrop(img_w, scale=(0.7,1.0)),
+-            transforms.RandomHorizontalFlip()
++            _NoFlipSameDraw()
+         ])
+ 
+     to_tensor=  transforms.Compose([
+

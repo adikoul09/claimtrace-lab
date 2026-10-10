@@ -1,0 +1,296 @@
+{
+ "table": "Table 1",
+ "doc": "main",
+ "page": 4,
+ "caption_quote": "Table 1. Slab Dataset: Source domains with noisy linear compo- nent with probability 0.0 and 0.1, target domain with noise 1.0.",
+ "header_line": "Method Source 1 Source 2 Target",
+ "row_label_header": "Method",
+ "columns": [
+  "Source 1",
+  "Source 2",
+  "Target"
+ ],
+ "metric": {
+  "name": "out-of-domain accuracy",
+  "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+  "unit": "percent",
+  "quote": "The results improve substantially: out-of-domain accuracy is now 78%.",
+  "quote_doc": "main",
+  "quote_page": 4
+ },
+ "aggregation": {
+  "kind": "mean",
+  "spread": "standard deviation over 10 different seed values",
+  "n_runs": 10,
+  "quote": "Mean and standard deviation over 10 different seed values for each method.",
+  "quote_doc": "main",
+  "quote_page": 4
+ },
+ "rows": [
+  {
+   "label": "ERM",
+   "line": "ERM 100.0 (0.0 ) 96.0 (0.25) 57.6 (6.58)",
+   "role": "baseline",
+   "role_quote": "We compare to 1) ERM: Standard empirical risk minimization,",
+   "role_doc": "main",
+   "role_page": 7,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 100,
+     "sd": 0
+    },
+    {
+     "column": "Source 2",
+     "mean": 96,
+     "sd": 0.25
+    },
+    {
+     "column": "Target",
+     "mean": 57.6,
+     "sd": 6.58
+    }
+   ]
+  },
+  {
+   "label": "DANN",
+   "line": "DANN 99.9 (0.07) 94.8 (0.25) 53.0 (1.41)",
+   "role": "baseline",
+   "role_quote": "Our objective with the synthetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+   "role_doc": "supplement",
+   "role_page": 2,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.07
+    },
+    {
+     "column": "Source 2",
+     "mean": 94.8,
+     "sd": 0.25
+    },
+    {
+     "column": "Target",
+     "mean": 53,
+     "sd": 1.41
+    }
+   ]
+  },
+  {
+   "label": "MMD",
+   "line": "MMD 99.9 (0.01) 95.9 (0.27) 62.9 (5.01)",
+   "role": "baseline",
+   "role_quote": "Our objective with the synthetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+   "role_doc": "supplement",
+   "role_page": 2,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.01
+    },
+    {
+     "column": "Source 2",
+     "mean": 95.9,
+     "sd": 0.27
+    },
+    {
+     "column": "Target",
+     "mean": 62.9,
+     "sd": 5.01
+    }
+   ]
+  },
+  {
+   "label": "CORAL",
+   "line": "CORAL 99.9 (0.01) 96.0 (0.27) 63.1 (5.86)",
+   "role": "baseline",
+   "role_quote": "Our objective with the synthetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+   "role_doc": "supplement",
+   "role_page": 2,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.01
+    },
+    {
+     "column": "Source 2",
+     "mean": 96,
+     "sd": 0.27
+    },
+    {
+     "column": "Target",
+     "mean": 63.1,
+     "sd": 5.86
+    }
+   ]
+  },
+  {
+   "label": "RandMatch",
+   "line": "RandMatch 100.0 (0.0) 96.1 (0.22) 59.5 (3.50)",
+   "role": "baseline",
+   "role_quote": "2) ERM-RandMatch that implements the loss from Eq. (3) but with randomly selected matches from the same class (Motiian et al., 2017),",
+   "role_doc": "main",
+   "role_page": 7,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 100,
+     "sd": 0
+    },
+    {
+     "column": "Source 2",
+     "mean": 96.1,
+     "sd": 0.22
+    },
+    {
+     "column": "Target",
+     "mean": 59.5,
+     "sd": 3.5
+    }
+   ]
+  },
+  {
+   "label": "CDANN",
+   "line": "CDANN 99.9 (0.01) 96.0 (0.27) 55.9 (2.47)",
+   "role": "baseline",
+   "role_quote": "Our objective with the synthetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+   "role_doc": "supplement",
+   "role_page": 2,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.01
+    },
+    {
+     "column": "Source 2",
+     "mean": 96,
+     "sd": 0.27
+    },
+    {
+     "column": "Target",
+     "mean": 55.9,
+     "sd": 2.47
+    }
+   ]
+  },
+  {
+   "label": "C-MMD",
+   "line": "C-MMD 99.9 (0.01) 96.0 (0.27) 58.9 (3.43)",
+   "role": "baseline",
+   "role_quote": "Our objective with the synthetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+   "role_doc": "supplement",
+   "role_page": 2,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.01
+    },
+    {
+     "column": "Source 2",
+     "mean": 96,
+     "sd": 0.27
+    },
+    {
+     "column": "Target",
+     "mean": 58.9,
+     "sd": 3.43
+    }
+   ]
+  },
+  {
+   "label": "C-CORAL",
+   "line": "C-CORAL 99.9 (0.01) 96.0 (0.27) 64.7 (4.69)",
+   "role": "baseline",
+   "role_quote": "Our objective with the synthetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+   "role_doc": "supplement",
+   "role_page": 2,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.01
+    },
+    {
+     "column": "Source 2",
+     "mean": 96,
+     "sd": 0.27
+    },
+    {
+     "column": "Target",
+     "mean": 64.7,
+     "sd": 4.69
+    }
+   ]
+  },
+  {
+   "label": "PerfMatch",
+   "line": "PerfMatch 99.9 (0.05) 97.8 (0.28) 77.8 (6.01)",
+   "role": "oracle",
+   "role_quote": "The last column shows the accu- racy for an oracle method, ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+   "role_doc": "main",
+   "role_page": 7,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "Source 1",
+     "mean": 99.9,
+     "sd": 0.05
+    },
+    {
+     "column": "Source 2",
+     "mean": 97.8,
+     "sd": 0.28
+    },
+    {
+     "column": "Target",
+     "mean": 77.8,
+     "sd": 6.01
+    }
+   ]
+  }
+ ],
+ "relative_claims": [
+  {
+   "type": "relative",
+   "statement": "PerfMatch substantially improves target out-of-domain accuracy (about 78%) over the other methods on the slab dataset.",
+   "quote": "The results improve substantially: out-of-domain accuracy is now 78%.",
+   "doc": "main",
+   "page": 4,
+   "rows": [
+    "PerfMatch",
+    "ERM",
+    "DANN",
+    "MMD",
+    "CORAL",
+    "RandMatch",
+    "CDANN",
+    "C-MMD",
+    "C-CORAL"
+   ],
+   "column": "Target"
+  }
+ ],
+ "notes": "PerfMatch is labelled oracle: on the slab data it uses ground-truth slab ids as matches, and the paper calls ERM-PerfMatch an oracle with access to ground-truth perfect matches (that quote is from the Table 2 discussion). Baseline numbers for DANN, CDANN, MMD, C-MMD, CORAL and C-CORAL were computed by the authors with DomainBed implementations, so provenance is this_paper. The caption's \"(0.0 )\" in the ERM row is copied as printed. The paper has no sentence that names the metric as accuracy for Table 1 in so many words, so the metric quote is the \"out-of-domain accuracy\" sentence."
+}

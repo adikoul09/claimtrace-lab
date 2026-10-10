@@ -1,0 +1,310 @@
+{
+ "experiment": "Synthetic Slab dataset (2-D features, binary label), fully connected network; source domains with linear-feature noise p=0.0 and 0.1, target domain p=1.0; methods ERM, DANN, MMD, CORAL, RandMatch, CDANN, C-MMD, C-CORAL, PerfMatch",
+ "notes": [
+  "Table 7 gives per-method regularization hyperparameters. Optimal lambda: DANN 0.01 (gradient penalty 0.1, discriminator steps 4); CDANN 0.01 (gradient penalty 1.0, discriminator steps 2); MMD 0.1; C-MMD 0.1; CORAL 0.1; C-CORAL 0.1; RandMatch 1.0; PerfMatch 1.0.",
+  "Epochs: 100 total with early stopping on validation loss (Suppl. A.1). Suppl. C.3 says generically that early stopping uses source validation accuracy; Slab-specific text says validation loss.",
+  "Main text says numbers are averaged over 3 runs, but the Table 1 caption says 10 seeds; 10 used here.",
+  "Slab parameters: k=7 slabs, margin m=0.1, slab label flip probability ps=0.1. Validation: 250 extra points per source domain.",
+  "Table 8 hyperparameters are for other datasets, not the slab dataset.",
+  "Momentum, Nesterov, LR schedule, resize, normalization and augmentation are not stated for the slab experiment."
+ ],
+ "settings": {
+  "data.source_domains": {
+   "value": [
+    "linear-noise p=0.0",
+    "linear-noise p=0.1"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We generate two source data domains with noise probabilitiesp as 0.0 and 0.1, and"
+    }
+   ]
+  },
+  "data.target_domains": {
+   "value": [
+    "linear-noise p=1.0"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "generate the target domain with complete noise p = 1.0,"
+    }
+   ]
+  },
+  "data.domains_data_available": {
+   "value": [
+    "linear-noise p=0.0",
+    "linear-noise p=0.1",
+    "linear-noise p=1.0"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We generate two source data domains with noise probabilitiesp as 0.0 and 0.1, and"
+    }
+   ]
+  },
+  "data.train_samples_per_domain": {
+   "value": 1000,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We sample 1k data points per domain, which leads to 2k"
+    }
+   ]
+  },
+  "data.val_samples_per_domain": {
+   "value": 250,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "250 data points per source domain as the validation"
+    }
+   ]
+  },
+  "data.generation_params": {
+   "value": {
+    "k": 7,
+    "m": 0.1,
+    "ps": 0.1,
+    "p_source": [
+     0,
+     0.1
+    ],
+    "p_target": 1
+   },
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We choose k = 7, m = 0.1,"
+    }
+   ]
+  },
+  "model.architecture": {
+   "value": "MLP: representation network FC(2,100)+ReLU; classification network FC(100,100), FC(100,2)",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "FC layer: (Input Dim, 100)"
+    },
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "FC layer: (100, 100)"
+    },
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "FC layer: (100, Num Classes)"
+    }
+   ]
+  },
+  "optim.name": {
+   "value": "sgd",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "using SGD, with batch size 128, learning rate 0.1 and weight"
+    }
+   ]
+  },
+  "optim.momentum": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.nesterov": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.lr": {
+   "value": 0.1,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "using SGD, with batch size 128, learning rate 0.1 and weight"
+    }
+   ]
+  },
+  "optim.lr_schedule": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.weight_decay": {
+   "value": 0.0005,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "decay 5e-4."
+    }
+   ]
+  },
+  "train.batch_size": {
+   "value": 128,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "using SGD, with batch size 128, learning rate 0.1 and weight"
+    }
+   ]
+  },
+  "train.epochs": {
+   "value": 100,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "We train each method for 100 epochs and do"
+    }
+   ]
+  },
+  "train.model_selection": {
+   "value": "min_val_loss",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "early stopping based on the validation loss."
+    }
+   ]
+  },
+  "loss.terms": {
+   "value": [
+    {
+     "name": "cross_entropy",
+     "weight": 1,
+     "weight_schedule": "constant"
+    },
+    {
+     "name": "regularization_penalty (lambda per method, see notes; none for ERM)",
+     "weight": null,
+     "weight_schedule": "constant"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "The loss objective of all the methods can be writ-"
+    },
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "We use Cross-Entropy for the classiﬁcation loss"
+    }
+   ]
+  },
+  "eval.n_seeds": {
+   "value": 10,
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 4,
+     "quote": "Mean and standard deviation over 10 different seed values for each"
+    }
+   ]
+  },
+  "eval.metric": {
+   "value": "accuracy (%) on source 1, source 2 and target domains",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 3,
+     "quote": "out-of-domain accuracy is now 78%."
+    }
+   ]
+  },
+  "eval.aggregation": {
+   "value": "mean_sd_over_seeds",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 4,
+     "quote": "Mean and standard deviation over 10 different seed values for each"
+    }
+   ]
+  },
+  "data.preprocessing.resize": {
+   "value": null,
+   "evidence": []
+  },
+  "data.preprocessing.normalization": {
+   "value": null,
+   "evidence": []
+  },
+  "data.augmentation": {
+   "value": null,
+   "evidence": []
+  },
+  "data.domain_transform": {
+   "value": [
+    {
+     "kind": "feature_noise",
+     "domains": [
+      "p=0.0",
+      "p=0.1",
+      "p=1.0"
+     ],
+     "params": "linear feature replaced by U(-0.1,0.1) noise with probability p per domain (0.0, 0.1 source; 1.0 target); slab feature unchanged",
+     "direction": "not_applicable",
+     "methods": null,
+     "note": null
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "generate the target domain with complete noise p = 1.0,"
+    }
+   ]
+  },
+  "train.model_selection_data": {
+   "value": [
+    {
+     "use": "checkpoint",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": "validation loss",
+     "methods": null,
+     "phase": null,
+     "note": "early stopping"
+    },
+    {
+     "use": "hyperparameter_tuning",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": null,
+     "methods": null,
+     "phase": null,
+     "note": "grid search over lambda etc. (Table 7)"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "250 data points per source domain as the validation"
+    },
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "early stopping based on the validation loss."
+    }
+   ]
+  }
+ }
+}

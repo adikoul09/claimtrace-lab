@@ -1,0 +1,134 @@
+{
+ "audit": "matchdg",
+ "baseline": {
+  "ref": "el01/h-F1",
+  "commit": "41f50a69839d2f834e6f035abf638811e5bfc36e",
+  "tree": "540a010600b07457bfa09a879ffe079a397f8fd1"
+ },
+ "baseline_findings": [
+  "F1"
+ ],
+ "agent": "branch_writer",
+ "model": "sonnet",
+ "llm": {
+  "backend": "claude_cli",
+  "cli_version": "2.1.289"
+ },
+ "retries_per_reading": 2,
+ "selfcheck": {
+  "extractor": "code_extractor",
+  "replicate": 1,
+  "rule": "exactly one changed setting, the finding's: diff_v2 (both directions) + canon, counted only where either run's evidence cites a patched line"
+ },
+ "findings": [
+  {
+   "finding": "F2",
+   "table": "Table 1",
+   "what": "model selection: validation loss (paper) vs accuracy (code)",
+   "kind": "difference",
+   "keys": [
+    "train.model_selection"
+   ],
+   "setting_ids": [
+    "[\"train.model_selection\", \"difference\", null, null]"
+   ],
+   "pairing": "paper_run1 x code_run1",
+   "also_in": [],
+   "methods": null,
+   "readings_proposed": [
+    "min mean val loss"
+   ],
+   "readings": [
+    {
+     "label": "min mean val loss",
+     "branch": "el01/h-F2",
+     "status": "written",
+     "commit": "4cc078d34082c9758528fa2b6d03e070363b645e",
+     "tree": "c40b50aaad9dd3d8b4ca29e10b065ffeefc0b583",
+     "message": "HYPOTHESIS(F2): train.model_selection: early stopping on minimum validation loss (mean cross-entropy) instead of best_val_accuracy",
+     "paper_value": "early stopping on minimum validation loss (mean cross-entropy)",
+     "attempts": [
+      {
+       "attempt": 1,
+       "label": "min mean val loss",
+       "paper_value": "early stopping on minimum validation loss (mean cross-entropy)",
+       "rationale": "Computes mean validation cross-entropy each epoch inside get_test_accuracy, saves the checkpoint when it reaches a new minimum, and reports the test accuracy at the epoch of minimum validation loss.",
+       "branch": "el01/h-F2",
+       "commit": "4cc078d34082c9758528fa2b6d03e070363b645e",
+       "pass": true,
+       "patch": "branches/F2/h-F2_attempt1.patch",
+       "message": "HYPOTHESIS(F2): train.model_selection: early stopping on minimum validation loss (mean cross-entropy) instead of best_val_accuracy",
+       "tree": "c40b50aaad9dd3d8b4ca29e10b065ffeefc0b583",
+       "selfcheck_call": {
+        "agent": "code_extractor",
+        "key": "69297756fa3019089719040988e918aedf3a418dbc4389239b95805d68157310",
+        "cache": "miss",
+        "backend": "claude_cli",
+        "total_cost_usd": 0.5632748000000001,
+        "num_turns": 30,
+        "prompt": "branches/F2/h-F2_attempt1_code_run1.prompt.md",
+        "answer": "branches/F2/h-F2_attempt1_code_run1.answer.json"
+       },
+       "selfcheck": "branches/F2/h-F2_attempt1_selfcheck.json",
+       "reason": "exactly one changed setting: train.model_selection",
+       "attributed": [
+        {
+         "key": "train.model_selection",
+         "use": null,
+         "via": [
+          "diff_v2 base->branch",
+          "diff_v2 branch->base",
+          "canon"
+         ]
+        }
+       ],
+       "disagreement": [
+        "data.generation_params",
+        "eval.aggregation",
+        "eval.metric",
+        "model.architecture",
+        "optim.weight_decay"
+       ]
+      }
+     ]
+    }
+   ],
+   "calls": [
+    {
+     "agent": "branch_writer",
+     "key": "6601a43c959b8ae8634415c5d7506e91a255e03d98f6212a2e02be2083daf50a",
+     "cache": "miss",
+     "backend": "claude_cli",
+     "total_cost_usd": 0.12073460000000001,
+     "num_turns": 10,
+     "prompt": "branches/F2/call_1.prompt.md",
+     "answer": "branches/F2/call_1.answer.json"
+    }
+   ]
+  }
+ ],
+ "baseline_selfcheck": {
+  "Table 1": {
+   "call": {
+    "agent": "code_extractor",
+    "key": "3c02c61350f294c6a3af837052320cf77cc56bab693d3f11e8363b6cea370382",
+    "cache": "miss",
+    "backend": "claude_cli",
+    "total_cost_usd": 0.534304,
+    "num_turns": 28,
+    "prompt": "branches/baseline/table-1/code_run1.prompt.md",
+    "answer": "branches/baseline/table-1/code_run1.answer.json"
+   },
+   "evidence": {
+    "items": 51,
+    "items_ok": 51,
+    "keys_verified": 25,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 0
+   },
+   "tree": "540a010600b07457bfa09a879ffe079a397f8fd1"
+  }
+ }
+}

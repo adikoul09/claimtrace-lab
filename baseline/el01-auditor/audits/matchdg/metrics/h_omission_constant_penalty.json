@@ -1,0 +1,155 @@
+{
+ "commit": "3130d463a6e020ae5b9b7c983f53f65e2fd4ebee",
+ "perf": {
+  "target": {
+   "log": "logs/h_omission_constant_penalty/train_perf.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 61,
+     "target_acc": 83.5,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 50,
+     "target_acc": 84.1,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 73,
+     "target_acc": 87.7,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 61,
+     "target_acc": 80.8,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 45,
+     "target_acc": 81.5,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 14,
+     "target_acc": 58.7,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 70,
+     "target_acc": 85.0,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 25,
+     "target_acc": 61.8,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 38,
+     "target_acc": 77.2,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 70,
+     "target_acc": 79.8,
+     "line": 6452
+    }
+   ],
+   "mean": 78.01,
+   "sd_pop": 9.32,
+   "sd_sample": 9.83,
+   "code_reported": {
+    "mean": 78.01,
+    "sd": 9.324424915242762,
+    "line": 6456
+   }
+  }
+ },
+ "rand": {
+  "target": {
+   "log": "logs/h_omission_constant_penalty/train_rand.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 86,
+     "target_acc": 63.2,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 22,
+     "target_acc": 54.6,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 45,
+     "target_acc": 53.5,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 88,
+     "target_acc": 64.9,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 63,
+     "target_acc": 60.6,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 37,
+     "target_acc": 55.1,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 4,
+     "target_acc": 53.0,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 89,
+     "target_acc": 60.5,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 61,
+     "target_acc": 60.4,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 3,
+     "target_acc": 52.5,
+     "line": 6452
+    }
+   ],
+   "mean": 57.83,
+   "sd_pop": 4.34,
+   "sd_sample": 4.58,
+   "code_reported": {
+    "mean": 57.83,
+    "sd": 4.342821663388909,
+    "line": 6456
+   }
+  }
+ }
+}

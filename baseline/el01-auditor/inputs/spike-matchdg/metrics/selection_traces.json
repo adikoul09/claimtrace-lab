@@ -1,0 +1,62 @@
+{
+ "checks": [
+  {
+   "branch": "h_select_valloss",
+   "baseline": "paper_target_1.0",
+   "log": "train_erm.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "h_select_valloss",
+   "baseline": "paper_target_1.0",
+   "log": "train_perf.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "h_select_valloss",
+   "baseline": "paper_target_1.0",
+   "log": "train_rand.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "h_select_valloss_total",
+   "baseline": "paper_target_1.0",
+   "log": "train_erm.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "h_select_valloss_total",
+   "baseline": "paper_target_1.0",
+   "log": "train_perf.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "h_select_valloss_total",
+   "baseline": "paper_target_1.0",
+   "log": "train_rand.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "confirm_select_valloss",
+   "baseline": "confirm_base",
+   "log": "train_erm.log",
+   "lines": 3000,
+   "identical": true
+  },
+  {
+   "branch": "confirm_select_valloss",
+   "baseline": "confirm_base",
+   "log": "train_perf.log",
+   "lines": 3000,
+   "identical": true
+  }
+ ],
+ "selection_runs": 80,
+ "all_identical": true
+}

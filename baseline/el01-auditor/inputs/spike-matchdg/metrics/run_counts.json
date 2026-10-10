@@ -1,0 +1,76 @@
+{
+ "slab": {
+  "confirm_base": {
+   "runs": 20,
+   "seconds": 84
+  },
+  "confirm_select_valloss": {
+   "runs": 20,
+   "seconds": 102
+  },
+  "h5_lambda_grid": {
+   "runs": 40,
+   "seconds": 185
+  },
+  "h_combined": {
+   "runs": 20,
+   "seconds": 106
+  },
+  "h_dann_lr": {
+   "runs": 20,
+   "seconds": 92
+  },
+  "h_omission_constant_penalty": {
+   "runs": 20,
+   "seconds": 91
+  },
+  "h_omission_plain_sgd": {
+   "runs": 30,
+   "seconds": 121
+  },
+  "h_plain_sgd_1000ep": {
+   "runs": 30,
+   "seconds": 1208
+  },
+  "h_select_valloss": {
+   "runs": 30,
+   "seconds": 141
+  },
+  "h_select_valloss_total": {
+   "runs": 30,
+   "seconds": 174
+  },
+  "naive_target_0.9_3m": {
+   "runs": 30,
+   "seconds": 123
+  },
+  "paper_target_1.0": {
+   "runs": 90,
+   "seconds": 507
+  }
+ },
+ "lenet": {
+  "h7_no_flip": {
+   "runs": 18,
+   "seconds": 5215
+  },
+  "matchdg_lenet": {
+   "runs": 72,
+   "seconds": 7103
+  },
+  "matchdg_lenet_confirm": {
+   "runs": 72,
+   "seconds": 7726
+  }
+ },
+ "totals": {
+  "slab": {
+   "runs": 380,
+   "minutes": 49
+  },
+  "lenet": {
+   "runs": 162,
+   "minutes": 334
+  }
+ }
+}

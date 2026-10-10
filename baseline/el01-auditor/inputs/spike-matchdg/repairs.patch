@@ -1,0 +1,53 @@
+diff --git a/algorithms/algo.py b/algorithms/algo.py
+index 23eee9d..b976dd5 100644
+--- a/algorithms/algo.py
++++ b/algorithms/algo.py
+@@ -273,7 +273,8 @@ class BaseAlgo():
+         print(' Accuracy: ', case, 100*test_acc/test_size )         
+                 
+         #self.privacy_engine.module.enable_hooks()
+-        opacus.autograd_grad_sample.enable_hooks()        
++        if self.args.dp_noise:
++            opacus.autograd_grad_sample.enable_hooks()        
+         return 100*test_acc/test_size
+     
+     def get_dp_noise(self):
+diff --git a/test.py b/test.py
+index 0c88a39..ce61d09 100644
+--- a/test.py
++++ b/test.py
+@@ -180,7 +180,7 @@ parser.add_argument('--logit_plot_path', default='', type=str,
+ args = parser.parse_args()
+ 
+ #GPU
+-cuda= torch.device("cuda:" + str(args.cuda_device))
++cuda= torch.device("cuda:" + str(args.cuda_device)) if torch.cuda.is_available() else torch.device("cpu")
+ if cuda:
+     kwargs = {'num_workers': 1, 'pin_memory': False} 
+ else:
+diff --git a/train.py b/train.py
+index 8172f2f..77d0708 100644
+--- a/train.py
++++ b/train.py
+@@ -166,7 +166,7 @@ parser.add_argument('--match_func_data_case', type=str, default='val',
+ args = parser.parse_args()
+ 
+ #GPU
+-cuda= torch.device("cuda:" + str(args.cuda_device))
++cuda= torch.device("cuda:" + str(args.cuda_device)) if torch.cuda.is_available() else torch.device("cpu")
+ if cuda:
+     kwargs = {'num_workers': 0, 'pin_memory': False} 
+ else:
+diff --git a/utils/slab_data.py b/utils/slab_data.py
+index c98f251..b821386 100644
+--- a/utils/slab_data.py
++++ b/utils/slab_data.py
+@@ -72,7 +72,7 @@ def get_data(num_samples, spur_corr, slab_noise, total_slabs, data_case, seed, m
+ #                      corrupt_lin_margin=c['corrupt_lin_margin'], num_lin=c['num_lin'], num_slabs=c['num_slabs3']+c['num_slabs']+c['num_slabs7'], width=c['width'], bs=c['bs'], corrupt_lin=c['corrupt_lin'], corrupt_slab=c['corrupt_slab'], corrupt_slab7=c['corrupt_slab7'])            
+     
+     #Load data from json file
+-    base_dir= '/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/'
++    base_dir= 'data/datasets/slab/'
+     data_dir= base_dir + 'total_slabs_' + str(total_slabs) + '_slab_noise_' + str(slab_noise) + '_spur_corr_' + str(spur_corr) + '_case_' + str(data_case) + '_seed_' + str(seed)
+     
+     with open(data_dir + '.pickle', 'rb') as handle:

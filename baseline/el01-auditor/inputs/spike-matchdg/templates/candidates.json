@@ -1,0 +1,28 @@
+{
+ "picks": [
+  {
+   "title": "PGExplainer: Parameterized Explainer for Graph Neural Network",
+   "venue": "NeurIPS 2020; flyingdoog/PGExplainer @ ec57ea2",
+   "why": "Six SciCoQA rows from an MLRC 2020 report, all on the code path behind the audited table; GNN explanation, so a different kind of paper from MatchDG.",
+   "table": "Table 2, PGExplainer explanation AUC, 6 cells, mean ± sd over 10 stated runs",
+   "runtime": "about 1 to 2.5 h for 10 seeds (estimated from the notebooks' saved timings, not run)",
+   "risk": "setup: TensorFlow 2.0 on Python 3.7, notebooks only, no seed loop, some wrong paths; its README links the reproduction report, which the blind run must not see."
+  },
+  {
+   "title": "Label-Free Explainability for Unsupervised Models",
+   "venue": "ICML 2022; JonathanCrabbe/Label-Free-XAI @ 3f6fd5e",
+   "why": "Not a graph paper: small PyTorch autoencoders on MNIST, so the pair covers two frameworks (TensorFlow, PyTorch) and two kinds of model. One SciCoQA row, from an MLRC 2022 report.",
+   "table": "Tables 1–2, pretext-task sensitivity on MNIST: 12 Pearson-correlation cells, mean ± sd over 5 runs",
+   "runtime": "about 1.5 to 4 h for 5 runs (inferred from 20 small trainings with early stopping, not run)",
+   "risk": "closest to MatchDG (PyTorch, MNIST); its known row is not on the audited table's path, so only the settings diff can score it; may exceed a 2 h budget."
+  }
+ ],
+ "backups": [
+  {
+   "title": "BUDDY / ELPH (ICLR 2023), graph link prediction"
+  },
+  {
+   "title": "GNNInterpreter (ICLR 2023), graph explanation"
+  }
+ ]
+}

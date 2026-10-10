@@ -1,0 +1,231 @@
+{
+ "commit": "4b37d3d944a3d3571018622a396c00c71897bd2b",
+ "erm": {
+  "target": {
+   "log": "logs/h_omission_plain_sgd/train_erm.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 0,
+     "target_acc": 50.6,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 89,
+     "target_acc": 50.6,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 4,
+     "target_acc": 49.7,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 1,
+     "target_acc": 49.3,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 3,
+     "target_acc": 51.0,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 1,
+     "target_acc": 50.3,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 0,
+     "target_acc": 50.5,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 2,
+     "target_acc": 48.3,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 6,
+     "target_acc": 50.3,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 24,
+     "target_acc": 49.8,
+     "line": 6452
+    }
+   ],
+   "mean": 50.04,
+   "sd_pop": 0.75,
+   "sd_sample": 0.79,
+   "code_reported": {
+    "mean": 50.04,
+    "sd": 0.7512655988397188,
+    "line": 6456
+   }
+  }
+ },
+ "perf": {
+  "target": {
+   "log": "logs/h_omission_plain_sgd/train_perf.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 53,
+     "target_acc": 50.8,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 86,
+     "target_acc": 56.3,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 4,
+     "target_acc": 49.6,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 91,
+     "target_acc": 53.4,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 3,
+     "target_acc": 51.1,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 13,
+     "target_acc": 50.5,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 0,
+     "target_acc": 50.5,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 3,
+     "target_acc": 49.3,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 65,
+     "target_acc": 52.5,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 42,
+     "target_acc": 53.2,
+     "line": 6452
+    }
+   ],
+   "mean": 51.72,
+   "sd_pop": 2.03,
+   "sd_sample": 2.14,
+   "code_reported": {
+    "mean": 51.720000000000006,
+    "sd": 2.02869416127715,
+    "line": 6456
+   }
+  }
+ },
+ "rand": {
+  "target": {
+   "log": "logs/h_omission_plain_sgd/train_rand.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 44,
+     "target_acc": 50.8,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 45,
+     "target_acc": 51.5,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 2,
+     "target_acc": 49.3,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 1,
+     "target_acc": 49.5,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 2,
+     "target_acc": 51.1,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 17,
+     "target_acc": 50.5,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 0,
+     "target_acc": 50.6,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 2,
+     "target_acc": 49.0,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 20,
+     "target_acc": 51.1,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 55,
+     "target_acc": 52.2,
+     "line": 6452
+    }
+   ],
+   "mean": 50.56,
+   "sd_pop": 0.97,
+   "sd_sample": 1.02,
+   "code_reported": {
+    "mean": 50.559999999999995,
+    "sd": 0.9676776322722366,
+    "line": 6456
+   }
+  }
+ }
+}

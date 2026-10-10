@@ -1,0 +1,460 @@
+{
+ "finding": "F7",
+ "branch": "audit/h7-no-flip",
+ "baseline": "matchdg_lenet_confirm",
+ "cells": {
+  "0": {
+   "runs": [
+    3,
+    4,
+    5
+   ],
+   "base": [
+    93.1,
+    92.4,
+    94.1
+   ],
+   "branch": [
+    93.8,
+    92.4,
+    94.1
+   ],
+   "base_log": "runs/matchdg_lenet_confirm/train_matchdg_0.log",
+   "branch_log": "runs/h7_no_flip/train_matchdg_0.log",
+   "base_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "branch_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "effect": 0.23,
+   "ci95": [
+    -0.77,
+    1.24
+   ],
+   "p": 0.4226,
+   "ctr_epoch_base": {
+    "3": {
+     "epoch": 14,
+     "topk_overlap": 46.4,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 24,
+     "topk_overlap": 45.5,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 9,
+     "topk_overlap": 40.3,
+     "line": 4756
+    }
+   },
+   "ctr_epoch_branch": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 71.8,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 24,
+     "topk_overlap": 67.7,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 9,
+     "topk_overlap": 63.5,
+     "line": 4756
+    }
+   },
+   "p_holm": 1.0,
+   "survives_holm": false,
+   "same_ctr_epoch": 2
+  },
+  "15": {
+   "runs": [
+    3,
+    4,
+    5
+   ],
+   "base": [
+    99.7,
+    99.7,
+    99.0
+   ],
+   "branch": [
+    99.3,
+    99.7,
+    99.5
+   ],
+   "base_log": "runs/matchdg_lenet_confirm/train_matchdg_15.log",
+   "branch_log": "runs/h7_no_flip/train_matchdg_15.log",
+   "base_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "branch_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "effect": 0.03,
+   "ci95": [
+    -1.09,
+    1.15
+   ],
+   "p": 0.9098,
+   "ctr_epoch_base": {
+    "3": {
+     "epoch": 9,
+     "topk_overlap": 47.1,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 42.0,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 14,
+     "topk_overlap": 41.4,
+     "line": 4756
+    }
+   },
+   "ctr_epoch_branch": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 72.4,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 63.2,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 9,
+     "topk_overlap": 64.6,
+     "line": 4756
+    }
+   },
+   "p_holm": 1.0,
+   "survives_holm": false,
+   "same_ctr_epoch": 1
+  },
+  "30": {
+   "runs": [
+    3,
+    4,
+    5
+   ],
+   "base": [
+    99.7,
+    99.4,
+    99.2
+   ],
+   "branch": [
+    100.0,
+    99.4,
+    98.8
+   ],
+   "base_log": "runs/matchdg_lenet_confirm/train_matchdg_30.log",
+   "branch_log": "runs/h7_no_flip/train_matchdg_30.log",
+   "base_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "branch_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "effect": -0.03,
+   "ci95": [
+    -0.91,
+    0.84
+   ],
+   "p": 0.8845,
+   "ctr_epoch_base": {
+    "3": {
+     "epoch": 14,
+     "topk_overlap": 47.4,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 24,
+     "topk_overlap": 46.1,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 24,
+     "topk_overlap": 40.7,
+     "line": 4756
+    }
+   },
+   "ctr_epoch_branch": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 73.4,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 24,
+     "topk_overlap": 65.8,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 4,
+     "topk_overlap": 62.6,
+     "line": 4756
+    }
+   },
+   "p_holm": 1.0,
+   "survives_holm": false,
+   "same_ctr_epoch": 1
+  },
+  "45": {
+   "runs": [
+    3,
+    4,
+    5
+   ],
+   "base": [
+    99.6,
+    99.5,
+    98.0
+   ],
+   "branch": [
+    99.6,
+    99.5,
+    98.0
+   ],
+   "base_log": "runs/matchdg_lenet_confirm/train_matchdg_45.log",
+   "branch_log": "runs/h7_no_flip/train_matchdg_45.log",
+   "base_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "branch_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "effect": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "p": 1.0,
+   "ctr_epoch_base": {
+    "3": {
+     "epoch": 24,
+     "topk_overlap": 49.3,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 43.2,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 19,
+     "topk_overlap": 43.2,
+     "line": 4756
+    }
+   },
+   "ctr_epoch_branch": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 73.8,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 63.3,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 19,
+     "topk_overlap": 64.1,
+     "line": 4756
+    }
+   },
+   "p_holm": 1.0,
+   "survives_holm": false,
+   "same_ctr_epoch": 2
+  },
+  "60": {
+   "runs": [
+    3,
+    4,
+    5
+   ],
+   "base": [
+    99.7,
+    99.6,
+    99.1
+   ],
+   "branch": [
+    99.7,
+    98.4,
+    98.9
+   ],
+   "base_log": "runs/matchdg_lenet_confirm/train_matchdg_60.log",
+   "branch_log": "runs/h7_no_flip/train_matchdg_60.log",
+   "base_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "branch_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "effect": -0.47,
+   "ci95": [
+    -2.06,
+    1.13
+   ],
+   "p": 0.3356,
+   "ctr_epoch_base": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 47.1,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 41.5,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 29,
+     "topk_overlap": 44.1,
+     "line": 4756
+    }
+   },
+   "ctr_epoch_branch": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 73.4,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 24,
+     "topk_overlap": 64.2,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 14,
+     "topk_overlap": 65.2,
+     "line": 4756
+    }
+   },
+   "p_holm": 1.0,
+   "survives_holm": false,
+   "same_ctr_epoch": 1
+  },
+  "75": {
+   "runs": [
+    3,
+    4,
+    5
+   ],
+   "base": [
+    92.6,
+    91.4,
+    91.5
+   ],
+   "branch": [
+    92.6,
+    91.4,
+    91.5
+   ],
+   "base_log": "runs/matchdg_lenet_confirm/train_matchdg_75.log",
+   "branch_log": "runs/h7_no_flip/train_matchdg_75.log",
+   "base_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "branch_lines": [
+    680,
+    1359,
+    2038
+   ],
+   "effect": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "p": 1.0,
+   "ctr_epoch_base": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 46.8,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 47.3,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 19,
+     "topk_overlap": 44.0,
+     "line": 4756
+    }
+   },
+   "ctr_epoch_branch": {
+    "3": {
+     "epoch": 4,
+     "topk_overlap": 72.7,
+     "line": 1586
+    },
+    "4": {
+     "epoch": 19,
+     "topk_overlap": 68.3,
+     "line": 3171
+    },
+    "5": {
+     "epoch": 19,
+     "topk_overlap": 65.9,
+     "line": 4756
+    }
+   },
+   "p_holm": 1.0,
+   "survives_holm": false,
+   "same_ctr_epoch": 3
+  }
+ },
+ "missing": [],
+ "average": {
+  "base": [
+   97.4,
+   97.0,
+   96.82
+  ],
+  "branch": [
+   97.5,
+   96.8,
+   96.8
+  ],
+  "effect": -0.04,
+  "ci95": [
+   -0.41,
+   0.34
+  ],
+  "p": 0.6996,
+  "excludes_zero": false
+ },
+ "setup_reason_for": []
+}

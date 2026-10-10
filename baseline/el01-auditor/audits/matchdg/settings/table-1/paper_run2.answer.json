@@ -1,0 +1,318 @@
+{
+ "experiment": "Slab synthetic dataset (2-d features, binary label), MLP (representation + classifier FC nets), source domains with linear-noise p=0.0 and 0.1, target domain p=1.0, methods ERM, DANN, MMD, CORAL, RandMatch, CDANN, C-MMD, C-CORAL, PerfMatch",
+ "notes": [
+  "Table 1 caption states mean and standard deviation over 10 different seed values for each method. Main text page 7 says 'All the numbers are averaged over 3 runs with standard deviation in brackets', which concerns the other experiments; Table 1's own caption (10 seeds) is used here.",
+  "Slab parameters: k=7 slabs, margin m=0.1, slab label-flip probability ps=0.1; linear-feature noise p=0.0 and 0.1 for sources, 1.0 for target.",
+  "Validation: 250 additional points per source domain, used for hyperparameter tuning (model selection) and early stopping on validation loss over 100 epochs.",
+  "Per-method lambda (optimal values, Table 7): DANN 0.01 (gradient penalty 0.1, discriminator steps 4); CDANN 0.01 (gradient penalty 1.0, discriminator steps 2); MMD 0.1; C-MMD 0.1; CORAL 0.1; C-CORAL 0.1; RandMatch 1.0; PerfMatch 1.0. Loss objective is ERM + lambda*Regularization Penalty.",
+  "Paper does not state momentum, Nesterov, lr schedule, normalization, resize or augmentation for the slab experiment. The paper says the Slab 'linear' feature noise is a domain-dependent change.",
+  "Appendix C.3 says early stopping uses validation accuracy on source domains for hyperparameters in general, while A.1 for the slab dataset says early stopping on validation loss; A.1 and Table 7 are used for the slab experiment.",
+  "Test points: 1k target-domain points used for evaluation."
+ ],
+ "settings": {
+  "data.source_domains": {
+   "value": [
+    "linear-feature noise p=0.0",
+    "linear-feature noise p=0.1"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We generate two source data domains with noise probabilitiesp as 0.0 and 0.1, and"
+    }
+   ]
+  },
+  "data.target_domains": {
+   "value": [
+    "linear-feature noise p=1.0"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "generate the target domain with complete noise p = 1.0,"
+    }
+   ]
+  },
+  "data.domains_data_available": {
+   "value": [
+    "linear-feature noise p=0.0",
+    "linear-feature noise p=0.1",
+    "linear-feature noise p=1.0"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We sample 1k data points per domain, which leads to 2k"
+    }
+   ]
+  },
+  "data.train_samples_per_domain": {
+   "value": 1000,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We sample 1k data points per domain, which leads to 2k"
+    }
+   ]
+  },
+  "data.val_samples_per_domain": {
+   "value": 250,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "additional 250 data points per source domain as the validation set."
+    }
+   ]
+  },
+  "data.generation_params": {
+   "value": {
+    "k_slabs": 7,
+    "margin_m": 0.1,
+    "slab_label_flip_prob": 0.1,
+    "linear_noise_p_sources": [
+     0,
+     0.1
+    ],
+    "linear_noise_p_target": 1,
+    "samples_per_domain": 1000,
+    "val_samples_per_source_domain": 250
+   },
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "We choose k = 7, m = 0.1,"
+    },
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "andps = 0.1 for the slab block features in our experiments."
+    }
+   ]
+  },
+  "model.architecture": {
+   "value": "MLP: representation network FC(2,100)+ReLU; classification network FC(100,100) then FC(100,2)",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "• FC layer: (Input Dim, 100)"
+    },
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "• FC layer: (100, Num Classes)"
+    }
+   ]
+  },
+  "optim.name": {
+   "value": "sgd",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "All the methods were trained"
+    }
+   ]
+  },
+  "optim.momentum": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.nesterov": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.lr": {
+   "value": 0.1,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4."
+    }
+   ]
+  },
+  "optim.lr_schedule": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.weight_decay": {
+   "value": 0.0005,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4."
+    }
+   ]
+  },
+  "train.batch_size": {
+   "value": 128,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4."
+    }
+   ]
+  },
+  "train.epochs": {
+   "value": 100,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "We train each method for 100 epochs and do"
+    }
+   ]
+  },
+  "train.model_selection": {
+   "value": "min_val_loss",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "early stopping based on the validation loss."
+    }
+   ]
+  },
+  "loss.terms": {
+   "value": [
+    {
+     "name": "cross_entropy",
+     "weight": 1,
+     "weight_schedule": "constant"
+    },
+    {
+     "name": "method regularization penalty (lambda per method, see notes)",
+     "weight": null,
+     "weight_schedule": "constant"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "The loss objective of all the methods can be writ-"
+    },
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "ten as ERM + λ*Regularization Penalty; and we provide"
+    }
+   ]
+  },
+  "eval.n_seeds": {
+   "value": 10,
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 4,
+     "quote": "Mean and standard deviation over 10 different seed values for each"
+    }
+   ]
+  },
+  "eval.metric": {
+   "value": "classification accuracy (%) on Source 1, Source 2 and Target domains",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 4,
+     "quote": "Method Source 1 Source 2 Target"
+    }
+   ]
+  },
+  "eval.aggregation": {
+   "value": "mean_sd_over_seeds",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 4,
+     "quote": "Mean and standard deviation over 10 different seed values for each"
+    }
+   ]
+  },
+  "data.preprocessing.resize": {
+   "value": null,
+   "evidence": []
+  },
+  "data.preprocessing.normalization": {
+   "value": null,
+   "evidence": []
+  },
+  "data.augmentation": {
+   "value": null,
+   "evidence": []
+  },
+  "data.domain_transform": {
+   "value": [
+    {
+     "kind": "feature_noise",
+     "domains": [
+      "p=0.0",
+      "p=0.1",
+      "p=1.0"
+     ],
+     "params": "Linear feature points sampled from U(-0.1,0.1) with probability p, otherwise from the class-conditional U(0.1,1.0) (y=1) or U(-1.0,-0.1) (y=0); p=0.0 and 0.1 for sources, 1.0 for target",
+     "direction": "not_applicable",
+     "methods": null,
+     "note": "Slab feature relation to label is the same across domains"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "features s.t. data points are sampled from U(−0.1, 0.1)"
+    },
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "generate the target domain with complete noise p = 1.0,"
+    }
+   ]
+  },
+  "train.model_selection_data": {
+   "value": [
+    {
+     "use": "checkpoint",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": "validation loss",
+     "methods": null,
+     "phase": null,
+     "note": "early stopping over 100 epochs on validation set sampled from source domains"
+    },
+    {
+     "use": "hyperparameter_tuning",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": null,
+     "methods": null,
+     "phase": null,
+     "note": "250 extra points per source domain used for hyperparameter tuning (model selection); grid search ranges in Table 7"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 1,
+     "quote": "for hyperparameter tuning (model selection), we sample ad-"
+    },
+    {
+     "doc": "supplement",
+     "page": 2,
+     "quote": "early stopping based on the validation loss."
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,552 @@
+{
+  "claims": [
+    {
+      "method": "ERM",
+      "column": "Source 1",
+      "mean": 100.0,
+      "sd": 0.0,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'ERM', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "ERM",
+      "column": "Source 2",
+      "mean": 96.0,
+      "sd": 0.25,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'ERM', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "ERM",
+      "column": "Target",
+      "mean": 57.6,
+      "sd": 6.58,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'ERM', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "DANN",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.07,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'DANN', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "DANN",
+      "column": "Source 2",
+      "mean": 94.8,
+      "sd": 0.25,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'DANN', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "DANN",
+      "column": "Target",
+      "mean": 53.0,
+      "sd": 1.41,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'DANN', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "MMD",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'MMD', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "MMD",
+      "column": "Source 2",
+      "mean": 95.9,
+      "sd": 0.27,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'MMD', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "MMD",
+      "column": "Target",
+      "mean": 62.9,
+      "sd": 5.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'MMD', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "CORAL",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'CORAL', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "CORAL",
+      "column": "Source 2",
+      "mean": 96.0,
+      "sd": 0.27,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'CORAL', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "CORAL",
+      "column": "Target",
+      "mean": 63.1,
+      "sd": 5.86,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'CORAL', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "RandMatch",
+      "column": "Source 1",
+      "mean": 100.0,
+      "sd": 0.0,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'RandMatch', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "RandMatch",
+      "column": "Source 2",
+      "mean": 96.1,
+      "sd": 0.22,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'RandMatch', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "RandMatch",
+      "column": "Target",
+      "mean": 59.5,
+      "sd": 3.5,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'RandMatch', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "CDANN",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'CDANN', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "CDANN",
+      "column": "Source 2",
+      "mean": 96.0,
+      "sd": 0.27,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'CDANN', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "CDANN",
+      "column": "Target",
+      "mean": 55.9,
+      "sd": 2.47,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'CDANN', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "C-MMD",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'C-MMD', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "C-MMD",
+      "column": "Source 2",
+      "mean": 96.0,
+      "sd": 0.27,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'C-MMD', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "C-MMD",
+      "column": "Target",
+      "mean": 58.9,
+      "sd": 3.43,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'C-MMD', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "C-CORAL",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'C-CORAL', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "C-CORAL",
+      "column": "Source 2",
+      "mean": 96.0,
+      "sd": 0.27,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'C-CORAL', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "C-CORAL",
+      "column": "Target",
+      "mean": 64.7,
+      "sd": 4.69,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'C-CORAL', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "PerfMatch",
+      "column": "Source 1",
+      "mean": 99.9,
+      "sd": 0.05,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'PerfMatch', column 'Source 1'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "PerfMatch",
+      "column": "Source 2",
+      "mean": 97.8,
+      "sd": 0.28,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'PerfMatch', column 'Source 2'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    },
+    {
+      "method": "PerfMatch",
+      "column": "Target",
+      "mean": 77.8,
+      "sd": 6.01,
+      "where": "Table 1 (Section 3.2), arXiv 2006.07500 / ICML 2021; row 'PerfMatch', column 'Target'",
+      "aggregation": "mean (sd in parentheses) over 10 seeds"
+    }
+  ],
+  "relative_claims": [
+    {
+      "type": "trend",
+      "methods": [
+        "ERM"
+      ],
+      "claim": "ERM does well on the source domains but generalizes poorly to the target domain (does not learn the slab feature).",
+      "magnitude_stated": null,
+      "quote": "The results in Table 1 (implementation details in Appendix A.1) show that ERM is unable to learn the slab feature, as evident by poor generalization to the target domain, despite very good performance on the source domains.",
+      "where": "Section 3.2"
+    },
+    {
+      "type": "trend",
+      "methods": [
+        "DANN",
+        "MMD",
+        "CORAL",
+        "CDANN",
+        "C-MMD",
+        "C-CORAL",
+        "RandMatch"
+      ],
+      "claim": "Unconditional and class-conditional distribution matching, and random same-class matching, all fail to learn the stable slab feature (i.e. poor target accuracy).",
+      "magnitude_stated": null,
+      "quote": "We also show that methods based on learning invariant representations by unconditional (DANN, MMD, CORAL) and conditional distribution matching (CDANN, C-MMD, C-CORAL), and matching same-class inputs (Random-Match) (Motiian et al., 2017) fail to learn the stable slab feature.",
+      "where": "Section 3.2"
+    },
+    {
+      "type": "relative",
+      "methods": [
+        "PerfMatch",
+        "vs. ERM and all other Table 1 methods"
+      ],
+      "claim": "PerfMatch (matching same-slab-value points across domains) substantially improves target-domain accuracy, to about 78%.",
+      "magnitude_stated": "absolute level only: 'out-of-domain accuracy is now 78%'; no explicit margin over another method is stated in the text (Table 1: 77.8 vs best baseline C-CORAL 64.7 and ERM 57.6, margins not stated in prose)",
+      "quote": "We do so by minimizing the ℓ_2-norm of the representations for data points from different domains that share the same slab value (details of the PerfectMatch method in Section 4.3). The results improve substantially: out-of-domain accuracy is now 78%.",
+      "where": "Section 3.2"
+    },
+    {
+      "type": "trend",
+      "methods": [
+        "methods relying on x1"
+      ],
+      "claim": "Hypothesis stated before the results: methods relying on the spurious linear feature x1 will do poorly out of domain.",
+      "magnitude_stated": null,
+      "quote": "We expect that methods that rely on the spurious feature x_1 would not be able to perform well on the out-of-domain data.",
+      "where": "Section 3.2"
+    },
+    {
+      "type": "trend",
+      "methods": [
+        "class-conditional methods (general)"
+      ],
+      "claim": "General claim (supported by Section 3, which includes the slab study) that class-conditional invariance is insufficient.",
+      "magnitude_stated": null,
+      "quote": "We show that the class-conditional domain-invariant objective for representations is insufficient.",
+      "where": "Section 1 (Introduction); not tied to Table 1 by name"
+    }
+  ],
+  "perfmatch_description": {
+    "one_line": "PerfMatch adds an l2 penalty between representations of inputs from different domains that share the same object; on slab, matches are pairs of points across domains with the same slab id (the value of the causal feature x2). The paper says this object information is available only when the object is observed (self-collected data or augmentation) and that 'In practice, however, the underlying objects are not always known' (i.e. an oracle-style method in general).",
+    "evidence": [
+      {
+        "quote": "For the PerfMatch algorithm, the match function Ω accepts two data points across domains with the same slab id as valid matches (the slab id corresponds to the value of the causal feature: two inputs with the same slab id have similar causal features).",
+        "where": "Appendix A.1, Methods paragraph"
+      },
+      {
+        "quote": "We do so by minimizing the ℓ_2-norm of the representations for data points from different domains that share the same slab value (details of the PerfectMatch method in Section 4.3).",
+        "where": "Section 3.2"
+      },
+      {
+        "quote": "Ω: X × X → {0,1} is a matching function that is 1 for pairs of inputs across domains corresponding to the same object, and 0 otherwise.",
+        "where": "Section 4.3"
+      },
+      {
+        "quote": "When the object variable is observed (e.g., in self-collected data or by dataset augmentation), we propose a perfect-match regularizer for domain generalization that minimizes the distance between representations of the same object across domains.",
+        "where": "Section 4.3"
+      },
+      {
+        "quote": "In practice, however, the underlying objects are not always known.",
+        "where": "Section 4.3"
+      }
+    ]
+  },
+  "settings": {
+    "experiment": "Slab dataset domain generalization (Table 1, Section 3.2 / Appendix A.1): 2 source domains (linear-feature noise p=0.0, 0.1), target domain p=1.0",
+    "settings": {
+      "data.source_domains": {
+        "value": [
+          "linear-feature noise p=0.0",
+          "linear-feature noise p=0.1"
+        ],
+        "evidence": "Appendix A.1: \"We generate two source data domains with noise probabilities p as 0.0 and 0.1, and generate the target domain with complete noise p=1.0\"; Table 1 caption: \"Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0.\""
+      },
+      "data.target_domains": {
+        "value": [
+          "linear-feature noise p=1.0"
+        ],
+        "evidence": "Appendix A.1: \"We generate two source data domains with noise probabilities p as 0.0 and 0.1, and generate the target domain with complete noise p=1.0\"; Section 3.2: \"On the third (test) domain, we add noise with probability 1\""
+      },
+      "data.domains_data_available": {
+        "value": [
+          "p=0.0 (source, train + val)",
+          "p=0.1 (source, train + val)",
+          "p=1.0 (target, test)"
+        ],
+        "evidence": "Appendix A.1: \"We sample 1k data points per domain, which leads to 2k training data points (source domain with p as 0.0 and 0.1), and 1k test data points (target domain with p as 1.0).\" and \"Also, for hyperparameter tuning (model selection), we sample additional 250 data points per source domain as the validation set\""
+      },
+      "data.train_samples_per_domain": {
+        "value": 1000,
+        "evidence": "Appendix A.1: \"We sample 1k data points per domain, which leads to 2k training data points (source domain with p as 0.0 and 0.1), and 1k test data points (target domain with p as 1.0).\""
+      },
+      "data.val_samples_per_domain": {
+        "value": 250,
+        "evidence": "Appendix A.1: \"Also, for hyperparameter tuning (model selection), we sample additional 250 data points per source domain as the validation set\" (per source domain; no target-domain validation set is mentioned)"
+      },
+      "data.generation_params": {
+        "value": {
+          "n_features": 2,
+          "label": "binary y in {0,1}",
+          "linear_feature_noise_prob_p": {
+            "source_1": 0.0,
+            "source_2": 0.1,
+            "target": 1.0
+          },
+          "linear_feature_clean_y1": "U(0.1,1.0)",
+          "linear_feature_clean_y0": "U(-1.0,-0.1)",
+          "linear_feature_noise_distribution": "U(-0.1,0.1) with probability p",
+          "slab_k_num_slabs": 7,
+          "slab_m_margin": 0.1,
+          "slab_p_s_label_flip_prob": 0.1,
+          "slab_length_L": "(2 - m*(k-1)) / k",
+          "slab_start_index_I(i)": "-1 + i*L (as returned by the fetch tool; see notes)",
+          "slab_feature_y0": "U(I(i), I(i)+L) for i in {0,2,4,...}",
+          "slab_feature_y1": "U(I(i), I(i)+L) for i in {1,3,5,...}"
+        },
+        "evidence": "Appendix A.1: \"The synthetic slab dataset (Section 3.2) consists of a binary label y and 2-dimensional features; one feature has a linear relationship with y while the other has a more complex \"slab\" relationship with y.\" | \"To make the linear features spurious, we add noise to the linear features s.t. data points are sampled from U(-0.1,0.1) with probability p, and sampled from U(0.1,1.0) (y=1) or U(-1.0,-0.1) (y=0) with probability 1-p.\" | \"Let k be the total number of slabs, and m be the margin between two slabs.\" | \"We choose k=7, m=0.1, and p_s=0.1 for the slab block features in our experiments.\" | \"We also a constant (domain independent) noise to the relationship between the slab feature and the class label by flipping the original label with probability p_s.\" | \"Slab length: L = (2-m*(k-1))/k\" | \"Start index: I(i) = -1 + i * L\" | \"p_s(x|y=0) = {U(I(i),I(i)+L) for i ∈ {0,2,4,...}}\" | \"p_s(x|y=1) = {U(I(i),I(i)+L) for i ∈ {1,3,5,...}}\" | \"We generate two source data domains with noise probabilities p as 0.0 and 0.1, and generate the target domain with complete noise p=1.0\""
+      },
+      "model.architecture": {
+        "value": "MLP. Representation network: FC(Input Dim, 100) + ReLU. Classification network: FC(100, 100), FC(100, Num Classes). Penalties applied on the representation-network output. DANN/CDANN discriminators use the classification-network architecture.",
+        "evidence": "Appendix A.1: \"The overall architecture consists of a representation network along with a classification network, detailed below.\" Representation Network: \"FC layer: (Input Dim, 100)\", \"ReLU activation\"; Classification Network: \"FC layer: (100, 100)\", \"FC layer: (100, Num Classes)\". \"The regularization penalty of all the methods is placed on the output of the representation network.\" \"For methods like DANN (Ganin et al., 2016), and CDAAN (Li et al., 2018d), which also require domain discriminators, we use the same architecture for them as that of the classification network.\""
+      },
+      "optim.name": {
+        "value": "sgd",
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "optim.momentum": {
+        "value": null,
+        "evidence": "Not stated. Appendix A.1 says only \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\"; no mention of momentum for the slab experiment was found."
+      },
+      "optim.nesterov": {
+        "value": null,
+        "evidence": "Not stated (word 'Nesterov' not found in the paper)."
+      },
+      "optim.lr": {
+        "value": 0.1,
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "optim.lr_schedule": {
+        "value": null,
+        "evidence": "Not stated. No learning-rate schedule/annealing/warm-up sentence was found for the slab experiment."
+      },
+      "optim.weight_decay": {
+        "value": 0.0005,
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "train.batch_size": {
+        "value": 128,
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "train.epochs": {
+        "value": 100,
+        "evidence": "Appendix A.1: \"We train each method for 100 epochs and do early stopping based on the validation loss.\""
+      },
+      "train.model_selection": {
+        "value": "min_val_loss",
+        "evidence": "Appendix A.1: \"We train each method for 100 epochs and do early stopping based on the validation loss.\" and \"Also, for hyperparameter tuning (model selection), we sample additional 250 data points per source domain as the validation set\". (Validation set = 250 extra points per source domain; whether 'validation loss' is the CE loss alone or the full ERM + λ*penalty objective is not stated.)"
+      },
+      "loss.terms": {
+        "value": {
+          "ERM": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            }
+          ],
+          "DANN": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "domain_adversarial (DomainBed DANN); also gradient_penalty=0.01, discriminator_steps=4",
+              "weight": 0.01,
+              "weight_schedule": null
+            }
+          ],
+          "CDANN": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "class_conditional_domain_adversarial (DomainBed CDANN); also gradient_penalty=1.0, discriminator_steps=2",
+              "weight": 0.01,
+              "weight_schedule": null
+            }
+          ],
+          "MMD": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "mmd (DomainBed)",
+              "weight": 0.1,
+              "weight_schedule": null
+            }
+          ],
+          "C-MMD": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "class_conditional_mmd",
+              "weight": 0.1,
+              "weight_schedule": null
+            }
+          ],
+          "CORAL": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "coral (DomainBed)",
+              "weight": 0.1,
+              "weight_schedule": null
+            }
+          ],
+          "C-CORAL": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "class_conditional_coral",
+              "weight": 0.1,
+              "weight_schedule": null
+            }
+          ],
+          "RandMatch": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "l2_distance between representations of random same-class pairs across domains",
+              "weight": 1.0,
+              "weight_schedule": null
+            }
+          ],
+          "PerfMatch": [
+            {
+              "name": "cross_entropy",
+              "weight": 1.0,
+              "weight_schedule": null
+            },
+            {
+              "name": "l2_distance between representations of same-slab-id pairs across domains",
+              "weight": 1.0,
+              "weight_schedule": null
+            }
+          ]
+        },
+        "evidence": "Appendix A.1: \"We use Cross-Entropy for the classification loss in ERM and all the other methods.\" | \"The loss objective of all the methods can be written as ERM + λ *Regularization Penalty; and we provide the optimal values and grid range for the hyperparam λ in Table 7.\" | \"For RandMatch (Motiian et al., 2017) and PerfMatch, we use ℓ2 distance for dist in (Eq: 3).\" | \"The match function Ω in the RandMatch algorithm is defined as randomly matching any two data points across domains with the same class label.\" | \"For the PerfMatch algorithm, the match function Ω accepts two data points across domains with the same slab id as valid matches ...\" | Table 7: Hyper parameter selection details for the slab dataset. Rows (Method | Hyper Parameter | Optimal Value | Range): DANN | Lambda | 0.01 | [0.01, 0.1, 1.0, 10.0, 100.0]; DANN | Gradient Penalty | 0.01 | [0.01, 0.1, 1.0, 10.0]; DANN | Discriminator Steps | 4 | [1, 2, 4, 8]; CDANN | Lambda | 0.01 | [0.01, 0.1, 1.0, 10.0, 100.0]; CDANN | Gradient Penalty | 1.0 | [0.01, 0.1, 1.0, 10.0]; CDANN | Discriminator Steps | 2 | [1, 2, 4, 8]; MMD | Lambda | 0.1 | [0.1, 1.0, 10.0]; C-MMD | Lambda | 0.1 | [0.1, 1.0, 10.0]; CORAL | Lambda | 0.1 | [0.1, 1.0, 10.0]; C-CORAL | Lambda | 0.1 | [0.1, 1.0, 10.0]; RandMatch | Lambda | 1.0 | [0.1, 1.0, 10.0]; PerfMatch | Lambda | 1.0 | [0.1, 1.0, 10.0] | Eq. (3), Section 4.3: f_perfectmatch = arg min_{h,Φ} ∑_{d=1}^{m} L_d(h(Φ(X)), Y) + λ ∑_{Ω(j,k)=1; d≠d'} dist(Φ(x_j^(d)), Φ(x_k^(d'))). CE weight 1.0 is read from 'ERM + λ *Regularization Penalty'. weight_schedule is null because the paper states no schedule for λ (only a single optimal value per method)."
+      },
+      "eval.n_seeds": {
+        "value": 10,
+        "evidence": "Table 1 caption: \"Mean and standard deviation over 10 different seed values for each method.\""
+      },
+      "eval.metric": {
+        "value": "classification accuracy (%) per domain (Source 1, Source 2, Target)",
+        "evidence": "Section 3.2: \"The results improve substantially: out-of-domain accuracy is now 78%.\" (Table 1 column headers: \"Method | Source 1 | Source 2 | Target\")"
+      },
+      "eval.aggregation": {
+        "value": "mean_sd_over_seeds",
+        "evidence": "Table 1 caption: \"Mean and standard deviation over 10 different seed values for each method.\""
+      }
+    },
+    "notes": [
+      "Table 1 caption (verbatim, ar5iv + PDF): Table 1: Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al. 2016), CDANN (Li et al. 2018d), MMD, C-MMD (Li et al. 2018b), CORAL, C-CORAL (Sun & Saenko 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz 2020).",
+      "Source: arXiv 2006.07500 PDF (venue line 'Proceedings of the 38th International Conference on Machine Learning, PMLR 139, 2021'), read via WebFetch in focused passes; the ar5iv HTML was also read but its content stops in Section 4 (no appendices).",
+      "All 27 Table 1 mean/sd pairs (9 methods x 3 columns) were returned identically by two independent fetches (arxiv.org PDF and ar5iv HTML).",
+      "Column mapping is from caption order: 'Source 1' = linear-feature noise p=0.0, 'Source 2' = p=0.1, 'Target' = p=1.0. The header row only says 'Source 1 | Source 2 | Target'.",
+      "The paper does not say whether the Source 1 / Source 2 numbers are training-set accuracy or accuracy on held-out source data. Only target test data (1k points) and source validation data (250 per source domain) are described, so the source columns may be training accuracy; this is not stated.",
+      "Model selection: early stopping on validation loss over 100 epochs, with validation data only from the source domains (250 per source domain). The paper does not say whether the validation loss includes the λ-weighted penalty. The λ grid search also uses this source validation set ('for hyperparameter tuning (model selection)'); the selection criterion for the grid (loss vs accuracy) is not stated explicitly.",
+      "Matching-penalty weight λ: RandMatch and PerfMatch both use λ = 1.0 (grid [0.1, 1.0, 10.0], Table 7). No sentence describes λ changing over training (no annealing, ramp-up or warm-up was found), so weight_schedule is null and not 'constant'.",
+      "Not stated in the paper for the slab experiment: momentum, Nesterov, LR schedule, how many matched pairs per batch or how matches are sampled within a batch, whether the l2 distance is squared, and whether the penalty is summed or averaged over pairs. Eq. (3) writes it as a sum over matched pairs with 'dist'; Appendix A.1 says 'ℓ2 distance for dist'.",
+      "Baselines DANN, CDANN, MMD and CORAL use DomainBed implementations; C-MMD and C-CORAL are the authors' class-conditional extensions ('computing their respective penalty over domains conditioned on a particular class label'). The grid ranges for DomainBed methods come from Table 8 of the DomainBed paper.",
+      "Uncertain transcription: one of three fetches showed the DANN 'Gradient Penalty' optimal value in Table 7 as a dash; the other two gave 0.01. 0.01 is recorded.",
+      "Uncertain transcription: the slab 'Start index' was returned as 'I(i) = -1 + i * L' with no margin term m. Because 'm' is defined as 'the margin between two slabs', the printed formula may contain +m (e.g. i*(L+m)), lost in extraction. Check this against the PDF directly.",
+      "Typo as printed in the paper: 'We also a constant (domain independent) noise ...' (a verb such as 'add' is missing). The paper also writes 'CDAAN' for CDANN in one sentence.",
+      "Input Dim is not given as a number in the architecture listing, but Appendix A.1 says the data has '2-dimensional features'. Num Classes = 2 (binary label).",
+      "Section 3.2 writes the random-matching baseline as 'Random-Match' and Table 1 / Appendix use 'RandMatch'. Section 3.2 / Section 4.3 call the oracle method 'PerfectMatch' and Table 1 calls it 'PerfMatch'."
+    ]
+  },
+  "notes": [
+    "Table 1 caption (verbatim, ar5iv + PDF): Table 1: Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al. 2016), CDANN (Li et al. 2018d), MMD, C-MMD (Li et al. 2018b), CORAL, C-CORAL (Sun & Saenko 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz 2020).",
+    "Source: arXiv 2006.07500 PDF (venue line 'Proceedings of the 38th International Conference on Machine Learning, PMLR 139, 2021'), read via WebFetch in focused passes; the ar5iv HTML was also read but its content stops in Section 4 (no appendices).",
+    "All 27 Table 1 mean/sd pairs (9 methods x 3 columns) were returned identically by two independent fetches (arxiv.org PDF and ar5iv HTML).",
+    "Column mapping is from caption order: 'Source 1' = linear-feature noise p=0.0, 'Source 2' = p=0.1, 'Target' = p=1.0. The header row only says 'Source 1 | Source 2 | Target'.",
+    "The paper does not say whether the Source 1 / Source 2 numbers are training-set accuracy or accuracy on held-out source data. Only target test data (1k points) and source validation data (250 per source domain) are described, so the source columns may be training accuracy; this is not stated.",
+    "Model selection: early stopping on validation loss over 100 epochs, with validation data only from the source domains (250 per source domain). The paper does not say whether the validation loss includes the λ-weighted penalty. The λ grid search also uses this source validation set ('for hyperparameter tuning (model selection)'); the selection criterion for the grid (loss vs accuracy) is not stated explicitly.",
+    "Matching-penalty weight λ: RandMatch and PerfMatch both use λ = 1.0 (grid [0.1, 1.0, 10.0], Table 7). No sentence describes λ changing over training (no annealing, ramp-up or warm-up was found), so weight_schedule is null and not 'constant'.",
+    "Not stated in the paper for the slab experiment: momentum, Nesterov, LR schedule, how many matched pairs per batch or how matches are sampled within a batch, whether the l2 distance is squared, and whether the penalty is summed or averaged over pairs. Eq. (3) writes it as a sum over matched pairs with 'dist'; Appendix A.1 says 'ℓ2 distance for dist'.",
+    "Baselines DANN, CDANN, MMD and CORAL use DomainBed implementations; C-MMD and C-CORAL are the authors' class-conditional extensions ('computing their respective penalty over domains conditioned on a particular class label'). The grid ranges for DomainBed methods come from Table 8 of the DomainBed paper.",
+    "Uncertain transcription: one of three fetches showed the DANN 'Gradient Penalty' optimal value in Table 7 as a dash; the other two gave 0.01. 0.01 is recorded.",
+    "Uncertain transcription: the slab 'Start index' was returned as 'I(i) = -1 + i * L' with no margin term m. Because 'm' is defined as 'the margin between two slabs', the printed formula may contain +m (e.g. i*(L+m)), lost in extraction. Check this against the PDF directly.",
+    "Typo as printed in the paper: 'We also a constant (domain independent) noise ...' (a verb such as 'add' is missing). The paper also writes 'CDAAN' for CDANN in one sentence.",
+    "Input Dim is not given as a number in the architecture listing, but Appendix A.1 says the data has '2-dimensional features'. Num Classes = 2 (binary label).",
+    "Section 3.2 writes the random-matching baseline as 'Random-Match' and Table 1 / Appendix use 'RandMatch'. Section 3.2 / Section 4.3 call the oracle method 'PerfectMatch' and Table 1 calls it 'PerfMatch'."
+  ]
+}

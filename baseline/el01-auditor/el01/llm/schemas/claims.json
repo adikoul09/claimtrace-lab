@@ -1,0 +1,87 @@
+{
+ "type": "object",
+ "properties": {
+  "table": {"type": "string", "description": "the table's name as its caption prints it, e.g. Table 1"},
+  "doc": {"type": "string", "enum": ["main", "supplement"]},
+  "page": {"type": "integer", "description": "the [page N] marker of the page that holds the table's rows"},
+  "caption_quote": {"type": "string", "description": "verbatim: the first sentence of the caption, starting with the table's name"},
+  "header_line": {"type": "string", "description": "verbatim: the table's column-header line, including the row-label column's header"},
+  "row_label_header": {"type": "string", "description": "the header of the row-label column, e.g. Method"},
+  "columns": {"type": "array", "items": {"type": "string"}, "description": "the numeric columns, left to right, as printed"},
+  "metric": {
+   "type": "object",
+   "properties": {
+    "name": {"type": "string"}, "split": {"type": "string"}, "unit": {"type": "string"},
+    "quote": {"type": "string", "description": "verbatim sentence that says what the numbers measure"},
+    "quote_doc": {"type": "string", "enum": ["main", "supplement"]},
+    "quote_page": {"type": "integer"}
+   },
+   "required": ["name", "split", "unit", "quote", "quote_doc", "quote_page"],
+   "additionalProperties": false
+  },
+  "aggregation": {
+   "type": "object",
+   "properties": {
+    "kind": {"type": "string", "enum": ["mean", "best_of_n", "single_run", "not_stated"]},
+    "spread": {"type": ["string", "null"], "description": "what the number in brackets is, e.g. sd over 10 seeds; null if no spread is printed"},
+    "n_runs": {"type": ["integer", "null"]},
+    "quote": {"type": ["string", "null"], "description": "verbatim sentence that states the aggregation; null if the paper does not state it"},
+    "quote_doc": {"type": ["string", "null"], "enum": ["main", "supplement", null]},
+    "quote_page": {"type": ["integer", "null"]}
+   },
+   "required": ["kind", "spread", "n_runs", "quote", "quote_doc", "quote_page"],
+   "additionalProperties": false
+  },
+  "rows": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "label": {"type": "string", "description": "the row label as printed"},
+     "line": {"type": "string", "description": "verbatim: the whole row as printed: label, then every cell left to right"},
+     "role": {"type": "string", "enum": ["method", "baseline", "oracle"]},
+     "role_quote": {"type": "string", "description": "verbatim sentence that supports the role"},
+     "role_doc": {"type": "string", "enum": ["main", "supplement"]},
+     "role_page": {"type": "integer"},
+     "provenance": {"type": "string", "enum": ["this_paper", "cited"], "description": "cited: the paper says it took these numbers from other work"},
+     "provenance_quote": {"type": ["string", "null"], "description": "verbatim sentence for provenance cited; null for this_paper"},
+     "cells": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "column": {"type": "string"},
+        "mean": {"type": "number"},
+        "sd": {"type": ["number", "null"]}
+       },
+       "required": ["column", "mean", "sd"],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": ["label", "line", "role", "role_quote", "role_doc", "role_page", "provenance", "provenance_quote", "cells"],
+    "additionalProperties": false
+   }
+  },
+  "relative_claims": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "type": {"type": "string", "enum": ["relative", "trend"]},
+     "statement": {"type": "string", "description": "one sentence in your words: who beats whom, on which column"},
+     "quote": {"type": "string", "description": "verbatim sentence from the paper"},
+     "doc": {"type": "string", "enum": ["main", "supplement"]},
+     "page": {"type": "integer"},
+     "rows": {"type": "array", "items": {"type": "string"}, "description": "row labels of this table the claim compares"},
+     "column": {"type": ["string", "null"]}
+    },
+    "required": ["type", "statement", "quote", "doc", "page", "rows", "column"],
+    "additionalProperties": false
+   }
+  },
+  "notes": {"type": "string"}
+ },
+ "required": ["table", "doc", "page", "caption_quote", "header_line", "row_label_header", "columns", "metric", "aggregation", "rows", "relative_claims", "notes"],
+ "additionalProperties": false
+}

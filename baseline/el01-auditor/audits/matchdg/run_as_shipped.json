@@ -1,0 +1,93 @@
+{
+ "audit": "matchdg",
+ "repo": "https://github.com/microsoft/robustdg",
+ "commit": "3eee1730ae9efaae2bd763f9835ac540b9bde02a",
+ "env": {
+  "python": "3.9.25",
+  "torch": "1.11.0",
+  "numpy": "1.22.3",
+  "plan_hash": "5c2230419d386387ee3376a678d5bf6f2182b77f213cdd0e928a8025fa75ccd3",
+  "report": "env.json"
+ },
+ "data_step": {
+  "command": [
+   "python",
+   "data_gen_syn.py"
+  ],
+  "seeds": null,
+  "status": "done",
+  "exit_code": 0,
+  "seconds": 5,
+  "start_utc": "2026-10-03T19:22:39Z",
+  "end_utc": "2026-10-03T19:22:44Z",
+  "log": "runs/shipped_data/datagen.log"
+ },
+ "run": {
+  "command": [
+   "python",
+   "train.py",
+   "--dataset",
+   "slab",
+   "--model_name",
+   "slab",
+   "--batch_size",
+   "128",
+   "--lr",
+   "0.1",
+   "--epochs",
+   "100",
+   "--out_classes",
+   "2",
+   "--train_domains",
+   "0.0",
+   "0.10",
+   "--test_domains",
+   "1.0",
+   "--slab_data_dim",
+   "2",
+   "--slab_noise",
+   "0.1",
+   "--n_runs",
+   "1",
+   "--method_name",
+   "erm_match",
+   "--match_case",
+   "0.0",
+   "--penalty_ws",
+   "0.0"
+  ],
+  "seeds": 1,
+  "status": "failed",
+  "exit_code": 1,
+  "seconds": 1,
+  "start_utc": "2026-10-03T19:23:51Z",
+  "end_utc": "2026-10-03T19:23:52Z",
+  "log": "runs/shipped/train_erm.log"
+ },
+ "outcome": "failed",
+ "failure": {
+  "class": "missing path",
+  "rule": "FileNotFoundError on an absolute path outside the worktree and the workspace",
+  "exception": "FileNotFoundError",
+  "message": "[Errno 2] No such file or directory: '/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/total_slabs_7_slab_noise_0.1_spur_corr_0.0_case_train_seed_0.pickle'",
+  "location": "utils/slab_data.py:75",
+  "origin": {
+   "file": "utils/slab_data.py",
+   "line": 75,
+   "literal": "/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/"
+  },
+  "raised_at": {
+   "file": "utils/slab_data.py",
+   "line": 78,
+   "func": "get_data",
+   "log_line": 15
+  },
+  "missing_path": "/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/total_slabs_7_slab_noise_0.1_spur_corr_0.0_case_train_seed_0.pickle",
+  "same_name_in_worktree": [
+   "data/datasets/slab/total_slabs_7_slab_noise_0.1_spur_corr_0.0_case_train_seed_0.pickle"
+  ],
+  "log": "runs/shipped/train_erm.log",
+  "log_line": 17,
+  "traceback_line": 6
+ }
+}

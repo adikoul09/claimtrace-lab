@@ -1,0 +1,2048 @@
+{
+ "audit": "matchdg",
+ "golden": "inputs/spike-matchdg/golden/findings.json (F1-F6); F7 from MASTER_PROMPT Appendix B",
+ "schema_version": 2,
+ "blind": {
+  "F1-F6": "scored against the spike's hand audit; the extractor prompts name no finding",
+  "F7": "found after schema v2 added the data-pipeline keys (spec section 3), so not a blind result: the spike's blind v1 run and the hand audit missed it",
+  "F8": "team-verified 2026-10-04, outside golden/findings.json; found after the spike (Phase 4 linker note, Phase 5 extractor), not blind"
+ },
+ "pass_rule": "F1-F3 found with verified evidence in every paper x code pairing (F4/F5 should, F6 bonus); Table 11: every code run reports the F7 code path with verified citations and every pairing lists F7 as a paper omission",
+ "problems": [],
+ "table1": {
+  "pairings": {
+   "paper_run1 x code_run1": {
+    "F1": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "code omission"
+     ],
+     "keys": [
+      "data.target_domains"
+     ],
+     "setting_ids": [
+      "[\"data.target_domains\", \"code omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F2": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "train.model_selection"
+     ],
+     "setting_ids": [
+      "[\"train.model_selection\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F5": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "optim.lr"
+     ],
+     "setting_ids": [
+      "[\"optim.lr\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F6": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "train.model_selection_data"
+     ],
+     "setting_ids": [
+      "[\"train.model_selection_data\", \"difference\", null, \"hyperparameter_tuning\"]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F8": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "eval.aggregation"
+     ],
+     "setting_ids": [
+      "[\"eval.aggregation\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    }
+   },
+   "paper_run1 x code_run2": {
+    "F1": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "code omission"
+     ],
+     "keys": [
+      "data.target_domains"
+     ],
+     "setting_ids": [
+      "[\"data.target_domains\", \"code omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F2": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "train.model_selection"
+     ],
+     "setting_ids": [
+      "[\"train.model_selection\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F5": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "optim.lr"
+     ],
+     "setting_ids": [
+      "[\"optim.lr\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F6": {
+     "found": false,
+     "verified": false,
+     "related": 0,
+     "kinds": [],
+     "keys": [],
+     "setting_ids": [],
+     "evidence": []
+    },
+    "F8": {
+     "found": false,
+     "verified": false,
+     "related": 0,
+     "kinds": [],
+     "keys": [],
+     "setting_ids": [],
+     "evidence": []
+    }
+   },
+   "paper_run2 x code_run1": {
+    "F1": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "code omission"
+     ],
+     "keys": [
+      "data.target_domains"
+     ],
+     "setting_ids": [
+      "[\"data.target_domains\", \"code omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F2": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "train.model_selection"
+     ],
+     "setting_ids": [
+      "[\"train.model_selection\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F5": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "optim.lr"
+     ],
+     "setting_ids": [
+      "[\"optim.lr\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F6": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "train.model_selection_data"
+     ],
+     "setting_ids": [
+      "[\"train.model_selection_data\", \"difference\", null, \"hyperparameter_tuning\"]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F8": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "eval.aggregation"
+     ],
+     "setting_ids": [
+      "[\"eval.aggregation\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    }
+   },
+   "paper_run2 x code_run2": {
+    "F1": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "code omission"
+     ],
+     "keys": [
+      "data.target_domains"
+     ],
+     "setting_ids": [
+      "[\"data.target_domains\", \"code omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F2": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "train.model_selection"
+     ],
+     "setting_ids": [
+      "[\"train.model_selection\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F5": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "difference"
+     ],
+     "keys": [
+      "optim.lr"
+     ],
+     "setting_ids": [
+      "[\"optim.lr\", \"difference\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F6": {
+     "found": false,
+     "verified": false,
+     "related": 0,
+     "kinds": [],
+     "keys": [],
+     "setting_ids": [],
+     "evidence": []
+    },
+    "F8": {
+     "found": false,
+     "verified": false,
+     "related": 0,
+     "kinds": [],
+     "keys": [],
+     "setting_ids": [],
+     "evidence": []
+    }
+   }
+  },
+  "summary": {
+   "F1": {
+    "what": "target domain p = 1.0 never generated",
+    "golden_kind": "code omission",
+    "level": "must",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "code omission"
+    ],
+    "all_pairings": true
+   },
+   "F2": {
+    "what": "model selection: validation loss (paper) vs accuracy (code)",
+    "golden_kind": "difference",
+    "level": "must",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "difference"
+    ],
+    "all_pairings": true
+   },
+   "F3": {
+    "what": "optimizer: plain SGD (paper) vs momentum 0.9 + Nesterov (code)",
+    "golden_kind": "paper omission",
+    "level": "must",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "paper omission"
+    ],
+    "all_pairings": true
+   },
+   "F4": {
+    "what": "matching weight ramps from about 0 (code), no schedule in paper",
+    "golden_kind": "paper omission",
+    "level": "should",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "paper omission"
+    ],
+    "all_pairings": true
+   },
+   "F5": {
+    "what": "DANN/CDANN learning rate 0.1 (paper) vs 0.01 (code)",
+    "golden_kind": "difference",
+    "level": "should",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "difference"
+    ],
+    "all_pairings": true
+   },
+   "F6": {
+    "what": "hyperparameters ranked by target accuracy (code) vs source validation (paper)",
+    "golden_kind": "difference",
+    "level": "bonus",
+    "found_in": "2/4",
+    "verified_in": "2/4",
+    "kinds_found": [
+     "difference"
+    ],
+    "all_pairings": false
+   },
+   "F8": {
+    "what": "Table 1 Source columns: test.py:399 prints np.std/sqrt(n), a standard error, where the caption says standard deviation (Target is graded from train.py:314-315's plain sd: no verdict changes)",
+    "golden_kind": "difference",
+    "level": "team-verified",
+    "found_in": "2/4",
+    "verified_in": "2/4",
+    "kinds_found": [
+     "difference"
+    ],
+    "all_pairings": false
+   }
+  },
+  "pass": true
+ },
+ "table11": {
+  "code_runs": {
+   "code_run1": {
+    "augmented_copy": {
+     "ok": true,
+     "entries": [
+      {
+       "ops": [
+        "random_resized_crop(scale 0.7-1.0)",
+        "random_horizontal_flip"
+       ],
+       "relative_to_domain_transform": "after",
+       "applies_to": [
+        {
+         "split": "val",
+         "domains": "source",
+         "use": "model_selection",
+         "methods": [
+          "MatchDG"
+         ],
+         "phase": "phase1_ctr"
+        }
+       ],
+       "note": "A stored augmented copy (_data.pt) is generated for train and val splits after rotation. It is read only through MnistRotatedAugEval during MatchDG phase-1 val match-score evaluation (aug vs org of source val domains). Training data uses the *_org_data.pt files since mnist_aug=0, and test and other methods' val use org data."
+      }
+     ]
+    },
+    "matchdg_first_phase_selection": {
+     "ok": true,
+     "entries": [
+      {
+       "use": "checkpoint",
+       "split": "val",
+       "domains": "source",
+       "version": "augmented",
+       "metric": "TopK (k=10) perfect match score, every 5 epochs",
+       "methods": [
+        "MatchDG"
+       ],
+       "phase": "phase1_ctr",
+       "note": "Val loader holds augmented plus original copies of source domains; matching aug<->org is scored"
+      }
+     ]
+    },
+    "other_methods_selecting_on_augmented": [],
+    "citations_verified": {
+     "data/data_gen_mnist.py:34-35, 85": true,
+     "data/mnist_loader_match_eval.py:38": true,
+     "algorithms/match_dg.py:263-266": true
+    },
+    "citation_keys": [
+     "data.augmentation",
+     "train.model_selection_data",
+     "train.model_selection"
+    ],
+    "augmentation_evidence": "verified",
+    "selection_evidence": "verified",
+    "ok": true
+   },
+   "code_run2": {
+    "augmented_copy": {
+     "ok": true,
+     "entries": [
+      {
+       "ops": [
+        "random_resized_crop(32, scale=(0.7,1.0))",
+        "random_horizontal_flip"
+       ],
+       "relative_to_domain_transform": "after",
+       "applies_to": [
+        {
+         "split": "val",
+         "domains": "source",
+         "use": "model_selection",
+         "methods": [
+          "MatchDG"
+         ],
+         "phase": "matchdg_ctr (phase 1)"
+        }
+       ],
+       "note": "The augmented copy is stored as *_data.pt for train and val (not test). With the default --mnist_aug 0 the training loaders read the un-augmented *_org_data.pt, so no method trains on augmented data. The only reader of the augmented copy is the MatchDG phase-1 validation loader (MnistRotatedAugEval). It loads both the augmented and original images and ranks matches between them, which is used to pick the phase-1 checkpoint. Test data is never augmented."
+      }
+     ]
+    },
+    "matchdg_first_phase_selection": {
+     "ok": true,
+     "entries": [
+      {
+       "use": "checkpoint",
+       "split": "val",
+       "domains": "source",
+       "version": "augmented",
+       "metric": "TopK(10) perfect match score between augmented and original validation images",
+       "methods": [
+        "MatchDG"
+       ],
+       "phase": "matchdg_ctr (phase 1)",
+       "note": "Evaluated every 5 epochs; best score is saved and later loaded by the matchdg_erm phase."
+      }
+     ]
+    },
+    "other_methods_selecting_on_augmented": [],
+    "citations_verified": {
+     "data/data_gen_mnist.py:34-35, 85": true,
+     "data/mnist_loader_match_eval.py:38": true,
+     "algorithms/match_dg.py:263-266": true
+    },
+    "citation_keys": [
+     "data.augmentation",
+     "train.model_selection_data",
+     "train.model_selection"
+    ],
+    "augmentation_evidence": "verified",
+    "selection_evidence": "verified",
+    "ok": true
+   }
+  },
+  "pairings": {
+   "paper_run1 x code_run1": {
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "partly"
+      },
+      {
+       "paper": "verified",
+       "code": "partly"
+      }
+     ]
+    },
+    "F7": {
+     "found": true,
+     "verified": true,
+     "related": 1,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "data.augmentation"
+     ],
+     "setting_ids": [
+      "[\"data.augmentation\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    }
+   },
+   "paper_run1 x code_run2": {
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F7": {
+     "found": true,
+     "verified": true,
+     "related": 1,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "data.augmentation"
+     ],
+     "setting_ids": [
+      "[\"data.augmentation\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    }
+   },
+   "paper_run2 x code_run1": {
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "partly"
+      },
+      {
+       "paper": "verified",
+       "code": "partly"
+      }
+     ]
+    },
+    "F7": {
+     "found": true,
+     "verified": true,
+     "related": 1,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "data.augmentation"
+     ],
+     "setting_ids": [
+      "[\"data.augmentation\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    }
+   },
+   "paper_run2 x code_run2": {
+    "F3": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "optim.momentum",
+      "optim.nesterov"
+     ],
+     "setting_ids": [
+      "[\"optim.momentum\", \"paper omission\", null, null]",
+      "[\"optim.nesterov\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      },
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    },
+    "F4": {
+     "found": true,
+     "verified": true,
+     "related": 0,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "loss.terms.weight_schedule"
+     ],
+     "setting_ids": [
+      "[\"loss.terms.weight_schedule\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "verified",
+       "code": "verified"
+      },
+      {
+       "paper": "verified",
+       "code": "verified"
+      }
+     ]
+    },
+    "F7": {
+     "found": true,
+     "verified": true,
+     "related": 1,
+     "kinds": [
+      "paper omission"
+     ],
+     "keys": [
+      "data.augmentation"
+     ],
+     "setting_ids": [
+      "[\"data.augmentation\", \"paper omission\", null, null]"
+     ],
+     "evidence": [
+      {
+       "paper": "null",
+       "code": "verified"
+      }
+     ]
+    }
+   }
+  },
+  "summary": {
+   "F3": {
+    "what": "optimizer: plain SGD (paper) vs momentum 0.9 + Nesterov (code)",
+    "golden_kind": "paper omission",
+    "level": "must",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "paper omission"
+    ],
+    "all_pairings": true
+   },
+   "F4": {
+    "what": "matching weight ramps from about 0 (code), no schedule in paper",
+    "golden_kind": "paper omission",
+    "level": "should",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "paper omission"
+    ],
+    "all_pairings": true
+   },
+   "F7": {
+    "what": "flip after rotation in the augmented Rotated MNIST copy, reaching only MatchDG's first-phase checkpoint choice (SciCoQA row 67)",
+    "golden_kind": "paper omission",
+    "level": "must",
+    "found_in": "4/4",
+    "verified_in": "4/4",
+    "kinds_found": [
+     "paper omission"
+    ],
+    "all_pairings": true,
+    "related_in": "4/4"
+   }
+  },
+  "pass": true
+ },
+ "new_unverified": [
+  {
+   "table": "Table 1",
+   "key": "train.model_selection_data",
+   "status": "false alarm: target-validation print",
+   "kind": "difference",
+   "use": "checkpoint",
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    null
+   ],
+   "variants": [
+    {
+     "method": null,
+     "paper": {
+      "split": "val",
+      "domains": "source",
+      "version": "plain"
+     },
+     "code": {
+      "split": "test",
+      "domains": "target",
+      "version": "plain"
+     },
+     "evidence": {
+      "paper": "verified",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "data.preprocessing.normalization",
+   "status": "new, unverified",
+   "kind": "paper omission",
+   "use": null,
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run1",
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run1",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    null
+   ],
+   "variants": [
+    {
+     "method": null,
+     "paper": null,
+     "code": {
+      "kind": "mean_std",
+      "mean": [
+       0.1307
+      ],
+      "std": [
+       0.3081
+      ],
+      "methods": null,
+      "note": "applied via ToTensor+Normalize after rotation (and after augmentation for the stored augmented copy)"
+     },
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": null,
+     "paper": null,
+     "code": {
+      "kind": "mean_std",
+      "mean": [
+       0.1307
+      ],
+      "std": [
+       0.3081
+      ],
+      "methods": null,
+      "note": "applied after rotation (and after the random augmentation for the stored augmented copy), at generation time"
+     },
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "data.preprocessing.resize",
+   "status": "new, unverified",
+   "kind": "paper omission",
+   "use": null,
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run1",
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run1",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    null
+   ],
+   "variants": [
+    {
+     "method": null,
+     "paper": null,
+     "code": {
+      "height": 32,
+      "width": 32,
+      "methods": null,
+      "note": "PIL Resize((img_w, img_h)) of 28x28 MNIST before rotation, with --img_h 32 --img_w 32"
+     },
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": null,
+     "paper": null,
+     "code": {
+      "height": 32,
+      "width": 32,
+      "methods": null,
+      "note": "transforms.Resize((img_w, img_h)) on the PIL 28x28 digit at generation time, before rotation, with --img_h 32 --img_w 32"
+     },
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "eval.aggregation",
+   "status": "new, unverified",
+   "kind": "difference",
+   "use": null,
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run1",
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run1",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    "Average column",
+    "Average"
+   ],
+   "variants": [
+    {
+     "method": "Average column",
+     "paper": "mean_sd_over_seeds",
+     "code": "not computed in repo",
+     "evidence": {
+      "paper": "verified",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": "Average",
+     "paper": "mean_sd_over_seeds",
+     "code": "not computed in code",
+     "evidence": {
+      "paper": "verified",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "optim.lr_schedule",
+   "status": "new, unverified",
+   "kind": "paper omission",
+   "use": null,
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run1",
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run1",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    "ERM",
+    "RandMatch",
+    "PerfMatch",
+    "MatchDG"
+   ],
+   "variants": [
+    {
+     "method": "ERM",
+     "paper": null,
+     "code": "step(halve at epochs 25,50,75: lr=0.01/2^(epoch//25))",
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": "RandMatch",
+     "paper": null,
+     "code": "step(halve at epochs 25,50,75: lr=0.01/2^(epoch//25))",
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": "PerfMatch",
+     "paper": null,
+     "code": "step(halve at epochs 25,50,75: lr=0.01/2^(epoch//25))",
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": "MatchDG",
+     "paper": null,
+     "code": {
+      "phase1_ctr": "constant",
+      "phase2_erm": "step(halve at epochs 25,50,75: lr=0.01/2^(epoch//25))"
+     },
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run2 x code_run1"
+     ]
+    },
+    {
+     "method": "ERM",
+     "paper": null,
+     "code": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)",
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    },
+    {
+     "method": "RandMatch",
+     "paper": null,
+     "code": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)",
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    },
+    {
+     "method": "PerfMatch",
+     "paper": null,
+     "code": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)",
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    },
+    {
+     "method": "MatchDG",
+     "paper": null,
+     "code": {
+      "phase1_ctr": "constant",
+      "phase2_erm": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)"
+     },
+     "evidence": {
+      "paper": "null",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "train.batch_size",
+   "status": "new, unverified",
+   "kind": "difference",
+   "use": null,
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run1",
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run1",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    "MatchDG"
+   ],
+   "variants": [
+    {
+     "method": "MatchDG",
+     "paper": 16,
+     "code": {
+      "phase1_ctr": 512,
+      "phase2_erm": 16
+     },
+     "evidence": {
+      "paper": "verified",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run1",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "train.epochs",
+   "status": "new, unverified",
+   "kind": "difference",
+   "use": null,
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run1",
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run1",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    "MatchDG"
+   ],
+   "variants": [
+    {
+     "method": "MatchDG",
+     "paper": 100,
+     "code": {
+      "phase1_ctr": 50,
+      "phase2_erm": 100
+     },
+     "evidence": {
+      "paper": "verified",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run1",
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run1",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  },
+  {
+   "table": "Suppl. Table 11",
+   "key": "train.model_selection_data",
+   "status": "false alarm: target-validation print",
+   "kind": "difference",
+   "use": "checkpoint",
+   "field": null,
+   "pairings": [
+    "paper_run1 x code_run2",
+    "paper_run2 x code_run2"
+   ],
+   "methods": [
+    [
+     "ERM",
+     "RandMatch",
+     "PerfMatch",
+     "MatchDG"
+    ]
+   ],
+   "variants": [
+    {
+     "method": [
+      "ERM",
+      "RandMatch",
+      "PerfMatch",
+      "MatchDG"
+     ],
+     "paper": {
+      "split": "val",
+      "domains": "source",
+      "version": "plain"
+     },
+     "code": {
+      "split": "test",
+      "domains": "target",
+      "version": "plain"
+     },
+     "evidence": {
+      "paper": "verified",
+      "code": "verified"
+     },
+     "pairings": [
+      "paper_run1 x code_run2",
+      "paper_run2 x code_run2"
+     ]
+    }
+   ]
+  }
+ ],
+ "precision": {
+  "F1-F7": {
+   "Table 1": {
+    "distinct_settings": 9,
+    "known": 7,
+    "new_unverified": 1,
+    "false_alarms": 1,
+    "not_known": 2,
+    "raw_findings": 88,
+    "precision_lower_bound": "7/9",
+    "precision_lower_bound_value": 0.778
+   },
+   "Suppl. Table 11": {
+    "distinct_settings": 11,
+    "known": 5,
+    "new_unverified": 6,
+    "false_alarms": 1,
+    "not_known": 7,
+    "raw_findings": 62,
+    "precision_lower_bound": "5/12",
+    "precision_lower_bound_value": 0.417
+   },
+   "all": {
+    "known": 12,
+    "new_unverified": 7,
+    "false_alarms": 2,
+    "not_known": 9,
+    "precision_lower_bound": "12/21",
+    "precision_lower_bound_value": 0.571
+   }
+  },
+  "F1-F8": {
+   "Table 1": {
+    "distinct_settings": 9,
+    "known": 8,
+    "new_unverified": 0,
+    "false_alarms": 1,
+    "not_known": 1,
+    "raw_findings": 88,
+    "precision_lower_bound": "8/9",
+    "precision_lower_bound_value": 0.889
+   },
+   "Suppl. Table 11": {
+    "distinct_settings": 11,
+    "known": 5,
+    "new_unverified": 6,
+    "false_alarms": 1,
+    "not_known": 7,
+    "raw_findings": 62,
+    "precision_lower_bound": "5/12",
+    "precision_lower_bound_value": 0.417
+   },
+   "all": {
+    "known": 13,
+    "new_unverified": 6,
+    "false_alarms": 2,
+    "not_known": 8,
+    "precision_lower_bound": "13/21",
+    "precision_lower_bound_value": 0.619
+   }
+  },
+  "definition": "distinct settings (key, kind, field, use) over all 4 pairings of a table; known = matches a known finding of that table (F1-F7, or F1-F8); false alarms (team-verified) and every new, unverified finding count as false"
+ },
+ "leads": [
+  {
+   "table": "Suppl. Table 11",
+   "keys": [
+    "data.train_samples_per_domain",
+    "data.generation_params"
+   ],
+   "lead": "no repository command makes LeNet-size Rotated MNIST: the README's data step uses --subset_size 2000 (ResNet-18); the paper (supp. C.1, p.7) and the spike's data use 1000 per domain",
+   "source": "Phase 4 (PROGRESS.md, notes for Phase 5)",
+   "status": "new, unverified",
+   "diff_lists_it_in": "0/4",
+   "code_values": {
+    "code_run1": {
+     "data.train_samples_per_domain": 1000,
+     "data.generation_params": {
+      "subset_size": 1000,
+      "val_size": 200,
+      "data_size": 60000,
+      "seeds": [
+       0,
+       1,
+       2
+      ],
+      "img_h": 32,
+      "img_w": 32,
+      "base_dataset": "MNIST train+test (70000 images); indices drawn with np.random.choice(data_size, ...) with replacement, from the first 60000"
+     }
+    },
+    "code_run2": {
+     "data.train_samples_per_domain": 1000,
+     "data.generation_params": {
+      "dataset": "rot_mnist",
+      "model": "lenet",
+      "subset_size": 1000,
+      "val_size": 200,
+      "img_h": 32,
+      "img_w": 32,
+      "data_seeds": [
+       0,
+       1,
+       2
+      ],
+      "base_data": "all 70000 MNIST train+test images; indices drawn with np.random.choice(data_size, subset_size+val_size) per seed, with replacement",
+      "test_indices": "same as train indices (res[:subset_size])",
+      "angles": [
+       0,
+       15,
+       30,
+       45,
+       60,
+       75
+      ]
+     }
+    }
+   },
+   "paper_values": {
+    "paper_run1": {
+     "data.train_samples_per_domain": 1000,
+     "data.generation_params": {
+      "angles": [
+       0,
+       15,
+       30,
+       45,
+       60,
+       75
+      ],
+      "samples_per_domain": 1000,
+      "val_fraction": 0.2
+     }
+    },
+    "paper_run2": {
+     "data.train_samples_per_domain": 1000,
+     "data.generation_params": {
+      "samples_per_domain": 1000,
+      "validation_fraction_of_train": 0.2
+     }
+    }
+   },
+   "code_citations_verified": [
+    "data/data_gen_mnist.py:108-109, 154, 175, 188",
+    "data/data_gen_mnist.py:109",
+    "data/data_gen_mnist.py:154",
+    "data/data_gen_mnist.py:188",
+    "data/data_gen_mnist.py:209",
+    "data/data_gen_mnist.py:238-239",
+    "docs/notebooks/reproduce_results.ipynb:273"
+   ]
+  }
+ ],
+ "agreement": {
+  "Table 1": {
+   "paper": {
+    "same": 16,
+    "differ": 3,
+    "one_null": 0,
+    "both_null": 6
+   },
+   "code": {
+    "same": 17,
+    "differ": 8,
+    "one_null": 0,
+    "both_null": 0
+   }
+  },
+  "Suppl. Table 11": {
+   "paper": {
+    "same": 15,
+    "differ": 3,
+    "one_null": 1,
+    "both_null": 6
+   },
+   "code": {
+    "same": 18,
+    "differ": 7,
+    "one_null": 0,
+    "both_null": 0
+   }
+  }
+ },
+ "evidence": {
+  "Table 1": {
+   "code_run1": {
+    "items": 46,
+    "items_ok": 45,
+    "keys_verified": 24,
+    "keys_partly": 1,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 0
+   },
+   "code_run2": {
+    "items": 46,
+    "items_ok": 46,
+    "keys_verified": 25,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 0
+   },
+   "paper_run1": {
+    "items": 23,
+    "items_ok": 23,
+    "keys_verified": 19,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 6
+   },
+   "paper_run2": {
+    "items": 24,
+    "items_ok": 24,
+    "keys_verified": 19,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 6
+   }
+  },
+  "Suppl. Table 11": {
+   "code_run1": {
+    "items": 39,
+    "items_ok": 38,
+    "keys_verified": 24,
+    "keys_partly": 1,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 0
+   },
+   "code_run2": {
+    "items": 55,
+    "items_ok": 55,
+    "keys_verified": 25,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 0
+   },
+   "paper_run1": {
+    "items": 22,
+    "items_ok": 22,
+    "keys_verified": 18,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 7
+   },
+   "paper_run2": {
+    "items": 22,
+    "items_ok": 22,
+    "keys_verified": 19,
+    "keys_partly": 0,
+    "keys_unverified": 0,
+    "keys_no_evidence": 0,
+    "keys_null": 6
+   }
+  }
+ },
+ "calls": {
+  "agent_calls": 8,
+  "cache_hits": 8,
+  "cost_usd_recorded": 3.3106
+ },
+ "pass": true
+}

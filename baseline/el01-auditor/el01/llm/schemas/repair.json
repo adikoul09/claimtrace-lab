@@ -1,0 +1,22 @@
+{
+ "type": "object",
+ "properties": {
+  "edits": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "file": {"type": "string", "description": "path relative to the repository root, e.g. utils/io.py"},
+     "old": {"type": "string", "description": "exact current text: one or more whole lines, unique in the file"},
+     "new": {"type": "string", "description": "replacement text for those lines"}
+    },
+    "required": ["file", "old", "new"],
+    "additionalProperties": false
+   }
+  },
+  "class": {"type": "string", "enum": ["env", "compat", "hypothesis"]},
+  "rationale": {"type": "string", "description": "one sentence"}
+ },
+ "required": ["edits", "class", "rationale"],
+ "additionalProperties": false
+}

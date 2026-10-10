@@ -1,0 +1,203 @@
+{
+ "pass": true,
+ "reason": "exactly one changed setting: train.model_selection",
+ "wanted": [
+  {
+   "key": "train.model_selection",
+   "use": null
+  }
+ ],
+ "attributed": [
+  {
+   "key": "train.model_selection",
+   "use": null,
+   "via": [
+    "diff_v2 base->branch",
+    "diff_v2 branch->base",
+    "canon"
+   ],
+   "base": "best_val_accuracy",
+   "branch": "min_val_loss",
+   "cites_patch": [
+    {
+     "run": "baseline",
+     "file": "algorithms/erm_match.py",
+     "lines": [
+      155,
+      156
+     ]
+    },
+    {
+     "run": "baseline",
+     "file": "train.py",
+     "lines": [
+      306
+     ]
+    },
+    {
+     "run": "branch",
+     "file": "algorithms/erm_match.py",
+     "lines": [
+      155,
+      156
+     ]
+    },
+    {
+     "run": "branch",
+     "file": "train.py",
+     "lines": [
+      306
+     ]
+    }
+   ]
+  }
+ ],
+ "disagreement": [
+  {
+   "key": "data.generation_params",
+   "use": null,
+   "via": [
+    "canon"
+   ],
+   "base": {
+    "total_slabs": 7,
+    "slab_noise": 0.1,
+    "dim": 2,
+    "lin_margin": 0.1,
+    "slab_margin": 0.1,
+    "width": 1,
+    "num_lin": 1,
+    "corrupt_lin_margin": true,
+    "random_transform": false,
+    "generated_samples_per_file": 10000,
+    "data_seeds": 10
+   },
+   "branch": {
+    "num_samples_generated_per_file": 10000,
+    "samples_used_per_domain_train_test": 1000,
+    "dim": 2,
+    "total_slabs": 7,
+    "lin_margin": 0.1,
+    "slab_margin": 0.1,
+    "num_lin": 1,
+    "width": 1,
+    "random_transform": false,
+    "corrupt_lin_margin": true,
+    "slab_noise": 0.1,
+    "source_corrupt_lin": [
+     0,
+     0.1
+    ],
+    "target_corrupt_lin": 1,
+    "num_dataset_seeds": 10
+   },
+   "cites_patch": []
+  },
+  {
+   "key": "eval.aggregation",
+   "use": null,
+   "via": [
+    "canon"
+   ],
+   "base": {
+    "target (train.py)": "mean_sd_over_seeds",
+    "source (test.py per_domain_acc)": "mean_se_over_seeds"
+   },
+   "branch": {
+    "Source 1 and Source 2 (test.py)": "mean_se_over_seeds",
+    "Target (train.py)": "mean_sd_over_seeds"
+   },
+   "cites_patch": []
+  },
+  {
+   "key": "eval.metric",
+   "use": null,
+   "via": [
+    "canon"
+   ],
+   "base": "classification accuracy (%) on each domain's data: source accuracy on the two source domains, target accuracy on domain 1.0",
+   "branch": "classification accuracy (%) per domain: source columns = per-domain accuracy on the train split of each source domain at the min-val-loss checkpoint; target = accuracy on the test split of domain 1.0",
+   "cites_patch": []
+  },
+  {
+   "key": "model.architecture",
+   "use": null,
+   "via": [
+    "canon"
+   ],
+   "base": "SlabClf MLP: Linear(2,100)+ReLU feature net, then Linear(100,100)->Linear(100,2) classifier (no nonlinearity between)",
+   "branch": "SlabClf: Linear(2,100)+ReLU feature net, then Linear(100,100)->Linear(100,2) classifier (no nonlinearity between the last two)",
+   "cites_patch": []
+  },
+  {
+   "key": "optim.weight_decay",
+   "use": null,
+   "via": [
+    "canon"
+   ],
+   "base": 0.0005,
+   "branch": {
+    "ERM": 0.0005,
+    "RandMatch": 0.0005,
+    "PerfMatch": 0.0005,
+    "MMD": 0.0005,
+    "CORAL": 0.0005,
+    "C-MMD": 0.0005,
+    "C-CORAL": 0.0005,
+    "DANN": 0.0005,
+    "CDANN": 0.0005
+   },
+   "cites_patch": []
+  }
+ ],
+ "uncited_hunks": [
+  {
+   "file": "algorithms/algo.py",
+   "side": "new",
+   "first": 106,
+   "last": 107
+  },
+  {
+   "file": "algorithms/algo.py",
+   "side": "new",
+   "first": 251,
+   "last": 251
+  },
+  {
+   "file": "algorithms/algo.py",
+   "side": "new",
+   "first": 270,
+   "last": 270
+  },
+  {
+   "file": "algorithms/algo.py",
+   "side": "new",
+   "first": 278,
+   "last": 279
+  },
+  {
+   "file": "algorithms/dann.py",
+   "side": "old",
+   "first": 144,
+   "last": 145
+  },
+  {
+   "file": "algorithms/dann.py",
+   "side": "new",
+   "first": 144,
+   "last": 145
+  },
+  {
+   "file": "algorithms/mmd.py",
+   "side": "old",
+   "first": 167,
+   "last": 168
+  },
+  {
+   "file": "algorithms/mmd.py",
+   "side": "new",
+   "first": 167,
+   "last": 168
+  }
+ ]
+}

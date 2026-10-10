@@ -1,0 +1,225 @@
+{
+ "commit": "26caa88d1f1ca6a1d6b374639b4c5606c61b8f66",
+ "matchdg_0": {
+  "target": {
+   "log": "logs/h7_no_flip/train_matchdg_0.log",
+   "n": 3,
+   "per_seed": [
+    {
+     "seed_run": 3,
+     "best_epoch": 29,
+     "target_acc": 93.8,
+     "line": 680
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 69,
+     "target_acc": 92.4,
+     "line": 1359
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 17,
+     "target_acc": 94.1,
+     "line": 2038
+    }
+   ],
+   "mean": 93.43,
+   "sd_pop": 0.74,
+   "sd_sample": 0.91,
+   "code_reported": {
+    "mean": 93.43333333333332,
+    "sd": 0.7408703590297575,
+    "line": 2042
+   }
+  }
+ },
+ "matchdg_15": {
+  "target": {
+   "log": "logs/h7_no_flip/train_matchdg_15.log",
+   "n": 3,
+   "per_seed": [
+    {
+     "seed_run": 3,
+     "best_epoch": 12,
+     "target_acc": 99.3,
+     "line": 680
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 31,
+     "target_acc": 99.7,
+     "line": 1359
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 16,
+     "target_acc": 99.5,
+     "line": 2038
+    }
+   ],
+   "mean": 99.5,
+   "sd_pop": 0.16,
+   "sd_sample": 0.2,
+   "code_reported": {
+    "mean": 99.5,
+    "sd": 0.16329931618554752,
+    "line": 2042
+   }
+  }
+ },
+ "matchdg_30": {
+  "target": {
+   "log": "logs/h7_no_flip/train_matchdg_30.log",
+   "n": 3,
+   "per_seed": [
+    {
+     "seed_run": 3,
+     "best_epoch": 46,
+     "target_acc": 100.0,
+     "line": 680
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 48,
+     "target_acc": 99.4,
+     "line": 1359
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 12,
+     "target_acc": 98.8,
+     "line": 2038
+    }
+   ],
+   "mean": 99.4,
+   "sd_pop": 0.49,
+   "sd_sample": 0.6,
+   "code_reported": {
+    "mean": 99.39999999999999,
+    "sd": 0.48989794855663676,
+    "line": 2042
+   }
+  }
+ },
+ "matchdg_45": {
+  "target": {
+   "log": "logs/h7_no_flip/train_matchdg_45.log",
+   "n": 3,
+   "per_seed": [
+    {
+     "seed_run": 3,
+     "best_epoch": 25,
+     "target_acc": 99.6,
+     "line": 680
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 36,
+     "target_acc": 99.5,
+     "line": 1359
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 6,
+     "target_acc": 98.0,
+     "line": 2038
+    }
+   ],
+   "mean": 99.03,
+   "sd_pop": 0.73,
+   "sd_sample": 0.9,
+   "code_reported": {
+    "mean": 99.03333333333335,
+    "sd": 0.7318166133366701,
+    "line": 2042
+   }
+  }
+ },
+ "matchdg_60": {
+  "target": {
+   "log": "logs/h7_no_flip/train_matchdg_60.log",
+   "n": 3,
+   "per_seed": [
+    {
+     "seed_run": 3,
+     "best_epoch": 92,
+     "target_acc": 99.7,
+     "line": 680
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 9,
+     "target_acc": 98.4,
+     "line": 1359
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 18,
+     "target_acc": 98.9,
+     "line": 2038
+    }
+   ],
+   "mean": 99.0,
+   "sd_pop": 0.54,
+   "sd_sample": 0.66,
+   "code_reported": {
+    "mean": 99.0,
+    "sd": 0.5354126134736324,
+    "line": 2042
+   }
+  }
+ },
+ "matchdg_75": {
+  "target": {
+   "log": "logs/h7_no_flip/train_matchdg_75.log",
+   "n": 3,
+   "per_seed": [
+    {
+     "seed_run": 3,
+     "best_epoch": 23,
+     "target_acc": 92.6,
+     "line": 680
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 11,
+     "target_acc": 91.4,
+     "line": 1359
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 8,
+     "target_acc": 91.5,
+     "line": 2038
+    }
+   ],
+   "mean": 91.83,
+   "sd_pop": 0.54,
+   "sd_sample": 0.67,
+   "code_reported": {
+    "mean": 91.83333333333333,
+    "sd": 0.5436502143433322,
+    "line": 2042
+   }
+  }
+ },
+ "matchdg_ctr_0": {
+  "error": "StatisticsError('mean requires at least one data point')"
+ },
+ "matchdg_ctr_15": {
+  "error": "StatisticsError('mean requires at least one data point')"
+ },
+ "matchdg_ctr_30": {
+  "error": "StatisticsError('mean requires at least one data point')"
+ },
+ "matchdg_ctr_45": {
+  "error": "StatisticsError('mean requires at least one data point')"
+ },
+ "matchdg_ctr_60": {
+  "error": "StatisticsError('mean requires at least one data point')"
+ },
+ "matchdg_ctr_75": {
+  "error": "StatisticsError('mean requires at least one data point')"
+ }
+}

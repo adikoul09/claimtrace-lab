@@ -1,0 +1,9 @@
+{
+ "same_file_list": true,
+ "plain_and_label_files": 108,
+ "plain_and_label_identical": 108,
+ "augmented_images": 21600,
+ "unchanged": 10848,
+ "flip_only": 10752,
+ "other": 0
+}

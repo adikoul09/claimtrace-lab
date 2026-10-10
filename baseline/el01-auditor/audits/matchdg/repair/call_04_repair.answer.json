@@ -1,0 +1,38 @@
+{
+ "n": 4,
+ "mode": "repair",
+ "attempt": 3,
+ "run": 4,
+ "failure": "missing attribute or API|algorithms/algo.py:276|AttributeError",
+ "answer": {
+  "edits": [
+   {
+    "file": "algorithms/algo.py",
+    "old": "        opacus.autograd_grad_sample.enable_hooks()        \n",
+    "new": "        if self.args.dp_noise:\n            opacus.autograd_grad_sample.enable_hooks()\n"
+   }
+  ],
+  "class": "compat",
+  "rationale": "The opacus hook re-enable call was unconditional but only matters when DP noise is on; guarding it matches the disable call and avoids the missing API on the non-DP path."
+ },
+ "cache": "hit",
+ "key": "7ee7318ddcd4030af4fc4f8ee10292c5bdeb9802583d8454d39721a6ba2f4344",
+ "backend": "replay",
+ "usage": {
+  "total_cost_usd": 0.0288432,
+  "num_turns": 3,
+  "models": [
+   "claude-sonnet-5-5"
+  ]
+ },
+ "policy": {
+  "class": "compat",
+  "llm_class": "compat",
+  "rules": [],
+  "basis": "answers a 'missing attribute or API' failure (AttributeError) and changes no data, training setting or number; needs the inertness check",
+  "files": [
+   "algorithms/algo.py"
+  ]
+ },
+ "outcome": "committed 5162394 on el01/repair"
+}

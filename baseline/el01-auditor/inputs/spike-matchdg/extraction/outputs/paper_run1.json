@@ -1,0 +1,621 @@
+{
+  "claims": [
+    {
+      "method": "ERM",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 100.0,
+      "sd": 0.0,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'ERM', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "ERM",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 96.0,
+      "sd": 0.25,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'ERM', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "ERM",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 57.6,
+      "sd": 6.58,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'ERM', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "DANN",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.07,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'DANN', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "DANN",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 94.8,
+      "sd": 0.25,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'DANN', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "DANN",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 53.0,
+      "sd": 1.41,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'DANN', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "MMD",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'MMD', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "MMD",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 95.9,
+      "sd": 0.27,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'MMD', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "MMD",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 62.9,
+      "sd": 5.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'MMD', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "CORAL",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'CORAL', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "CORAL",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 96.0,
+      "sd": 0.27,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'CORAL', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "CORAL",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 63.1,
+      "sd": 5.86,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'CORAL', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "RandMatch",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 100.0,
+      "sd": 0.0,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'RandMatch', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "RandMatch",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 96.1,
+      "sd": 0.22,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'RandMatch', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "RandMatch",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 59.5,
+      "sd": 3.5,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'RandMatch', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "CDANN",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'CDANN', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "CDANN",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 96.0,
+      "sd": 0.27,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'CDANN', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "CDANN",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 55.9,
+      "sd": 2.47,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'CDANN', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "C-MMD",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'C-MMD', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "C-MMD",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 96.0,
+      "sd": 0.27,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'C-MMD', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "C-MMD",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 58.9,
+      "sd": 3.43,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'C-MMD', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "C-CORAL",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'C-CORAL', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "C-CORAL",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 96.0,
+      "sd": 0.27,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'C-CORAL', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "C-CORAL",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 64.7,
+      "sd": 4.69,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'C-CORAL', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "PerfMatch",
+      "column": "Source 1",
+      "column_meaning": "source domain, linear-feature noise probability 0.0",
+      "mean": 99.9,
+      "sd": 0.05,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'PerfMatch', column 'Source 1'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "PerfMatch",
+      "column": "Source 2",
+      "column_meaning": "source domain, linear-feature noise probability 0.1",
+      "mean": 97.8,
+      "sd": 0.28,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'PerfMatch', column 'Source 2'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    },
+    {
+      "method": "PerfMatch",
+      "column": "Target",
+      "column_meaning": "target domain, linear-feature noise probability 1.0",
+      "mean": 77.8,
+      "sd": 6.01,
+      "metric": "classification accuracy (%)",
+      "where": "Table 1 (Section 3.2, 'An empirical study of class-conditional methods'), row 'PerfMatch', column 'Target'",
+      "aggregation": "mean_sd_over_seeds (10 seeds)",
+      "evidence": "Slab Dataset: Source domains with noisy linear component with probability 0.0 and 0.1, target domain with noise 1.0. Mean and standard deviation over 10 different seed values for each method. The results for DANN (Ganin et al., 2016), CDANN (Li et al., 2018d), MMD, C-MMD (Li et al., 2018b), CORAL, C-CORAL (Sun & Saenko, 2016) were computed by using their implementations in DomainBed (Gulrajani & Lopez-Paz, 2020)."
+    }
+  ],
+  "relative_claims": [
+    {
+      "type": "trend",
+      "statement": "ERM fails on target despite near-perfect source accuracy",
+      "methods": [
+        "ERM"
+      ],
+      "magnitude": null,
+      "verbatim": "The results in Table 1 (implementation details in Appendix A.1) show that ERM is unable to learn the slab feature, as evident by poor generalization to the target domain, despite very good performance on the source domains.",
+      "where": "Section 3.2, paragraph after Table 1"
+    },
+    {
+      "type": "trend",
+      "statement": "Unconditional DM (DANN, MMD, CORAL), conditional DM (CDANN, C-MMD, C-CORAL) and RandMatch all fail to learn the stable slab feature",
+      "methods": [
+        "DANN",
+        "MMD",
+        "CORAL",
+        "CDANN",
+        "C-MMD",
+        "C-CORAL",
+        "RandMatch"
+      ],
+      "magnitude": null,
+      "verbatim": "We also show that methods based on learning invariant representations by unconditional (DANN, MMD, CORAL) and conditional distribution matching (CDANN, C-MMD, C-CORAL), and matching same-class inputs (Random-Match) (Motiian et al., 2017) fail to learn the stable slab feature.",
+      "where": "Section 3.2, paragraph after Table 1"
+    },
+    {
+      "type": "trend",
+      "statement": "CDM methods fail to generalize to target even though slab distribution is similar across source domains",
+      "methods": [
+        "CDANN",
+        "C-MMD",
+        "C-CORAL"
+      ],
+      "magnitude": null,
+      "verbatim": "However, the slab dataset has similar distribution of stable feature (slabs) across the source domains, yet the CDM algorithms fail to generalize to the target domain.",
+      "where": "Section 3.2, paragraph after Table 1"
+    },
+    {
+      "type": "trend",
+      "statement": "CDM methods can fail empirically even with equal stable-feature distribution across domains",
+      "methods": [
+        "CDANN",
+        "C-MMD",
+        "C-CORAL"
+      ],
+      "magnitude": null,
+      "verbatim": "This shows that the CDM methods can empirically fail even when there is an equal distribution of stable features across domains.",
+      "where": "Section 3.2, paragraph after Table 1"
+    },
+    {
+      "type": "relative",
+      "statement": "Matching representations of cross-domain points with the same slab value (PerfectMatch) substantially improves out-of-domain accuracy, to 78%",
+      "methods": [
+        "PerfMatch",
+        "vs. all other Table 1 methods"
+      ],
+      "magnitude": "target accuracy 78% (Table 1: 77.8); no explicit margin stated in text. Implied by Table 1: +20.2 over ERM (57.6), +13.1 over best baseline C-CORAL (64.7) -- these differences are computed, not stated.",
+      "verbatim": "We do so by minimizing the ℓ_2 -norm of the representations for data points from different domains that share the same slab value (details of the PerfectMatch method in Section 4.3). The results improve substantially: out-of-domain accuracy is now 78%.",
+      "where": "Section 3.2, paragraph starting 'How can we ensure that a model learns the stable, generalizable feature x2?'"
+    }
+  ],
+  "perfmatch_description": {
+    "one_line": "PerfMatch (PerfectMatch) adds an l2 penalty between representations Phi(x) of cross-domain input pairs that share the same slab id, i.e. the same value of the causal/stable feature (ground-truth 'object' matches); the paper says such object information is not always available in practice (it is an oracle-style match that the slab simulation provides; MatchDG is proposed to approximate it).",
+    "evidence": [
+      {
+        "verbatim": "For RandMatch (Motiian et al., 2017) and PerfMatch, we use ℓ_2 distance for dist in (Eq: 3).",
+        "where": "Appendix A.1"
+      },
+      {
+        "verbatim": "For the PerfectMatch algorithm, the match function Ω accepts two data points across domains with the same slab id as valid matches (the slab id corresponds to the value of the causal feature: two inputs with the same slab id have similar causal features).",
+        "where": "Appendix A.1"
+      },
+      {
+        "verbatim": "The match function Ω in the RandMatch algorithm is defined as randomly matching any two data points across domains with the same class label.",
+        "where": "Appendix A.1"
+      },
+      {
+        "verbatim": "We do so by minimizing the ℓ_2 -norm of the representations for data points from different domains that share the same slab value (details of the PerfectMatch method in Section 4.3).",
+        "where": "Section 3.2"
+      },
+      {
+        "verbatim": "When object information is available, Eq. (3) provides a loss objective to build a classifer using causal features.",
+        "where": "Section 5 (first sentence)"
+      },
+      {
+        "verbatim": "However, object information is not always available, and in many datasets there may not be a perfect \"counterfactual\" match based on same object across domains.",
+        "where": "Section 5"
+      },
+      {
+        "verbatim": "We propose matching-based algorithms when base objects are observed (e.g., through data augmentation) and approximate the objective when objects are not observed (MatchDG).",
+        "where": "Abstract (fetched as two fragments of one sentence)"
+      }
+    ],
+    "available_in_practice": "not always (per Section 5); in the slab experiment the slab id is known from the simulation"
+  },
+  "settings": {
+    "experiment": "Slab dataset domain generalization (Table 1): 2 source domains (linear-feature noise p=0.0, 0.1), target p=1.0; ERM, DANN, MMD, CORAL, RandMatch, CDANN, C-MMD, C-CORAL, PerfMatch",
+    "settings": {
+      "data.source_domains": {
+        "value": [
+          "linear-feature noise p=0.0",
+          "linear-feature noise p=0.1"
+        ],
+        "evidence": "Appendix A.1: \"We generate two source data domains with noise probabilities p as 0.0 and 0.1, and generate the target domain with complete noise p=1.0, rendering the linear block feature not informative of the label in the target domain.\""
+      },
+      "data.target_domains": {
+        "value": [
+          "linear-feature noise p=1.0"
+        ],
+        "evidence": "Appendix A.1: \"We generate two source data domains with noise probabilities p as 0.0 and 0.1, and generate the target domain with complete noise p=1.0, ...\"; Section 3.2: \"On the third (test) domain, we add noise with probability 1 (see Figure 1(b)).\""
+      },
+      "data.domains_data_available": {
+        "value": [
+          "p=0.0 (source)",
+          "p=0.1 (source)",
+          "p=1.0 (target)"
+        ],
+        "evidence": "Appendix A.1: \"We sample 1k data points per domain, which leads to 2k training data points (source domain with p as 0.0 and 0.1), and 1k test data points (target domain with p as 1.0).\""
+      },
+      "data.train_samples_per_domain": {
+        "value": 1000,
+        "evidence": "Appendix A.1: \"We sample 1k data points per domain, which leads to 2k training data points (source domain with p as 0.0 and 0.1), and 1k test data points (target domain with p as 1.0).\""
+      },
+      "data.val_samples_per_domain": {
+        "value": 250,
+        "evidence": "Appendix A.1: \"Also, for hyperparameter tuning (model selection), we sample additional 250 data points per source domain as the validation set\" (validation is from source domains only; Section 6: \"Hence, we use only data from source domains to construct a validation set (except when explicitly mentioned in Table 4, to compare to past methods that use test domain validation).\")"
+      },
+      "data.generation_params": {
+        "value": {
+          "input_dim": 2,
+          "num_classes": 2,
+          "k_slabs": 7,
+          "slab_margin_m": 0.1,
+          "slab_label_flip_noise_p_s": 0.1,
+          "slab_length_formula": "(2 - m*(k-1)) / k",
+          "slab_feature_range": [
+            -1,
+            1
+          ],
+          "linear_feature_y1": "U(0.1, 1.0)",
+          "linear_feature_y0": "U(-1.0, -0.1)",
+          "linear_feature_noise": "with probability p sampled from U(-0.1, 0.1)",
+          "noise_p_source": [
+            0.0,
+            0.1
+          ],
+          "noise_p_target": 1.0,
+          "test_samples_target": 1000
+        },
+        "evidence": "Appendix A.1: \"We choose k=7, m=0.1, and p_s=0.1 for the slab block features in our experiments.\"; \"The length for each slab is given by (2-m*(k-1))/k where k is the total number of slabs, and m is the margin between two slabs.\"; \"The k-slab feature ranges from [-1, 1] and within it has different 'slabs' corresponding to uniform distributions of the feature's value, conditioned on class label y.\"; \"The linear block features contain the positive (y=1) and the negative (y=0) labels sampled from uniform distributions U(0.1,1.0) and U(-1.0,-0.1) respectively.\"; \"To make the linear features spurious, we add noise to the linear features s.t. data points are sampled from U(-0.1,0.1) with probability p, and sampled from U(0.1,1.0) (y=1) or U(-1.0,-0.1) (y=0) with probability 1-p.\"; \"We also a constant (domain independent) noise to the relationship between the slab feature and the class label by flipping the original label with probability p_s.\" [sic]; \"Input Dim refers to the input data dimension, which is 2 dimensional (linear block feature, slab block feature).\"; \"Num Classes refers to the total number of output classes, which is binary classification for the synthetic slab dataset.\""
+      },
+      "model.architecture": {
+        "value": "Representation network: FC(2,100) + ReLU; classification network: FC(100,100), FC(100,2) (no activation printed between the two classifier FC layers); DANN/CDANN discriminators use the same architecture as the classification network",
+        "evidence": "Appendix A.1: \"The overall architecture consists of a representation network along with a classification network, detailed below.\" Representation Network: \"FC layer: (Input Dim, 100)\", \"ReLU activation\"; Classification Network: \"FC layer: (100, 100)\", \"FC layer: (100, Num Classes)\"; discriminators: \"we use the same architecture for them as that of the classification network.\""
+      },
+      "optim.name": {
+        "value": "sgd",
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "optim.momentum": {
+        "value": null,
+        "evidence": "Not stated in the paper (Appendix A.1 gives SGD, batch size, lr, weight decay only)."
+      },
+      "optim.nesterov": {
+        "value": null,
+        "evidence": "Not stated in the paper."
+      },
+      "optim.lr": {
+        "value": 0.1,
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "optim.lr_schedule": {
+        "value": null,
+        "evidence": "Not stated in the paper (no learning-rate schedule described for the slab experiment)."
+      },
+      "optim.weight_decay": {
+        "value": 0.0005,
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "train.batch_size": {
+        "value": 128,
+        "evidence": "Appendix A.1: \"All the methods were trained using SGD, with batch size 128, learning rate 0.1 and weight decay 5e-4.\""
+      },
+      "train.epochs": {
+        "value": 100,
+        "evidence": "Appendix A.1: \"We train each method for 100 epochs and do early stopping based on the validation loss.\"; Table 7 caption: \"... with the total number of epochs for each model as 100.\""
+      },
+      "train.model_selection": {
+        "value": "min_val_loss",
+        "evidence": "Appendix A.1: \"We train each method for 100 epochs and do early stopping based on the validation loss.\"; Table 7 caption: \"We leave the optimal value for Epochs as blank since we do early stopping based on the validation loss, with the total number of epochs for each model as 100.\"; validation set = \"additional 250 data points per source domain\". The paper does not say whether 'validation loss' is the classification loss alone or the full objective incl. the matching penalty, nor the early-stopping patience. Hyperparameters (lambda etc.) are also selected on this source-domain validation set: \"Also, for hyperparameter tuning (model selection), we sample additional 250 data points per source domain as the validation set\"."
+      },
+      "loss.terms": {
+        "value": [
+          {
+            "name": "cross_entropy (L_d, summed over source domains)",
+            "weight": 1.0,
+            "weight_schedule": null
+          },
+          {
+            "name": "matching/alignment penalty (method-specific; l2 distance between Phi(x) of matched cross-domain pairs for RandMatch and PerfMatch)",
+            "weight": {
+              "ERM": null,
+              "DANN": 0.01,
+              "CDANN": 0.01,
+              "MMD": 0.1,
+              "C-MMD": 0.1,
+              "CORAL": 0.1,
+              "C-CORAL": 0.1,
+              "RandMatch": 1.0,
+              "PerfMatch": 1.0
+            },
+            "grid": {
+              "DANN": [
+                0.01,
+                0.1,
+                1.0,
+                10.0,
+                100.0
+              ],
+              "CDANN": [
+                0.01,
+                0.1,
+                1.0,
+                10.0,
+                100.0
+              ],
+              "MMD": [
+                0.1,
+                1.0,
+                10.0
+              ],
+              "C-MMD": [
+                0.1,
+                1.0,
+                10.0
+              ],
+              "CORAL": [
+                0.1,
+                1.0,
+                10.0
+              ],
+              "C-CORAL": [
+                0.1,
+                1.0,
+                10.0
+              ],
+              "RandMatch": [
+                0.1,
+                1.0,
+                10.0
+              ],
+              "PerfMatch": [
+                0.1,
+                1.0,
+                10.0
+              ]
+            },
+            "weight_schedule": null
+          },
+          {
+            "name": "DANN/CDANN adversarial extras (gradient penalty, discriminator steps)",
+            "weight": {
+              "DANN": {
+                "gradient_penalty": "printed blank / unreadable",
+                "discriminator_steps": 4
+              },
+              "CDANN": {
+                "gradient_penalty": 1.0,
+                "discriminator_steps": 2
+              }
+            },
+            "grid": {
+              "gradient_penalty": [
+                0.01,
+                0.1,
+                1.0,
+                10.0
+              ],
+              "discriminator_steps": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            "weight_schedule": null
+          }
+        ],
+        "evidence": "Eq. (3), Section 4.3 ('A \"perfect-match\" invariant'): f_perfectmatch = argmin_{h,Phi} sum_{d=1}^{m} L_d(h(Phi(X)), Y) + lambda sum_{Omega(j,k)=1; d!=d'} dist(Phi(x_j^(d)), Phi(x_k^(d'))) (as rendered by the fetch tool). Section 6: \"For all matching-based methods, we use the cross-entropy loss for L_d and ℓ_2 distance for dist in Eq.(3).\" Appendix A.1: \"For RandMatch (Motiian et al., 2017) and PerfMatch, we use ℓ_2 distance for dist in (Eq: 3).\"; \"Further details regarding the tuning of hyperparameters specific to each method's regularization technique are provided in Table 7.\" Table 7 caption: \"Hyper parameter selection details for the slab dataset. We mention the Optimal Value for each hyper parameter and the Range used for grid search. ...\" Table 7 rows (Method | Hyper Parameter | Optimal Value | Range): DANN | Lambda | 0.01 | [0.01, 0.1, 1.0, 10.0, 100.0]; DANN | Gradient Penalty | (blank) | [0.01, 0.1, 1.0, 10.0]; DANN | Discriminator Steps | 4 | [1, 2, 4, 8]; CDANN | Lambda | 0.01 | [0.01, 0.1, 1.0, 10.0, 100.0]; CDANN | Gradient Penalty | 1.0 | [0.01, 0.1, 1.0, 10.0]; CDANN | Discriminator Steps | 2 | [1, 2, 4, 8]; MMD | Lambda | 0.1 | [0.1, 1.0, 10.0]; C-MMD | Lambda | 0.1 | [0.1, 1.0, 10.0]; CORAL | Lambda | 0.1 | [0.1, 1.0, 10.0]; C-CORAL | Lambda | 0.1 | [0.1, 1.0, 10.0]; RandMatch | Lambda | 1.0 | [0.1, 1.0, 10.0]; PerfMatch | Lambda | 1.0 | [0.1, 1.0, 10.0]. Weight schedule: the paper describes no warm-up, annealing or ramp for lambda; it is written as a single scalar in Eq. (3), but constancy is not stated explicitly, so weight_schedule is null. CE weight 1.0 is read from Eq. (3), where L_d carries no coefficient."
+      },
+      "eval.n_seeds": {
+        "value": 10,
+        "evidence": "Table 1 caption: \"Mean and standard deviation over 10 different seed values for each method.\""
+      },
+      "eval.metric": {
+        "value": "classification accuracy (%) on each source domain and on the target domain",
+        "evidence": "Section 3.2: \"The results improve substantially: out-of-domain accuracy is now 78%.\"; Table 1 columns: \"Source 1 | Source 2 | Target\". (Table 1 caption itself does not name the metric; it is identified as accuracy from the text.)"
+      },
+      "eval.aggregation": {
+        "value": "mean_sd_over_seeds",
+        "evidence": "Table 1 caption: \"Mean and standard deviation over 10 different seed values for each method.\""
+      }
+    },
+    "notes": []
+  },
+  "notes": [
+    "Source: arXiv 2006.07500 PDF (latest version served by arxiv.org/pdf) read via WebFetch; Table 1 was cross-checked against ar5iv HTML (identical numbers). WebFetch caps verbatim quotes at ~125 chars per quote, so long passages were gathered sentence by sentence; quotes are as returned by the tool and math notation (e.g. ℓ_2, Ω, p_s) is the tool's rendering.",
+    "Table 1 numbers printed as 'mean (sd)'. Bolded cells (per fetch): ERM and RandMatch Source 1 100.0 (0.0); PerfMatch Source 2 97.8 (0.28) and Target 77.8 (6.01).",
+    "Table 1 baselines DANN, CDANN, MMD, C-MMD, CORAL, C-CORAL were run with their DomainBed implementations (Table 1 caption). Appendix A.1: \"The grid search range for methods that were implemented using DomainBed (Gulrajani & Lopez-Paz, 2020) is taken from the Table 8 in the DomainBed paper.\"",
+    "Domain discriminators for DANN/CDANN: \"we use the same architecture for them as that of the classification network.\" (Appendix A.1)",
+    "PerfMatch match rule: same slab id across domains (Appendix A.1). The paper does not say whether matched pairs must also share the class label (with p_s=0.1 label flipping, same slab id does not guarantee same label). RandMatch: random cross-domain pairs with the same class label.",
+    "The paper does not say whether the 10 seeds resample the dataset or only change model initialization / data order.",
+    "Not stated: SGD momentum, Nesterov, LR schedule, early-stopping patience, whether 'validation loss' includes the regularizer, how matched pairs are formed per batch for PerfMatch/RandMatch (e.g. how many matches per point), and whether the l2 penalty is a squared or unsquared distance.",
+    "Table 7 DANN 'Gradient Penalty' optimal value came back blank in two separate fetches (could be a PDF extraction gap or a dash in the table). Table 7 caption mentions an 'Epochs' entry left blank; no explicit Epochs rows were returned by the fetch.",
+    "Architecture: only one 'ReLU activation' line was found (in the representation network); the classification network was returned as two FC layers, FC(100,100) then FC(100,Num Classes), with no activation printed between them. That may be a PDF-extraction artifact; check against the PDF if it matters.",
+    "Explanatory conjecture in Section 3.2 (not a numeric claim): \"We conjecture that the model may first learn the linear feature due to its simplicity (Shah et al., 2020), and then retain the spurious linear feature upon further optimization since it satisfies the CDM constraint.\"",
+    "Section 3.2 setup sentence: \"The relationship of the linear feature with the label changes with domains (A.1); we do so by adding noise with probability ε=0 for domain 1 and ε=0.1 for domain 2.\""
+  ]
+}

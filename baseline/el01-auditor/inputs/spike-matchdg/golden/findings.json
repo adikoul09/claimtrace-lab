@@ -1,0 +1,26 @@
+{
+ "F1": {
+  "what": "target domain p = 1.0 never generated",
+  "kind": "code omission"
+ },
+ "F2": {
+  "what": "model selection: validation loss (paper) vs accuracy (code)",
+  "kind": "difference"
+ },
+ "F3": {
+  "what": "optimizer: plain SGD (paper) vs momentum 0.9 + Nesterov (code)",
+  "kind": "paper omission"
+ },
+ "F4": {
+  "what": "matching weight ramps from about 0 (code), no schedule in paper",
+  "kind": "paper omission"
+ },
+ "F5": {
+  "what": "DANN/CDANN learning rate 0.1 (paper) vs 0.01 (code)",
+  "kind": "difference"
+ },
+ "F6": {
+  "what": "hyperparameters ranked by target accuracy (code) vs source validation (paper)",
+  "kind": "difference"
+ }
+}

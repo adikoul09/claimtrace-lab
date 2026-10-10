@@ -1,0 +1,676 @@
+{
+ "commands": [
+  {
+   "command": "python data/data_gen_mnist.py --dataset rot_mnist --model lenet --img_h 32 --img_w 32 --subset_size 1000",
+   "source": "docs/notebooks/reproduce_results.ipynb:273"
+  },
+  {
+   "command": "python3 reproduce_rmnist_lenet.py   (the script is at reproduce_scripts/reproduce_rmnist_lenet.py; default --methods erm rand matchdg_ctr matchdg_erm perf; for each method and each test domain in [0,15,30,45,60,75] it runs train.py with the other 5 domains as training domains and writes stdout to results/rmnist_lenet/<method>_<test_domain>.txt)",
+   "source": "docs/notebooks/reproduce_results.ipynb:277"
+  },
+  {
+   "command": "python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 0.0 --penalty_ws 0.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 --train_domains <5 domains> --test_domains <d>   (ERM)",
+   "source": "reproduce_scripts/reproduce_rmnist_lenet.py:19"
+  },
+  {
+   "command": "python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 0.0 --penalty_ws 1.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 --total_matches_per_point 100 --train_domains <5 domains> --test_domains <d>   (RandMatch)",
+   "source": "reproduce_scripts/reproduce_rmnist_lenet.py:22"
+  },
+  {
+   "command": "python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name lenet --img_h 32 --img_w 32 --match_func_aug_case 1 --train_domains <5 domains> --test_domains <d>   (MatchDG phase 1)",
+   "source": "reproduce_scripts/reproduce_rmnist_lenet.py:25"
+  },
+  {
+   "command": "python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name lenet --model_name lenet --img_h 32 --img_w 32 --total_matches_per_point 100 --train_domains <5 domains> --test_domains <d>   (MatchDG phase 2)",
+   "source": "reproduce_scripts/reproduce_rmnist_lenet.py:28"
+  },
+  {
+   "command": "python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 --train_domains <5 domains> --test_domains <d>   (PerfMatch)",
+   "source": "reproduce_scripts/reproduce_rmnist_lenet.py:16"
+  }
+ ],
+ "experiment": "Rotated MNIST (MNIST digits rotated by 0-75 degrees), LeNet-5, leave-one-domain-out over domains {0,15,30,45,60,75}: ERM, RandMatch, MatchDG, PerfMatch",
+ "notes": [
+  "The README/notebook gives `python3 reproduce_rmnist_lenet.py`, but the file is reproduce_scripts/reproduce_rmnist_lenet.py. The script also runs MatchDG as two chained commands (matchdg_ctr, then matchdg_erm), and the notebook says nothing about the order. The default --methods list keeps ctr before erm.",
+  "The scripts pass `--dataset`, but train.py defines `--dataset_name`. argparse accepts it as an unambiguous prefix abbreviation.",
+  "Data generation: the notebook says `--subset_size 1000`, so val_size = 1000/5 = 200. The script default is 2000, which would give 400 validation samples per domain. The data are one random draw (np.random.choice, with replacement) of subset_size+val_size indices per seed in [0,1,2]. Train and test both use res[:subset_size]. So for the lenet case the test domain is the same 1000 base digits as the training domains, rotated by the test angle. Validation uses res[subset_size:], also with replacement.",
+  "In the lenet case train.py reads test data with seed=`run`, not 9, because of `args.mnist_case not in ['lenet']`.",
+  "Seeds: n_runs=3 (default), seeds run*10 = 0, 10, 20. The data subset index is also `run` (0,1,2), so each run uses a different data draw. matchdg_erm runs n_runs_matchdg_erm=1 inner run per outer run.",
+  "Reported number: train.py prints two lines per test domain, np.mean and np.std (population SD, ddof=0) over the 3 runs. 'Final Test Accuracy (Source Validation)' takes the test accuracy at the epoch with the best source-validation accuracy. 'Final Test Accuracy (Target Validation)' takes the max over epochs of test accuracy on the target domain, which is oracle selection. The code does not say which line goes into the table. The per-domain files in results/rmnist_lenet/ hold both. The 'Average' column over the 6 test domains is not computed anywhere in these scripts.",
+  "All methods except matchdg_ctr use `erm_match`/`matchdg_erm` training on matched batches. Each step draws, for each of 16 base points, one random match from every training domain. The batch is 16 x 5 = 80 images and the cross-entropy is computed on those images. ERM therefore trains on random-matched (class-matched) batches with ws weight 0, not on plain shuffled batches. Matching is class-aware, base domain per class is the domain with the most samples.",
+  "RandMatch uses match_case 0.0, so perm_prob=1 and every match is random within the class, with total_matches_per_point=100 (one is chosen at random per step via random.choice). PerfMatch uses match_case 1.0 and perfect_match=1, so it matches the same object index in every domain. ERM uses match_case 0.0 with total_matches_per_point=1, and ws weight 0. match_flag defaults to 0, so matches are never re-inferred in these methods.",
+  "MatchDG phase 2 (matchdg_erm) uses match_case -1, so the initial matches are inferred with the phase-1 LeNet features (l2 distance on the 10-d logits, fc_layer is not used by lenet), top 100 matches per point. It uses pos_metric l2 (default, not cos). Matches are not refreshed because match_flag=0. The loss is cross-entropy on the matched batch + cross-entropy on an extra plain batch (erm_loss_extra, a standard shuffled batch of 16) + ramped ws penalty. The phase-1 checkpoint loaded is Model_<ctr_match_case>_<ctr_match_interrupt>_<ctr_match_flag>_<run>_lenet.pth from results/rot_mnist/matchdg_ctr/logit_match/train_<domains>/.",
+  "MatchDG phase 1 (matchdg_ctr): 50 epochs, batch 512, SGD lr 0.01 constant (BaseAlgo builds a StepLR scheduler but it is never stepped, and the lenet halving code only exists in the erm phases). Matches are random at epoch 0 and re-inferred every match_interrupt=5 epochs (match_flag 1). The loss is the NT-Xent-style diff_hinge_loss with tau 0.05 and cosine metric, weighted by (epoch+1)/51. Every 5 epochs it computes the top-10 perfect-match score on the source validation set, using the augmented and original copies of each validation image (match_func_aug_case=1), and saves the best. No accuracy is reported in this phase.",
+  "Learning rate for the erm phases: initial SGD(lr=0.01, momentum 0.9, nesterov, wd 5e-4). At epochs 25, 50, 75 a fresh SGD optimizer is built (momentum buffer reset) with lr = 0.01/2^(epoch//25), i.e. 0.005, 0.0025, 0.00125. This halving code is in the erm_match and match_dg erm phase and applies to lenet. The --opt flag is the default sgd and --lr is the default 0.01. The scripts pass neither.",
+  "Penalty ramp: weight = penalty_ws*(epoch - penalty_s)/(epochs - penalty_s) with penalty_s=-1, i.e. penalty_ws*(epoch+1)/101 for erm_match and matchdg_erm (100 epochs). The match_flag branch with match_interrupt does not apply, since match_flag=0 here.",
+  "The stored augmented copy (RandomResizedCrop(32, scale 0.7-1.0) + RandomHorizontalFlip applied after rotation, then ToTensor + Normalize) is saved as *_data.pt for train and val. Training reads it only if --mnist_aug 1, default 0, so it is not used for training in any method. Its one use here is the MatchDG phase-1 validation loader (MnistRotatedAugEval). Test images are never augmented. Because the loaders are called with mnist_aug=0, train/val/test for the erm phases use the *_org_data.pt files.",
+  "Neither the dataset-generation commands nor the reproduce script do any hyperparameter tuning. No tuning script for this experiment exists. The hyperparameters are the fixed defaults and command-line values above."
+ ],
+ "settings": {
+  "data.source_domains": {
+   "value": "leave-one-domain-out: the five domains of {0,15,30,45,60,75} other than the test domain (e.g. test 0 -> [15,30,45,60,75]; test 75 -> [0,15,30,45,60])",
+   "evidence": [
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "11",
+     "code": "domains= [0, 15, 30, 45, 60, 75]"
+    },
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "30-35",
+     "code": "    for test_domain in domains:\n\n        train_domains=''\n        for d in domains:\n            if d != test_domain:\n                train_domains+= str(d) + ' '"
+    }
+   ]
+  },
+  "data.target_domains": {
+   "value": "each single held-out domain in [0, 15, 30, 45, 60, 75], one run set per column",
+   "evidence": [
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "42",
+     "code": "        script= base_script + ' --train_domains ' + str(train_domains) + ' --test_domains ' + str(test_domain) "
+    }
+   ]
+  },
+  "data.domains_data_available": {
+   "value": [
+    0,
+    15,
+    30,
+    45,
+    60,
+    75
+   ],
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "214-216",
+     "code": "        elif model in ['lenet']:\n            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:\n                generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)                   "
+    },
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "244-246",
+     "code": "        elif model in ['lenet', 'lenet_mdg']:\n            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:\n                generate_rotated_domain_data(mnist_imgs, mnist_labels, data_case, dataset, indices, domain, save_dir, img_w, img_h, cmnist_permute)"
+    }
+   ]
+  },
+  "data.train_samples_per_domain": {
+   "value": 1000,
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "109",
+     "code": "parser.add_argument('--subset_size', type=int, default=2000)"
+    },
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "209",
+     "code": "        indices= res[:subset_size]      "
+    },
+    {
+     "file": "docs/notebooks/reproduce_results.ipynb",
+     "lines": "273",
+     "code": "    \"`python data/data_gen_mnist.py --dataset rot_mnist --model lenet --img_h 32 --img_w 32 --subset_size 1000`\\n\","
+    }
+   ]
+  },
+  "data.val_samples_per_domain": {
+   "value": 200,
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "122",
+     "code": "val_size= int(args.subset_size/5)"
+    },
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "224",
+     "code": "        indices= res[subset_size:]"
+    }
+   ]
+  },
+  "data.generation_params": {
+   "value": {
+    "dataset": "rot_mnist",
+    "model": "lenet",
+    "subset_size": 1000,
+    "val_size": 200,
+    "img_h": 32,
+    "img_w": 32,
+    "data_seeds": [
+     0,
+     1,
+     2
+    ],
+    "base_data": "all 70000 MNIST train+test images; indices drawn with np.random.choice(data_size, subset_size+val_size) per seed, with replacement",
+    "test_indices": "same as train indices (res[:subset_size])",
+    "angles": [
+     0,
+     15,
+     30,
+     45,
+     60,
+     75
+    ]
+   },
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "154",
+     "code": "    mnist_imgs= torch.cat((data_obj_train.data, data_obj_test.data))"
+    },
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "188",
+     "code": "    res=np.random.choice(data_size, subset_size+val_size)"
+    },
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "238-239",
+     "code": "        save_dir= data_dir + data_case + '/' + 'seed_' + str(seed) + '_domain_' + str(domain)\n        indices= res[:subset_size]"
+    }
+   ]
+  },
+  "model.architecture": {
+   "value": "LeNet5 (conv 1->6 k5, ReLU, maxpool2, conv 6->16 k5, ReLU, maxpool2, FC 400-120-84-10), 32x32 single-channel input",
+   "evidence": [
+    {
+     "file": "models/lenet.py",
+     "lines": "18-27",
+     "code": "                    nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=0, bias=True),\n                    nn.ReLU(),\n                    # Max-pooling\n                    nn.MaxPool2d(kernel_size=2, stride=2),\n                    # Convolution\n                    nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0, bias=True),\n                    nn.ReLU(),\n                    # Max-pooling\n                    nn.MaxPool2d(kernel_size=2, stride=2), "
+    },
+    {
+     "file": "models/lenet.py",
+     "lines": "32-38",
+     "code": "                    nn.Linear(16*5*5, 120),   \n                    nn.ReLU(),\n                    # convert matrix with 120 features to a matrix of 84 features (columns)            \n                    nn.Linear(120, 84),       \n                    nn.ReLU(),\n                    # convert matrix with 84 features to a matrix of 10 features (columns)            \n                    nn.Linear(84, 10),"
+    }
+   ]
+  },
+  "optim.name": {
+   "value": "sgd",
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "61-62",
+     "code": "parser.add_argument('--opt', type=str, default='sgd', \n                    help='Optimizer Choice: sgd; adam') "
+    },
+    {
+     "file": "algorithms/algo.py",
+     "lines": "182-185",
+     "code": "        if self.args.opt == 'sgd':\n            opt= optim.SGD([\n                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \n                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        "
+    }
+   ]
+  },
+  "optim.momentum": {
+   "value": 0.9,
+   "evidence": [
+    {
+     "file": "algorithms/algo.py",
+     "lines": "185",
+     "code": "                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        "
+    }
+   ]
+  },
+  "optim.nesterov": {
+   "value": true,
+   "evidence": [
+    {
+     "file": "algorithms/algo.py",
+     "lines": "185",
+     "code": "                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        "
+    }
+   ]
+  },
+  "optim.lr": {
+   "value": 0.01,
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "65-66",
+     "code": "parser.add_argument('--lr', type=float, default=0.01, \n                    help='Learning rate for training the model')"
+    }
+   ]
+  },
+  "optim.lr_schedule": {
+   "value": {
+    "ERM": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)",
+    "RandMatch": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)",
+    "PerfMatch": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)",
+    "MatchDG": {
+     "phase1_ctr": "constant",
+     "phase2_erm": "step(halve every 25 epochs: lr=0.01/2^(epoch//25), optimizer rebuilt)"
+    }
+   },
+   "evidence": [
+    {
+     "file": "algorithms/erm_match.py",
+     "lines": "162-173",
+     "code": "            if epoch > 0 and self.args.model_name in ['domain_bed_mnist', 'lenet']:\n                if self.args.model_name == 'lenet':\n                    lr_schedule_step= 25\n                elif self.args.model_name == 'domain_bed_mnist':\n                    lr_schedule_step= 10\n            \n                if epoch % lr_schedule_step==0 :\n                    lr=self.args.lr/(2**(int(epoch/lr_schedule_step)))\n                    print('Learning Rate Scheduling; New LR: ', lr)                \n                    self.opt= optim.SGD([\n                             {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \n                    ], lr= lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )     "
+    },
+    {
+     "file": "algorithms/match_dg.py",
+     "lines": "388-399",
+     "code": "                if epoch > 0 and self.args.model_name in ['domain_bed_mnist', 'lenet']:\n                    if self.args.model_name == 'lenet':\n                        lr_schedule_step= 25\n                    elif self.args.model_name == 'domain_bed_mnist':\n                        lr_schedule_step= 10\n\n                    if epoch % lr_schedule_step==0 :\n                        lr=self.args.lr/(2**(int(epoch/lr_schedule_step)))"
+    },
+    {
+     "file": "algorithms/algo.py",
+     "lines": "102",
+     "code": "        self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, step_size=25)    "
+    }
+   ]
+  },
+  "optim.weight_decay": {
+   "value": 0.0005,
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "63-64",
+     "code": "parser.add_argument('--weight_decay', type=float, default=5e-4,\n                   help='Weight Decay in SGD')"
+    }
+   ]
+  },
+  "train.batch_size": {
+   "value": {
+    "ERM": 16,
+    "RandMatch": 16,
+    "PerfMatch": 16,
+    "MatchDG": {
+     "phase1_ctr": 512,
+     "phase2_erm": 16
+    }
+   },
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "67-68",
+     "code": "parser.add_argument('--batch_size', type=int, default=16, \n                    help='Batch size foe training the model')"
+    },
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "25",
+     "code": "        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name lenet --img_h 32 --img_w 32 --match_func_aug_case 1 '"
+    },
+    {
+     "file": "algorithms/algo.py",
+     "lines": "212",
+     "code": "        data_matched= list(chunked(data_matched, self.args.batch_size))"
+    }
+   ]
+  },
+  "train.epochs": {
+   "value": {
+    "ERM": 100,
+    "RandMatch": 100,
+    "PerfMatch": 100,
+    "MatchDG": {
+     "phase1_ctr": 50,
+     "phase2_erm": 100
+    }
+   },
+   "evidence": [
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "16",
+     "code": "        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 '"
+    },
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "25",
+     "code": "        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name lenet --img_h 32 --img_w 32 --match_func_aug_case 1 '"
+    },
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "28",
+     "code": "        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name lenet  --model_name lenet --img_h 32 --img_w 32 --total_matches_per_point 100 '"
+    }
+   ]
+  },
+  "train.model_selection": {
+   "value": {
+    "ERM": "best_val_accuracy",
+    "RandMatch": "best_val_accuracy",
+    "PerfMatch": "best_val_accuracy",
+    "MatchDG": {
+     "phase1_ctr": "other: best TopK(10) perfect-match score on source validation (aug vs original copies), checked every 5 epochs",
+     "phase2_erm": "best_val_accuracy"
+    }
+   },
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "306-308",
+     "code": "        idx= np.argmax(train_method.val_acc)\n        final_acc= train_method.final_acc[idx]\n        final_accuracy_source_val.append( final_acc  )"
+    },
+    {
+     "file": "train.py",
+     "lines": "302-304",
+     "code": "    if args.method_name != 'matchdg_ctr':\n        final_acc= np.max(train_method.final_acc)\n        final_accuracy_target_val.append( final_acc )"
+    },
+    {
+     "file": "algorithms/match_dg.py",
+     "lines": "263-266",
+     "code": "                if test_method.metric_score['TopK Perfect Match Score'] > self.max_val_score:\n                    self.max_val_score= test_method.metric_score['TopK Perfect Match Score']\n                    self.max_epoch= epoch\n                    self.save_model_ctr_phase(epoch)"
+    }
+   ]
+  },
+  "loss.terms": {
+   "value": {
+    "ERM": [
+     {
+      "name": "cross_entropy on matched batch (16 points x 5 domains)",
+      "weight": 1,
+      "weight_schedule": "constant"
+     },
+     {
+      "name": "matching penalty (l2 on logits)",
+      "weight": 0,
+      "weight_schedule": "constant"
+     }
+    ],
+    "RandMatch": [
+     {
+      "name": "cross_entropy on matched batch (random matches)",
+      "weight": 1,
+      "weight_schedule": "constant"
+     },
+     {
+      "name": "matching penalty (l2 distance between logits of matched points)",
+      "weight": 1,
+      "weight_schedule": "linear_ramp_from_0 (penalty_ws*(epoch+1)/101)"
+     }
+    ],
+    "PerfMatch": [
+     {
+      "name": "cross_entropy on matched batch (perfect matches)",
+      "weight": 1,
+      "weight_schedule": "constant"
+     },
+     {
+      "name": "matching penalty (l2 distance between logits of matched points)",
+      "weight": 1,
+      "weight_schedule": "linear_ramp_from_0 (penalty_ws*(epoch+1)/101)"
+     }
+    ],
+    "MatchDG": {
+     "phase1_ctr": [
+      {
+       "name": "contrastive diff_hinge_loss (NT-Xent style, cosine, tau 0.05)",
+       "weight": 1,
+       "weight_schedule": "linear_ramp_from_0 ((epoch+1)/51)"
+      }
+     ],
+     "phase2_erm": [
+      {
+       "name": "cross_entropy on matched batch (inferred matches)",
+       "weight": 1,
+       "weight_schedule": "constant"
+      },
+      {
+       "name": "cross_entropy on extra plain batch",
+       "weight": 1,
+       "weight_schedule": "constant"
+      },
+      {
+       "name": "matching penalty (l2 distance between logits of matched points)",
+       "weight": 1,
+       "weight_schedule": "linear_ramp_from_0 (penalty_ws*(epoch+1)/101)"
+      }
+     ]
+    }
+   },
+   "evidence": [
+    {
+     "file": "algorithms/erm_match.py",
+     "lines": "77-79",
+     "code": "                    erm_loss+= F.cross_entropy(feat_match, label_match.long()).to(self.cuda)\n                    penalty_erm+= float(erm_loss)           \n                    loss_e += erm_loss"
+    },
+    {
+     "file": "algorithms/erm_match.py",
+     "lines": "108-109",
+     "code": "                    else:\n                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss"
+    },
+    {
+     "file": "algorithms/match_dg.py",
+     "lines": "233",
+     "code": "                    loss_e += ( ( epoch- self.args.penalty_s )/(self.args.epochs -self.args.penalty_s) )*diff_hinge_loss"
+    },
+    {
+     "file": "algorithms/match_dg.py",
+     "lines": "354-356",
+     "code": "                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss\n                        loss_e += erm_loss\n                        loss_e += erm_loss_extra"
+    },
+    {
+     "file": "train.py",
+     "lines": "71-72",
+     "code": "parser.add_argument('--penalty_s', type=int, default=-1, \n                    help='Epoch threshold over which Matching Loss to be optimised')"
+    }
+   ]
+  },
+  "eval.n_seeds": {
+   "value": 3,
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "93-94",
+     "code": "parser.add_argument('--n_runs', type=int, default=3, \n                    help='Number of iterations to repeat the training process')"
+    },
+    {
+     "file": "train.py",
+     "lines": "209-211",
+     "code": "    random.seed(run*10)\n    np.random.seed(run*10) \n    torch.manual_seed(run*10)    "
+    }
+   ]
+  },
+  "eval.metric": {
+   "value": "classification accuracy (%) on the held-out rotated test domain, evaluated per epoch",
+   "evidence": [
+    {
+     "file": "algorithms/algo.py",
+     "lines": "266-267",
+     "code": "                test_acc+= torch.sum( torch.argmax(out, dim=1) == y_e ).item()\n                test_size+= y_e.shape[0]"
+    },
+    {
+     "file": "algorithms/algo.py",
+     "lines": "277",
+     "code": "        return 100*test_acc/test_size"
+    }
+   ]
+  },
+  "eval.aggregation": {
+   "value": {
+    "per_test_domain_accuracy": "mean_sd_over_seeds (np.mean and np.std, population SD, over 3 runs)",
+    "Average": "not computed in code"
+   },
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "314-315",
+     "code": "    print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) )\n    print('Final Test Accuracy (Target Validation)', np.mean(final_accuracy_target_val), np.std(final_accuracy_target_val) )"
+    }
+   ]
+  },
+  "data.preprocessing.resize": {
+   "value": [
+    {
+     "height": 32,
+     "width": 32,
+     "methods": null,
+     "note": "transforms.Resize((img_w, img_h)) on the PIL 28x28 digit at generation time, before rotation, with --img_h 32 --img_w 32"
+    }
+   ],
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "28-31",
+     "code": "    to_pil=  transforms.Compose([\n            transforms.ToPILImage(),\n            transforms.Resize((img_w, img_h))\n        ])"
+    },
+    {
+     "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+     "lines": "16",
+     "code": "        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 '"
+    }
+   ]
+  },
+  "data.preprocessing.normalization": {
+   "value": [
+    {
+     "kind": "mean_std",
+     "mean": [
+      0.1307
+     ],
+     "std": [
+      0.3081
+     ],
+     "methods": null,
+     "note": "applied after rotation (and after the random augmentation for the stored augmented copy), at generation time"
+    }
+   ],
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "38-41",
+     "code": "    to_tensor=  transforms.Compose([\n            transforms.ToTensor(),\n            transforms.Normalize((0.1307,), (0.3081,))\n        ])"
+    }
+   ]
+  },
+  "data.augmentation": {
+   "value": [
+    {
+     "ops": [
+      "random_resized_crop(32, scale=(0.7,1.0))",
+      "random_horizontal_flip"
+     ],
+     "relative_to_domain_transform": "after",
+     "applies_to": [
+      {
+       "split": "val",
+       "domains": "source",
+       "use": "model_selection",
+       "methods": [
+        "MatchDG"
+       ],
+       "phase": "matchdg_ctr (phase 1)"
+      }
+     ],
+     "note": "The augmented copy is stored as *_data.pt for train and val (not test). With the default --mnist_aug 0 the training loaders read the un-augmented *_org_data.pt, so no method trains on augmented data. The only reader of the augmented copy is the MatchDG phase-1 validation loader (MnistRotatedAugEval). It loads both the augmented and original images and ranks matches between them, which is used to pick the phase-1 checkpoint. Test data is never augmented."
+    }
+   ],
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "33-36",
+     "code": "    to_augment= transforms.Compose([\n            transforms.RandomResizedCrop(img_w, scale=(0.7,1.0)),\n            transforms.RandomHorizontalFlip()\n        ])"
+    },
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "83-90",
+     "code": "        mnist_img_rot_org[i]= to_tensor(img_rotated)        \n        #Augmentation\n        mnist_img_rot[i]= to_tensor(to_augment(img_rotated))        \n\n    if data_case == 'train' or data_case == 'val':\n        torch.save(mnist_img_rot, save_dir + '_data.pt')    \n        \n    torch.save(mnist_img_rot_org, save_dir + '_org_data.pt')        "
+    },
+    {
+     "file": "data/mnist_loader.py",
+     "lines": "37-40",
+     "code": "            if self.data_case =='train' and self.args.mnist_aug:                \n                mnist_imgs= torch.load( load_dir +  '_data.pt')\n            else:\n                mnist_imgs= torch.load( load_dir +  '_org_data.pt')"
+    },
+    {
+     "file": "data/mnist_loader_match_eval.py",
+     "lines": "38-39",
+     "code": "            mnist_imgs= torch.load( load_dir +  '_data.pt')\n            mnist_imgs_org= torch.load( load_dir +  '_org_data.pt')"
+    },
+    {
+     "file": "train.py",
+     "lines": "217-218",
+     "code": "    if args.method_name == 'matchdg_ctr':\n        val_dataset= get_dataloader( args, run, train_domains, 'val', 1, kwargs )            "
+    }
+   ]
+  },
+  "data.domain_transform": {
+   "value": [
+    {
+     "kind": "rotation",
+     "domains": [
+      0,
+      15,
+      30,
+      45,
+      60,
+      75
+     ],
+     "params": "each domain is the same set of 28x28 MNIST digits resized to 32x32, then rotated by the domain angle in degrees with transforms.functional.rotate (angle 0 is left unrotated)",
+     "direction": "counterclockwise",
+     "methods": null,
+     "note": "torchvision rotate with a positive angle rotates counterclockwise. The same base indices are used for every domain, so each digit appears in all domains (objects are matched by index). Test domains use the same base indices as train."
+    }
+   ],
+   "evidence": [
+    {
+     "file": "data/data_gen_mnist.py",
+     "lines": "78-81",
+     "code": "        if domain == '0':\n            img_rotated= curr_image\n        else:\n            img_rotated= transforms.functional.rotate( curr_image, int(domain) )"
+    }
+   ]
+  },
+  "train.model_selection_data": {
+   "value": [
+    {
+     "use": "checkpoint",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": "validation accuracy",
+     "methods": [
+      "ERM",
+      "RandMatch",
+      "PerfMatch",
+      "MatchDG"
+     ],
+     "phase": "erm phase (erm_match / matchdg_erm)",
+     "note": "train.py's 'Source Validation' line takes test accuracy at argmax of val_acc. The validation set is the source domains' val split, from the *_org_data.pt files. It is used for the saved model and the source-validation number. A separate printed 'Target Validation' number takes the max over epochs of target-domain test accuracy (oracle selection on the test domain)."
+    },
+    {
+     "use": "checkpoint",
+     "split": "test",
+     "domains": "target",
+     "version": "plain",
+     "metric": "test accuracy (max over epochs)",
+     "methods": [
+      "ERM",
+      "RandMatch",
+      "PerfMatch",
+      "MatchDG"
+     ],
+     "phase": "erm phase (erm_match / matchdg_erm)",
+     "note": "Printed as 'Final Test Accuracy (Target Validation)' = np.max(final_acc). This is oracle selection on the held-out test domain. It is printed alongside the source-validation number; the code does not say which one the paper's table uses."
+    },
+    {
+     "use": "checkpoint",
+     "split": "val",
+     "domains": "source",
+     "version": "augmented",
+     "metric": "TopK(10) perfect match score between augmented and original validation images",
+     "methods": [
+      "MatchDG"
+     ],
+     "phase": "matchdg_ctr (phase 1)",
+     "note": "Evaluated every 5 epochs; best score is saved and later loaded by the matchdg_erm phase."
+    }
+   ],
+   "evidence": [
+    {
+     "file": "train.py",
+     "lines": "302-308",
+     "code": "    if args.method_name != 'matchdg_ctr':\n        final_acc= np.max(train_method.final_acc)\n        final_accuracy_target_val.append( final_acc )\n        \n        idx= np.argmax(train_method.val_acc)\n        final_acc= train_method.final_acc[idx]"
+    },
+    {
+     "file": "algorithms/erm_match.py",
+     "lines": "148-158",
+     "code": "            #Val Dataset Accuracy\n            self.val_acc.append( self.get_test_accuracy('val') )\n            \n            #Test Dataset Accuracy\n            self.final_acc.append( self.get_test_accuracy('test') )\n            \n            #Save the model if current best epoch as per validation loss\n            if self.val_acc[-1] > self.max_val_acc:\n                self.max_val_acc=self.val_acc[-1]\n                self.max_epoch= epoch\n                self.save_model()"
+    },
+    {
+     "file": "algorithms/match_dg.py",
+     "lines": "250-266",
+     "code": "            if (epoch+1)%5 == 0:\n                                \n                from evaluation.match_eval import MatchEval\n...\n                if test_method.metric_score['TopK Perfect Match Score'] > self.max_val_score:\n                    self.max_val_score= test_method.metric_score['TopK Perfect Match Score']\n                    self.max_epoch= epoch\n                    self.save_model_ctr_phase(epoch)"
+    }
+   ]
+  }
+ }
+}

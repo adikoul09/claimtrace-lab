@@ -1,0 +1,2101 @@
+{
+ "key": "f7d044a437d985030204cdd9f12e01cb0fa8bda09af070f9f55760732b5cf993",
+ "agent": "code_extractor",
+ "model": "sonnet",
+ "backend": "claude_cli",
+ "created_utc": "2026-10-03T21:26:55Z",
+ "cli_version": "2.1.288",
+ "request": {
+  "schema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "commands",
+    "experiment",
+    "notes",
+    "settings"
+   ],
+   "properties": {
+    "experiment": {
+     "type": "string"
+    },
+    "settings": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "data.source_domains",
+      "data.target_domains",
+      "data.domains_data_available",
+      "data.train_samples_per_domain",
+      "data.val_samples_per_domain",
+      "data.generation_params",
+      "model.architecture",
+      "optim.name",
+      "optim.momentum",
+      "optim.nesterov",
+      "optim.lr",
+      "optim.lr_schedule",
+      "optim.weight_decay",
+      "train.batch_size",
+      "train.epochs",
+      "train.model_selection",
+      "loss.terms",
+      "eval.n_seeds",
+      "eval.metric",
+      "eval.aggregation",
+      "data.preprocessing.resize",
+      "data.preprocessing.normalization",
+      "data.augmentation",
+      "data.domain_transform",
+      "train.model_selection_data"
+     ],
+     "properties": {
+      "data.source_domains": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.target_domains": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.domains_data_available": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.train_samples_per_domain": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.val_samples_per_domain": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.generation_params": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "model.architecture": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.name": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.momentum": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.nesterov": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.lr": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.lr_schedule": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.weight_decay": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.batch_size": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.epochs": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.model_selection": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "loss.terms": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "eval.n_seeds": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "eval.metric": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "eval.aggregation": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.preprocessing.resize": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "height",
+           "width",
+           "methods",
+           "note"
+          ],
+          "properties": {
+           "height": {
+            "type": [
+             "integer",
+             "null"
+            ]
+           },
+           "width": {
+            "type": [
+             "integer",
+             "null"
+            ]
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.preprocessing.normalization": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "kind",
+           "mean",
+           "std",
+           "methods",
+           "note"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string",
+            "enum": [
+             "none",
+             "mean_std",
+             "scale_0_1",
+             "other"
+            ]
+           },
+           "mean": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "number"
+            }
+           },
+           "std": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "number"
+            }
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.augmentation": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "ops",
+           "relative_to_domain_transform",
+           "applies_to",
+           "note"
+          ],
+          "properties": {
+           "ops": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "relative_to_domain_transform": {
+            "type": "string",
+            "enum": [
+             "before",
+             "after",
+             "no_domain_transform",
+             "unknown"
+            ]
+           },
+           "applies_to": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "additionalProperties": false,
+             "required": [
+              "split",
+              "domains",
+              "use",
+              "methods",
+              "phase"
+             ],
+             "properties": {
+              "split": {
+               "type": "string",
+               "enum": [
+                "train",
+                "val",
+                "test"
+               ]
+              },
+              "domains": {
+               "type": "string",
+               "enum": [
+                "source",
+                "target",
+                "all"
+               ]
+              },
+              "use": {
+               "type": "string",
+               "enum": [
+                "training",
+                "validation",
+                "model_selection",
+                "evaluation"
+               ]
+              },
+              "methods": {
+               "type": [
+                "array",
+                "null"
+               ],
+               "items": {
+                "type": "string"
+               }
+              },
+              "phase": {
+               "type": [
+                "string",
+                "null"
+               ]
+              }
+             }
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.domain_transform": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "kind",
+           "domains",
+           "params",
+           "direction",
+           "methods",
+           "note"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "domains": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": [
+              "number",
+              "string"
+             ]
+            }
+           },
+           "params": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "direction": {
+            "type": "string",
+            "enum": [
+             "counterclockwise",
+             "clockwise",
+             "not_applicable",
+             "unknown"
+            ]
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.model_selection_data": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "use",
+           "split",
+           "domains",
+           "version",
+           "metric",
+           "methods",
+           "phase",
+           "note"
+          ],
+          "properties": {
+           "use": {
+            "type": "string",
+            "enum": [
+             "checkpoint",
+             "hyperparameter_tuning"
+            ]
+           },
+           "split": {
+            "type": "string",
+            "enum": [
+             "train",
+             "val",
+             "test",
+             "other"
+            ]
+           },
+           "domains": {
+            "type": "string",
+            "enum": [
+             "source",
+             "target",
+             "source_and_target",
+             "unknown"
+            ]
+           },
+           "version": {
+            "type": "string",
+            "enum": [
+             "plain",
+             "augmented",
+             "other"
+            ]
+           },
+           "metric": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "phase": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "notes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "commands": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "command",
+       "source"
+      ],
+      "properties": {
+       "command": {
+        "type": "string"
+       },
+       "source": {
+        "type": "string",
+        "description": "path:line"
+       }
+      }
+     }
+    }
+   }
+  },
+  "inputs": {
+   "repo_tree": "dcf7ae0d6c2a47464943a2435868f9224676a1ab",
+   "replicate": "1"
+  },
+  "tools": [
+   "Read",
+   "Grep",
+   "Glob"
+  ],
+  "max_turns": 120,
+  "prompt": "You are the repository-analysis step of an automated ML reproducibility pipeline. Work only from the code, by reading\nit. The repository, exactly as shipped at the audited commit and without its git history, is in the directory `./repo`\n(relative to your working directory). Read it with Read, Grep and Glob.\n\nRepository: https://github.com/microsoft/robustdg\nExperiment: the one the associated paper reports in Table 1, whose caption reads: \"Table 1. Slab Dataset: Source domains with noisy linear compo- nent with probability 0.0 and 0.1, target domain with noise 1.0.\"\nIts columns: Source 1, Source 2, Target.\nIts rows that the paper's own runs produce (use these names for methods): ERM, DANN, MMD, CORAL, RandMatch, CDANN, C-MMD, C-CORAL, PerfMatch.\n\nSteps:\n1. Find the command(s) the repository provides to reproduce this experiment (reproduce scripts, README, docs,\n   notebooks), including the steps that prepare its data.\n2. Trace what those commands actually do, statically: argument values and defaults; which data the data-preparation\n   code produces versus which domains the commands ask for; how each domain is made from the base data;\n   preprocessing (resizing, normalization); any random transforms applied to the data, in which order relative to the\n   domain transform, and every split and use that reads the transformed data (training, validation, model selection,\n   evaluation), per method and training phase; the model; how the optimizer is constructed (type, momentum, nesterov,\n   lr, weight decay, any schedule); the training loop and every loss term with its weight and how that weight changes\n   across epochs; how the reported epoch or checkpoint is chosen and which data that choice reads, in every training\n   phase; how hyperparameters are chosen, if the repository has tuning scripts, and which data that choice reads; the\n   number of seeds and how seeds are set; the metric, and how results are aggregated across seeds, including what\n   spread is printed.\n3. Fill the schema below for this experiment from the code only.\n\nRules:\n- Read only files under ./repo. Do not use the web and do not look for the paper. Do not run anything.\n- Evidence for each non-null value: one or more items {file, lines, code}: `file` is the path relative to the\n  repository root (without `repo/`), `lines` the line or line range as the Read tool numbers them (\"42\" or \"34-35\"),\n  and `code` the code on those lines, copied verbatim (inside a range you may skip lines with \"...\"). Code checks\n  every item against the file.\n- Use null only when the code genuinely does not determine the value.\n- Where a setting differs by method, give it per method inside `value` as {\"<method>\": value}.\n- Keys marked \"entries\" take a list of entries: `[]` means the code has no such step for this experiment (cite where\n  the data is built); give one entry per distinct case; `methods: null` means every method, `phase: null` every\n  training phase. Use the enumerated values shown; put anything that does not fit in the entry's `note`.\n- Report what the code does, even where it looks like a mistake, and say so in `notes`.\n- `commands`: each command you traced and where the repository gives it (path:line). `experiment`: one line naming\n  the experiment (dataset, model, domains). `notes`: anything that matters for reproducing this experiment but does\n  not fit a key.\n\nSchema keys (`value` shape, then what the key means):\n- `data.source_domains`: [..]: the domains the model trains on\n- `data.target_domains`: [..]: the domains the reported numbers are evaluated on\n- `data.domains_data_available`: [..]: code: the domains for which data actually exists or is produced by the provided scripts; paper: the domains it states are used\n- `data.train_samples_per_domain`: 0: training examples per domain\n- `data.val_samples_per_domain`: 0: validation examples per domain\n- `data.generation_params`: {\"name\": value}: parameters of the data generation (synthetic data, subsets)\n- `model.architecture`: \"..\": the model\n- `optim.name`: \"sgd | adam | ..\": the optimizer\n- `optim.momentum`: 0.0: 0.0 means plain SGD with no momentum; null means the source does not say\n- `optim.nesterov`: false: Nesterov momentum\n- `optim.lr`: 0.0: the learning rate\n- `optim.lr_schedule`: \"constant | step(..) | ..\": how the learning rate changes over training\n- `optim.weight_decay`: 0.0: weight decay\n- `train.batch_size`: 0: batch size\n- `train.epochs`: 0: number of training epochs\n- `train.model_selection`: \"best_val_accuracy | min_val_loss | min_val_objective | last_epoch | test_domain_validation | other: ..\": how the reported epoch or checkpoint is chosen\n- `loss.terms`: [{\"name\": \"..\", \"weight\": 0.0, \"weight_schedule\": \"constant | linear_ramp_from_0 | ..\"}]: one entry per term in the training objective (e.g. cross-entropy, a penalty), with its weight and how the weight changes over training\n- `eval.n_seeds`: 0: number of runs (seeds) behind each reported number\n- `eval.metric`: \"..\": what the reported numbers measure\n- `eval.aggregation`: \"mean_sd_over_seeds | mean_se_over_seeds | best_of_n | single_run | ..\": how the reported numbers aggregate the runs, including what the printed spread is (standard deviation or standard error); give it per reported quantity as {\"<quantity>\": value} where it differs\n- `data.preprocessing.resize`: entries [{height, width, methods: [..], note}]: resizing of the inputs before they reach the model\n- `data.preprocessing.normalization`: entries [{kind: none|mean_std|scale_0_1|other, mean: [..], std: [..], methods: [..], note}]: normalization of the inputs (e.g. subtracting a mean and dividing by a standard deviation)\n- `data.augmentation`: entries [{ops: [..], relative_to_domain_transform: before|after|no_domain_transform|unknown, applies_to: [{split: train|val|test, domains: source|target|all, use: training|validation|model_selection|evaluation, methods: [..], phase}], note}]: random transforms applied to the data, on the fly or as a stored augmented copy: what they are (snake_case names, in the order applied), whether they come before or after the transform that makes each domain, and every split and use that reads the augmented data (training, validation, model selection, evaluation), per method and training phase\n- `data.domain_transform`: entries [{kind, domains: [..], params, direction: counterclockwise|clockwise|not_applicable|unknown, methods: [..], note}]: how each domain is made from the base data (e.g. a rotation angle, a noise level, a style), including the direction (sign) of a rotation\n- `train.model_selection_data`: entries [{use: checkpoint|hyperparameter_tuning, split: train|val|test|other, domains: source|target|source_and_target|unknown, version: plain|augmented|other, metric, methods: [..], phase, note}]: the data each selection step reads: the choice of the reported epoch or checkpoint (use checkpoint) and the choice of hyperparameters (use hyperparameter_tuning): which split, of which domains, and which version of it (plain or augmented), per method and training phase\n"
+ },
+ "response": {
+  "output": {
+   "commands": [
+    {
+     "command": "python data_gen_syn.py",
+     "source": "data_gen_syn.py:1"
+    },
+    {
+     "command": "python reproduce_scripts/reproduce_slab.py train",
+     "source": "reproduce_scripts/reproduce_slab.py:12"
+    },
+    {
+     "command": "python reproduce_scripts/reproduce_slab.py evaluate",
+     "source": "reproduce_scripts/reproduce_slab.py:15"
+    },
+    {
+     "command": "python reproduce_scripts/slab-tune.py <method>",
+     "source": "reproduce_scripts/slab-tune.py:7"
+    },
+    {
+     "command": "python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 --n_runs 10 (+ per-method flags)",
+     "source": "reproduce_scripts/reproduce_slab.py:13"
+    }
+   ],
+   "experiment": "Slab dataset (2-D linear+7-slab synthetic), 2-layer MLP (SlabClf, hidden 100); source domains = linear-feature corruption prob 0.0 and 0.1, target domain 1.0; slab noise 0.1",
+   "notes": [
+    "The data generator (data_gen_syn.py) only produces spur_corr in [0.0, 0.10, 0.20, 0.90] and slab_noise in [0.0, 0.10]. No domain with corruption 1.0 is produced, yet reproduce_slab.py passes --test_domains 1.0. slab_data.get_data would then open a pickle with 'spur_corr_1.0' that does not exist, so the target run would fail with FileNotFoundError unless the file is made separately. slab-run.py uses target 0.90 instead.",
+    "slab_data.py:75 hardcodes the data directory '/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/', an absolute path on the author's machine that differs from where data_gen_syn.py writes (data/datasets/slab/). It must be edited to reproduce.",
+    "train.py declares --dataset_name; the scripts pass --dataset, which argparse accepts only through unique-prefix abbreviation.",
+    "--slab_num_samples is not passed, so the default 1000 applies as base_size: 1000 train, 250 val and 1000 test samples per domain are used, though the pickles hold 10000 samples each (the val/test files are generated with num_train=10000, same generator, different draw).",
+    "The reproduce script's n_runs is 10 (slab-run/slab-tune use 3). Seeds: run*10 for random/numpy/torch in train.py, and data pickle seed index = run, so each run uses a different dataset draw (data seeds 0..9 match the 10 generated). The generator uses np.random.seed(seed*10).",
+    "Optimizer: SGD with momentum 0.9 and nesterov=True, hardcoded in BaseAlgo.get_opt, and weight decay is the train.py default 5e-4 (not the 5e-5 in the gen config). A StepLR(step_size=25) is created but scheduler.step() is never called, so the lr is effectively constant. DANN uses its own two plain SGD optimizers (lr 0.01, no momentum, wd 5e-4) for the discriminator and the generator, so --lr 0.1 is ignored for DANN/C-DANN.",
+    "DANN alternation uses epoch (not batch) to choose a discriminator-vs-generator step: epochs where epoch % (1+d_steps) < d_steps update only the discriminator, others only the generator+classifier. So with d_steps 4 the classifier is updated only in 1 of every 5 epochs. DANN generator loss is classifier_loss - lambda*disc_loss; the weight is constant.",
+    "MMD/CORAL/C-MMD/C-CORAL: loss = CE + 0.1 * mmd, with a constant weight, computed on the 2-layer hidden feature (feat_net output), per batch of 128 mixed from both domains. 'coral' uses the mean_cov kernel (gaussian 0) and is run through method_name mmd.",
+    "ERM/RandMatch/PerfMatch use erm_match: the CE loss is over matched batches (penalty_s=-1 so the matched path is always on); ERM has penalty_ws 0.0. For RandMatch and PerfMatch the match penalty weight is ramped linearly: penalty_ws*(epoch+1)/(epochs+1) with match_flag 0, ramping from near 0 to just under penalty_ws=1.0. Match distance uses pos_metric default 'l2' on logits (match_layer logit_match, fc_layer=1) between matched samples across domains. RandMatch uses match_case 0.0 and PerfMatch match_case 1.0. perfect_match default is 1.",
+    "Model selection in train.py: each epoch evaluates val (source domains, 250 per domain) and the test (target) accuracy. The checkpoint saved is the best source val accuracy epoch. The printed numbers are 'Final Test Accuracy (Source Validation)' = target accuracy at the argmax-source-val epoch, and 'Final Test Accuracy (Target Validation)' = max over epochs of the target accuracy (oracle) with std over runs. The oracle target-selected value is printed alongside; which one the paper reports for Table 1 is not determined by the code. The Source 1/Source 2 columns come from the 'evaluate' step (test.py per_domain_acc, acc_data_case train, i.e. the training data of the saved best-val checkpoint), which prints mean and std/sqrt(n) (standard error) per domain over 10 runs. test.py is run with --test_domains 1.0 but acc_data_case train, so the target is not evaluated there.",
+    "The Source accuracy therefore comes from the train split (1000 samples per domain) evaluated with the saved checkpoint, while the Target column from train.py comes with a population std (np.std, ddof=0) over runs rather than the standard error printed by test.py.",
+    "Hyperparameter tuning (slab-tune.py) uses 3 runs and selects, per method, the penalty (and DANN grad_penalty/d_steps) with the highest 'Source validation accuracy' read from data[-4] of the train.py log, i.e. the 'Final Test Accuracy (Source Validation)' line. This is actually the target-domain accuracy at the source-val-selected epoch, evaluated on --test_domains 1.0 (test domain data), so tuning reads target-domain data. Tuning uses the same slab_noise 0.1 and test_domains 1.0. The grids are penalty [0.1,1,10] (DANN [0.01..100]), grad_penalty [0.01..10] and disc_steps [1,2,4,8]. The reproduce script then hardcodes final values: 0.1 for MMD/CORAL variants, DANN (0.01, 0.1, 4), C-DANN (0.01, 1.0, 2), RandMatch/PerfMatch 1.0.",
+    "Target accuracy numbers in the paper table could not be checked; the code in train.py uses the raw test split for the target, 1000 samples per run.",
+    "CDANN corresponds to method 'c-dann' in the script (--method_name dann --conditional 1); the script list has the order erm, mmd, coral, dann, c-mmd, c-coral, c-dann, rand, perf."
+   ],
+   "settings": {
+    "data.source_domains": {
+     "value": [
+      "0.0",
+      "0.10"
+     ],
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "13",
+       "code": "base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)"
+      }
+     ]
+    },
+    "data.target_domains": {
+     "value": [
+      "1.0"
+     ],
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "13",
+       "code": "base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)"
+      }
+     ]
+    },
+    "data.domains_data_available": {
+     "value": [
+      "0.0",
+      "0.10",
+      "0.20",
+      "0.90"
+     ],
+     "evidence": [
+      {
+       "file": "data_gen_syn.py",
+       "lines": "41-42",
+       "code": "slab_noise_list= [0.0, 0.10]\nspur_corr_list= [0.0, 0.10, 0.20, 0.90]"
+      }
+     ]
+    },
+    "data.train_samples_per_domain": {
+     "value": 1000,
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "138",
+       "code": "parser.add_argument('--slab_num_samples', type=int, default=1000)"
+      },
+      {
+       "file": "utils/helper.py",
+       "lines": "277",
+       "code": "data_obj= SlabData(args, domains, '/slab/', data_case=data_case, match_func=match_func, base_size=args.slab_num_samples, freq_ratio=50, data_dim=args.slab_data_dim, total_slabs=args.slab_total_slabs, seed=run, mask_linear=mask_linear)"
+      },
+      {
+       "file": "utils/slab_data.py",
+       "lines": "89",
+       "code": "X, Y = data['X'][:num_samples], data['Y'][:num_samples]"
+      }
+     ]
+    },
+    "data.val_samples_per_domain": {
+     "value": 250,
+     "evidence": [
+      {
+       "file": "data/slab_loader.py",
+       "lines": "45-47",
+       "code": "elif self.data_case == 'val':\n            self.domain_size = len(self.list_domains)*[int(self.base_size/4)]\n            self.spur_probs= [ float(domain) for domain in self.list_domains ]"
+      }
+     ]
+    },
+    "data.generation_params": {
+     "value": {
+      "num_samples_per_file": 10000,
+      "total_slabs": 7,
+      "dim": 2,
+      "lin_margin": 0.1,
+      "slab_margin": 0.1,
+      "width": 1,
+      "num_lin": 1,
+      "corrupt_lin": "spur_corr (domain value)",
+      "corrupt_lin_margin": true,
+      "corrupt_slab7": "slab_noise (0.1 in the train command)",
+      "random_transform": false,
+      "data_seeds": 10,
+      "slab_noise_list": [
+       0,
+       0.1
+      ],
+      "spur_corr_list": [
+       0,
+       0.1,
+       0.2,
+       0.9
+      ]
+     },
+     "evidence": [
+      {
+       "file": "data_gen_syn.py",
+       "lines": "39-42",
+       "code": "num_samples= 10000\ntotal_slabs= 7\nslab_noise_list= [0.0, 0.10]\nspur_corr_list= [0.0, 0.10, 0.20, 0.90]"
+      },
+      {
+       "file": "data_gen_syn.py",
+       "lines": "64-80",
+       "code": "c = config =  {\n                    'num_train': num_samples, # training dataset size\n                    'dim': 2, # input dimension\n                    'lin_margin': 0.1, # linear margin\n                    'slab_margin': 0.1, # slab margin,\n                    'same_margin': True, # keep same margin\n                    'random_transform': False, # apply random (orthogonal) transformation\n                    'width': 1, # data width in standard basis\n                    'num_lin': 1, # number of linear components\n                    'num_slabs': slab_5_flag, #. number of 5 slabs\n                    'num_slabs7': slab_7_flag, # number of 7 slabs\n                    'num_slabs3': 0, # number of 3 slabs\n                    'bs': 256, # batch size\n                    'corrupt_lin': spur_corr, # p_noise\n                    'corrupt_lin_margin': True, # noise model\n                    'corrupt_slab': slab_noise_5, # slab corruption"
+      }
+     ]
+    },
+    "model.architecture": {
+     "value": "SlabClf MLP: Linear(2,100)+ReLU feature net, then Linear(100,100)->Linear(100,2) classifier (no nonlinearity between the last two); extra disc head for DANN",
+     "evidence": [
+      {
+       "file": "models/slab.py",
+       "lines": "18-26",
+       "code": "self.feat_net= nn.Sequential(\n                     nn.Linear( self.inp_shape, self.hidden_dim),\n                     nn.ReLU(),\n                    )\n        \n        self.fc= nn.Sequential(\n                    nn.Linear( self.hidden_dim, self.hidden_dim),\n                    nn.Linear( self.hidden_dim, self.out_shape),\n                    )"
+      }
+     ]
+    },
+    "optim.name": {
+     "value": "sgd",
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "182-185",
+       "code": "if self.args.opt == 'sgd':\n            opt= optim.SGD([\n                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \n                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )"
+      }
+     ]
+    },
+    "optim.momentum": {
+     "value": {
+      "ERM": 0.9,
+      "MMD": 0.9,
+      "CORAL": 0.9,
+      "C-MMD": 0.9,
+      "C-CORAL": 0.9,
+      "RandMatch": 0.9,
+      "PerfMatch": 0.9,
+      "DANN": 0,
+      "CDANN": 0
+     },
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "185",
+       "code": "], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )"
+      },
+      {
+       "file": "algorithms/dann.py",
+       "lines": "41-51",
+       "code": "self.disc_opt = torch.optim.SGD(\n            (list(self.discriminator.parameters()) + \n                list(self.class_embeddings.parameters())),\n            lr=self.initial_lr,\n            weight_decay=5e-4)\n\n        self.gen_opt = torch.optim.SGD(\n            (list(self.featurizer.parameters()) + \n                list(self.classifier.parameters())),\n            lr=self.initial_lr,\n            weight_decay=5e-4)"
+      }
+     ]
+    },
+    "optim.nesterov": {
+     "value": {
+      "ERM": true,
+      "MMD": true,
+      "CORAL": true,
+      "C-MMD": true,
+      "C-CORAL": true,
+      "RandMatch": true,
+      "PerfMatch": true,
+      "DANN": false,
+      "CDANN": false
+     },
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "185",
+       "code": "], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )"
+      },
+      {
+       "file": "algorithms/dann.py",
+       "lines": "41-45",
+       "code": "self.disc_opt = torch.optim.SGD(\n            (list(self.discriminator.parameters()) + \n                list(self.class_embeddings.parameters())),\n            lr=self.initial_lr,\n            weight_decay=5e-4)"
+      }
+     ]
+    },
+    "optim.lr": {
+     "value": {
+      "ERM": 0.1,
+      "MMD": 0.1,
+      "CORAL": 0.1,
+      "C-MMD": 0.1,
+      "C-CORAL": 0.1,
+      "RandMatch": 0.1,
+      "PerfMatch": 0.1,
+      "DANN": 0.01,
+      "CDANN": 0.01
+     },
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "13",
+       "code": "--batch_size 128 --lr 0.1 --epochs 100"
+      },
+      {
+       "file": "algorithms/dann.py",
+       "lines": "38",
+       "code": "self.initial_lr= 0.01"
+      }
+     ]
+    },
+    "optim.lr_schedule": {
+     "value": "constant (StepLR(step_size=25) is constructed in BaseAlgo but scheduler.step() is never called; the manual lr decay in erm_match applies only to lenet/domain_bed_mnist)",
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "102",
+       "code": "self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, step_size=25)"
+      },
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "162",
+       "code": "if epoch > 0 and self.args.model_name in ['domain_bed_mnist', 'lenet']:"
+      }
+     ]
+    },
+    "optim.weight_decay": {
+     "value": 0.0005,
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "63-64",
+       "code": "parser.add_argument('--weight_decay', type=float, default=5e-4,\n                   help='Weight Decay in SGD')"
+      },
+      {
+       "file": "algorithms/dann.py",
+       "lines": "45",
+       "code": "weight_decay=5e-4)"
+      }
+     ]
+    },
+    "train.batch_size": {
+     "value": 128,
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "13",
+       "code": "--batch_size 128 --lr 0.1 --epochs 100"
+      }
+     ]
+    },
+    "train.epochs": {
+     "value": 100,
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "13",
+       "code": "--batch_size 128 --lr 0.1 --epochs 100"
+      }
+     ]
+    },
+    "train.model_selection": {
+     "value": "best_val_accuracy (source-domain validation accuracy, strict >; the checkpoint is saved at the best-val epoch; train.py also prints an oracle max-over-epochs target accuracy)",
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "155-158",
+       "code": "if self.val_acc[-1] > self.max_val_acc:\n                self.max_val_acc=self.val_acc[-1]\n                self.max_epoch= epoch\n                self.save_model()"
+      },
+      {
+       "file": "train.py",
+       "lines": "303-308",
+       "code": "final_acc= np.max(train_method.final_acc)\n        final_accuracy_target_val.append( final_acc )\n        \n        idx= np.argmax(train_method.val_acc)\n        final_acc= train_method.final_acc[idx]\n        final_accuracy_source_val.append( final_acc  )"
+      }
+     ]
+    },
+    "loss.terms": {
+     "value": [
+      {
+       "name": "cross_entropy (ERM/RandMatch/PerfMatch: on the matched batch; MMD/CORAL variants: on the batch; DANN: classifier loss)",
+       "weight": 1,
+       "weight_schedule": "constant"
+      },
+      {
+       "name": "match penalty, l2 distance between matched logits (RandMatch penalty_ws 1.0 with match_case 0.0; PerfMatch penalty_ws 1.0 with match_case 1.0; ERM 0.0)",
+       "weight": 1,
+       "weight_schedule": "linear ramp penalty_ws*(epoch+1)/(epochs+1), ramp from ~0 over 100 epochs (match_flag 0, penalty_s -1)"
+      },
+      {
+       "name": "MMD (gaussian multi-kernel) / CORAL (mean_cov) on hidden features, marginal or class-conditional, averaged over domain pairs (MMD, CORAL, C-MMD, C-CORAL)",
+       "weight": 0.1,
+       "weight_schedule": "constant"
+      },
+      {
+       "name": "DANN domain discriminator term in generator loss: -lambda*disc_loss (disc_loss includes grad_penalty*input-gradient penalty); DANN penalty_ws 0.01, grad_penalty 0.1, d_steps 4; C-DANN penalty_ws 0.01, grad_penalty 1.0, d_steps 2, conditional class embedding",
+       "weight": 0.01,
+       "weight_schedule": "constant"
+      }
+     ],
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "77-79",
+       "code": "erm_loss+= F.cross_entropy(feat_match, label_match.long()).to(self.cuda)\n                    penalty_erm+= float(erm_loss)           \n                    loss_e += erm_loss"
+      },
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "106-109",
+       "code": "if epoch >= self.args.match_interrupt and self.args.match_flag==1:\n                        loss_e += ( self.args.penalty_ws*( epoch - self.args.penalty_s - self.args.match_interrupt )/(self.args.epochs - self.args.penalty_s - self.args.match_interrupt) )*wasserstein_loss\n                    else:\n                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss"
+      },
+      {
+       "file": "algorithms/mmd.py",
+       "lines": "140",
+       "code": "loss_e+= self.mmd_gamma*mmd_loss                "
+      },
+      {
+       "file": "algorithms/dann.py",
+       "lines": "101-102",
+       "code": "gen_loss = (classifier_loss +\n                            (self.lambda_ * -disc_loss))"
+      },
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "39-42",
+       "code": "script= base_script + ' --method_name dann --conditional 0 --penalty_ws 0.01 --grad_penalty 0.1 --d_steps_per_g_step 4 '\n\n    elif method == 'c-dann':\n        script= base_script + ' --method_name dann --conditional 1 --penalty_ws 0.01 --grad_penalty 1.0 --d_steps_per_g_step 2 '"
+      }
+     ]
+    },
+    "eval.n_seeds": {
+     "value": 10,
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "10",
+       "code": "total_seed= 10"
+      }
+     ]
+    },
+    "eval.metric": {
+     "value": "classification accuracy (%): target domain accuracy from train.py (test split of the target domain, at the epoch selected by source validation); per-domain accuracy on source domains from test.py per_domain_acc with acc_data_case train",
+     "evidence": [
+      {
+       "file": "evaluation/per_domain_acc.py",
+       "lines": "67",
+       "code": "acc= torch.sum( torch.argmax(out_c, dim=1) == y_c ).item()"
+      },
+      {
+       "file": "reproduce_scripts/reproduce_slab.py",
+       "lines": "16",
+       "code": "base_script= 'python test.py --test_metric per_domain_acc --acc_data_case train --dataset slab"
+      }
+     ]
+    },
+    "eval.aggregation": {
+     "value": {
+      "Source 1 / Source 2 (test.py per_domain_acc)": "mean and standard error (np.std/sqrt(n_runs)) over 10 seeds",
+      "Target (train.py)": "mean and population standard deviation (np.std, ddof=0) over 10 seeds"
+     },
+     "evidence": [
+      {
+       "file": "test.py",
+       "lines": "399",
+       "code": "print(key, ' : ', np.mean(curr_metric_score), np.std(curr_metric_score)/np.sqrt(curr_metric_score.shape[0]))"
+      },
+      {
+       "file": "train.py",
+       "lines": "314-315",
+       "code": "print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) )\n    print('Final Test Accuracy (Target Validation)', np.mean(final_accuracy_target_val), np.std(final_accuracy_target_val) )"
+      }
+     ]
+    },
+    "data.preprocessing.resize": {
+     "value": [],
+     "evidence": [
+      {
+       "file": "data/slab_loader.py",
+       "lines": "134-136",
+       "code": "data_feat= data_feat.type(torch.FloatTensor)\n        data_labels = data_labels.long()"
+      }
+     ]
+    },
+    "data.preprocessing.normalization": {
+     "value": [
+      {
+       "kind": "none",
+       "mean": null,
+       "std": null,
+       "methods": null,
+       "note": "2-D synthetic features are used as generated, only cast to float; with method mask_linear (not in this table) the linear coordinate is zeroed"
+      }
+     ],
+     "evidence": [
+      {
+       "file": "data/slab_loader.py",
+       "lines": "134",
+       "code": "data_feat= data_feat.type(torch.FloatTensor)"
+      }
+     ]
+    },
+    "data.augmentation": {
+     "value": [],
+     "evidence": [
+      {
+       "file": "data/slab_loader.py",
+       "lines": "98-122",
+       "code": "data_feat = torch.cat(list_data)\n        data_labels = torch.cat(list_labels)\n...\n        np.random.shuffle(inds)\n        data_feat = data_feat[inds]"
+      }
+     ]
+    },
+    "data.domain_transform": {
+     "value": [
+      {
+       "kind": "label-noise-like corruption of the linear feature: each domain is a separately generated dataset with corrupt_lin = domain value (probability of corrupting the linear component), with slab corruption fixed at slab_noise",
+       "domains": [
+        "0.0",
+        "0.10",
+        "1.0"
+       ],
+       "params": "corrupt_lin=spur_corr (0.0, 0.10 source; 1.0 target requested), corrupt_slab7=0.1, corrupt_lin_margin=True, 7 slabs",
+       "direction": "not_applicable",
+       "methods": null,
+       "note": "data_gen_syn.py generates only 0.0, 0.1, 0.2, 0.9; domain 1.0 is not generated"
+      }
+     ],
+     "evidence": [
+      {
+       "file": "data_gen_syn.py",
+       "lines": "77-80",
+       "code": "'corrupt_lin': spur_corr, # p_noise\n                    'corrupt_lin_margin': True, # noise model\n                    'corrupt_slab': slab_noise_5, # slab corruption\n                    'corrupt_slab7': slab_noise_7, # slab corruption"
+      },
+      {
+       "file": "data/slab_loader.py",
+       "lines": "43",
+       "code": "self.spur_probs= [ float(domain) for domain in self.list_domains ]"
+      }
+     ]
+    },
+    "train.model_selection_data": {
+     "value": [
+      {
+       "use": "checkpoint",
+       "split": "val",
+       "domains": "source",
+       "version": "plain",
+       "metric": "accuracy",
+       "methods": null,
+       "phase": null,
+       "note": "val split of the train domains (250 per domain), best epoch by strict >; the target test accuracy is computed each epoch but only used for the reported oracle max (train.py 'Target Validation') alongside the source-val-selected value"
+      },
+      {
+       "use": "hyperparameter_tuning",
+       "split": "test",
+       "domains": "target",
+       "version": "plain",
+       "metric": "accuracy at the source-val-selected epoch, read from the 'Final Test Accuracy (Source Validation)' line",
+       "methods": null,
+       "phase": null,
+       "note": "slab-tune.py runs train.py with --test_domains 1.0 and picks the config by that printed accuracy, which is computed on the target domain test data even though its comment says 'Source validation accuracy'"
+      }
+     ],
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "149-158",
+       "code": "self.val_acc.append( self.get_test_accuracy('val') )\n            \n            #Test Dataset Accuracy\n            self.final_acc.append( self.get_test_accuracy('test') )\n            \n            #Save the model if current best epoch as per validation loss\n            if self.val_acc[-1] > self.max_val_acc:"
+      },
+      {
+       "file": "reproduce_scripts/slab-tune.py",
+       "lines": "94-96",
+       "code": "# Source validation accuracy\n        mean= float(data[-4].replace('\\n', '').split(' ')[-2])\n        err= float(data[-4].replace('\\n', '').split(' ')[-1])"
+      },
+      {
+       "file": "reproduce_scripts/slab-tune.py",
+       "lines": "10",
+       "code": "base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)"
+      }
+     ]
+    }
+   }
+  },
+  "result_text": "{\"commands\":[{\"command\":\"python data_gen_syn.py\",\"source\":\"data_gen_syn.py:1\"},{\"command\":\"python reproduce_scripts/reproduce_slab.py train\",\"source\":\"reproduce_scripts/reproduce_slab.py:12\"},{\"command\":\"python reproduce_scripts/reproduce_slab.py evaluate\",\"source\":\"reproduce_scripts/reproduce_slab.py:15\"},{\"command\":\"python reproduce_scripts/slab-tune.py <method>\",\"source\":\"reproduce_scripts/slab-tune.py:7\"},{\"command\":\"python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 --n_runs 10 (+ per-method flags)\",\"source\":\"reproduce_scripts/reproduce_slab.py:13\"}],\"experiment\":\"Slab dataset (2-D linear+7-slab synthetic), 2-layer MLP (SlabClf, hidden 100); source domains = linear-feature corruption prob 0.0 and 0.1, target domain 1.0; slab noise 0.1\",\"notes\":[\"The data generator (data_gen_syn.py) only produces spur_corr in [0.0, 0.10, 0.20, 0.90] and slab_noise in [0.0, 0.10]. No domain with corruption 1.0 is produced, yet reproduce_slab.py passes --test_domains 1.0. slab_data.get_data would then open a pickle with 'spur_corr_1.0' that does not exist, so the target run would fail with FileNotFoundError unless the file is made separately. slab-run.py uses target 0.90 instead.\",\"slab_data.py:75 hardcodes the data directory '/home/t-dimaha/RobustDG/robustdg/data/datasets/slab/', an absolute path on the author's machine that differs from where data_gen_syn.py writes (data/datasets/slab/). It must be edited to reproduce.\",\"train.py declares --dataset_name; the scripts pass --dataset, which argparse accepts only through unique-prefix abbreviation.\",\"--slab_num_samples is not passed, so the default 1000 applies as base_size: 1000 train, 250 val and 1000 test samples per domain are used, though the pickles hold 10000 samples each (the val/test files are generated with num_train=10000, same generator, different draw).\",\"The reproduce script's n_runs is 10 (slab-run/slab-tune use 3). Seeds: run*10 for random/numpy/torch in train.py, and data pickle seed index = run, so each run uses a different dataset draw (data seeds 0..9 match the 10 generated). The generator uses np.random.seed(seed*10).\",\"Optimizer: SGD with momentum 0.9 and nesterov=True, hardcoded in BaseAlgo.get_opt, and weight decay is the train.py default 5e-4 (not the 5e-5 in the gen config). A StepLR(step_size=25) is created but scheduler.step() is never called, so the lr is effectively constant. DANN uses its own two plain SGD optimizers (lr 0.01, no momentum, wd 5e-4) for the discriminator and the generator, so --lr 0.1 is ignored for DANN/C-DANN.\",\"DANN alternation uses epoch (not batch) to choose a discriminator-vs-generator step: epochs where epoch % (1+d_steps) < d_steps update only the discriminator, others only the generator+classifier. So with d_steps 4 the classifier is updated only in 1 of every 5 epochs. DANN generator loss is classifier_loss - lambda*disc_loss; the weight is constant.\",\"MMD/CORAL/C-MMD/C-CORAL: loss = CE + 0.1 * mmd, with a constant weight, computed on the 2-layer hidden feature (feat_net output), per batch of 128 mixed from both domains. 'coral' uses the mean_cov kernel (gaussian 0) and is run through method_name mmd.\",\"ERM/RandMatch/PerfMatch use erm_match: the CE loss is over matched batches (penalty_s=-1 so the matched path is always on); ERM has penalty_ws 0.0. For RandMatch and PerfMatch the match penalty weight is ramped linearly: penalty_ws*(epoch+1)/(epochs+1) with match_flag 0, ramping from near 0 to just under penalty_ws=1.0. Match distance uses pos_metric default 'l2' on logits (match_layer logit_match, fc_layer=1) between matched samples across domains. RandMatch uses match_case 0.0 and PerfMatch match_case 1.0. perfect_match default is 1.\",\"Model selection in train.py: each epoch evaluates val (source domains, 250 per domain) and the test (target) accuracy. The checkpoint saved is the best source val accuracy epoch. The printed numbers are 'Final Test Accuracy (Source Validation)' = target accuracy at the argmax-source-val epoch, and 'Final Test Accuracy (Target Validation)' = max over epochs of the target accuracy (oracle) with std over runs. The oracle target-selected value is printed alongside; which one the paper reports for Table 1 is not determined by the code. The Source 1/Source 2 columns come from the 'evaluate' step (test.py per_domain_acc, acc_data_case train, i.e. the training data of the saved best-val checkpoint), which prints mean and std/sqrt(n) (standard error) per domain over 10 runs. test.py is run with --test_domains 1.0 but acc_data_case train, so the target is not evaluated there.\",\"The Source accuracy therefore comes from the train split (1000 samples per domain) evaluated with the saved checkpoint, while the Target column from train.py comes with a population std (np.std, ddof=0) over runs rather than the standard error printed by test.py.\",\"Hyperparameter tuning (slab-tune.py) uses 3 runs and selects, per method, the penalty (and DANN grad_penalty/d_steps) with the highest 'Source validation accuracy' read from data[-4] of the train.py log, i.e. the 'Final Test Accuracy (Source Validation)' line. This is actually the target-domain accuracy at the source-val-selected epoch, evaluated on --test_domains 1.0 (test domain data), so tuning reads target-domain data. Tuning uses the same slab_noise 0.1 and test_domains 1.0. The grids are penalty [0.1,1,10] (DANN [0.01..100]), grad_penalty [0.01..10] and disc_steps [1,2,4,8]. The reproduce script then hardcodes final values: 0.1 for MMD/CORAL variants, DANN (0.01, 0.1, 4), C-DANN (0.01, 1.0, 2), RandMatch/PerfMatch 1.0.\",\"Target accuracy numbers in the paper table could not be checked; the code in train.py uses the raw test split for the target, 1000 samples per run.\",\"CDANN corresponds to method 'c-dann' in the script (--method_name dann --conditional 1); the script list has the order erm, mmd, coral, dann, c-mmd, c-coral, c-dann, rand, perf.\"],\"settings\":{\"data.source_domains\":{\"value\":[\"0.0\",\"0.10\"],\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"13\",\"code\":\"base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)\"}]},\"data.target_domains\":{\"value\":[\"1.0\"],\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"13\",\"code\":\"base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)\"}]},\"data.domains_data_available\":{\"value\":[\"0.0\",\"0.10\",\"0.20\",\"0.90\"],\"evidence\":[{\"file\":\"data_gen_syn.py\",\"lines\":\"41-42\",\"code\":\"slab_noise_list= [0.0, 0.10]\\nspur_corr_list= [0.0, 0.10, 0.20, 0.90]\"}]},\"data.train_samples_per_domain\":{\"value\":1000,\"evidence\":[{\"file\":\"train.py\",\"lines\":\"138\",\"code\":\"parser.add_argument('--slab_num_samples', type=int, default=1000)\"},{\"file\":\"utils/helper.py\",\"lines\":\"277\",\"code\":\"data_obj= SlabData(args, domains, '/slab/', data_case=data_case, match_func=match_func, base_size=args.slab_num_samples, freq_ratio=50, data_dim=args.slab_data_dim, total_slabs=args.slab_total_slabs, seed=run, mask_linear=mask_linear)\"},{\"file\":\"utils/slab_data.py\",\"lines\":\"89\",\"code\":\"X, Y = data['X'][:num_samples], data['Y'][:num_samples]\"}]},\"data.val_samples_per_domain\":{\"value\":250,\"evidence\":[{\"file\":\"data/slab_loader.py\",\"lines\":\"45-47\",\"code\":\"elif self.data_case == 'val':\\n            self.domain_size = len(self.list_domains)*[int(self.base_size/4)]\\n            self.spur_probs= [ float(domain) for domain in self.list_domains ]\"}]},\"data.generation_params\":{\"value\":{\"num_samples_per_file\":10000,\"total_slabs\":7,\"dim\":2,\"lin_margin\":0.1,\"slab_margin\":0.1,\"width\":1,\"num_lin\":1,\"corrupt_lin\":\"spur_corr (domain value)\",\"corrupt_lin_margin\":true,\"corrupt_slab7\":\"slab_noise (0.1 in the train command)\",\"random_transform\":false,\"data_seeds\":10,\"slab_noise_list\":[0,0.1],\"spur_corr_list\":[0,0.1,0.2,0.9]},\"evidence\":[{\"file\":\"data_gen_syn.py\",\"lines\":\"39-42\",\"code\":\"num_samples= 10000\\ntotal_slabs= 7\\nslab_noise_list= [0.0, 0.10]\\nspur_corr_list= [0.0, 0.10, 0.20, 0.90]\"},{\"file\":\"data_gen_syn.py\",\"lines\":\"64-80\",\"code\":\"c = config =  {\\n                    'num_train': num_samples, # training dataset size\\n                    'dim': 2, # input dimension\\n                    'lin_margin': 0.1, # linear margin\\n                    'slab_margin': 0.1, # slab margin,\\n                    'same_margin': True, # keep same margin\\n                    'random_transform': False, # apply random (orthogonal) transformation\\n                    'width': 1, # data width in standard basis\\n                    'num_lin': 1, # number of linear components\\n                    'num_slabs': slab_5_flag, #. number of 5 slabs\\n                    'num_slabs7': slab_7_flag, # number of 7 slabs\\n                    'num_slabs3': 0, # number of 3 slabs\\n                    'bs': 256, # batch size\\n                    'corrupt_lin': spur_corr, # p_noise\\n                    'corrupt_lin_margin': True, # noise model\\n                    'corrupt_slab': slab_noise_5, # slab corruption\"}]},\"model.architecture\":{\"value\":\"SlabClf MLP: Linear(2,100)+ReLU feature net, then Linear(100,100)->Linear(100,2) classifier (no nonlinearity between the last two); extra disc head for DANN\",\"evidence\":[{\"file\":\"models/slab.py\",\"lines\":\"18-26\",\"code\":\"self.feat_net= nn.Sequential(\\n                     nn.Linear( self.inp_shape, self.hidden_dim),\\n                     nn.ReLU(),\\n                    )\\n        \\n        self.fc= nn.Sequential(\\n                    nn.Linear( self.hidden_dim, self.hidden_dim),\\n                    nn.Linear( self.hidden_dim, self.out_shape),\\n                    )\"}]},\"optim.name\":{\"value\":\"sgd\",\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"182-185\",\"code\":\"if self.args.opt == 'sgd':\\n            opt= optim.SGD([\\n                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \\n                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )\"}]},\"optim.momentum\":{\"value\":{\"ERM\":0.9,\"MMD\":0.9,\"CORAL\":0.9,\"C-MMD\":0.9,\"C-CORAL\":0.9,\"RandMatch\":0.9,\"PerfMatch\":0.9,\"DANN\":0,\"CDANN\":0},\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"185\",\"code\":\"], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )\"},{\"file\":\"algorithms/dann.py\",\"lines\":\"41-51\",\"code\":\"self.disc_opt = torch.optim.SGD(\\n            (list(self.discriminator.parameters()) + \\n                list(self.class_embeddings.parameters())),\\n            lr=self.initial_lr,\\n            weight_decay=5e-4)\\n\\n        self.gen_opt = torch.optim.SGD(\\n            (list(self.featurizer.parameters()) + \\n                list(self.classifier.parameters())),\\n            lr=self.initial_lr,\\n            weight_decay=5e-4)\"}]},\"optim.nesterov\":{\"value\":{\"ERM\":true,\"MMD\":true,\"CORAL\":true,\"C-MMD\":true,\"C-CORAL\":true,\"RandMatch\":true,\"PerfMatch\":true,\"DANN\":false,\"CDANN\":false},\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"185\",\"code\":\"], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )\"},{\"file\":\"algorithms/dann.py\",\"lines\":\"41-45\",\"code\":\"self.disc_opt = torch.optim.SGD(\\n            (list(self.discriminator.parameters()) + \\n                list(self.class_embeddings.parameters())),\\n            lr=self.initial_lr,\\n            weight_decay=5e-4)\"}]},\"optim.lr\":{\"value\":{\"ERM\":0.1,\"MMD\":0.1,\"CORAL\":0.1,\"C-MMD\":0.1,\"C-CORAL\":0.1,\"RandMatch\":0.1,\"PerfMatch\":0.1,\"DANN\":0.01,\"CDANN\":0.01},\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"13\",\"code\":\"--batch_size 128 --lr 0.1 --epochs 100\"},{\"file\":\"algorithms/dann.py\",\"lines\":\"38\",\"code\":\"self.initial_lr= 0.01\"}]},\"optim.lr_schedule\":{\"value\":\"constant (StepLR(step_size=25) is constructed in BaseAlgo but scheduler.step() is never called; the manual lr decay in erm_match applies only to lenet/domain_bed_mnist)\",\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"102\",\"code\":\"self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, step_size=25)\"},{\"file\":\"algorithms/erm_match.py\",\"lines\":\"162\",\"code\":\"if epoch > 0 and self.args.model_name in ['domain_bed_mnist', 'lenet']:\"}]},\"optim.weight_decay\":{\"value\":0.0005,\"evidence\":[{\"file\":\"train.py\",\"lines\":\"63-64\",\"code\":\"parser.add_argument('--weight_decay', type=float, default=5e-4,\\n                   help='Weight Decay in SGD')\"},{\"file\":\"algorithms/dann.py\",\"lines\":\"45\",\"code\":\"weight_decay=5e-4)\"}]},\"train.batch_size\":{\"value\":128,\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"13\",\"code\":\"--batch_size 128 --lr 0.1 --epochs 100\"}]},\"train.epochs\":{\"value\":100,\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"13\",\"code\":\"--batch_size 128 --lr 0.1 --epochs 100\"}]},\"train.model_selection\":{\"value\":\"best_val_accuracy (source-domain validation accuracy, strict >; the checkpoint is saved at the best-val epoch; train.py also prints an oracle max-over-epochs target accuracy)\",\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"155-158\",\"code\":\"if self.val_acc[-1] > self.max_val_acc:\\n                self.max_val_acc=self.val_acc[-1]\\n                self.max_epoch= epoch\\n                self.save_model()\"},{\"file\":\"train.py\",\"lines\":\"303-308\",\"code\":\"final_acc= np.max(train_method.final_acc)\\n        final_accuracy_target_val.append( final_acc )\\n        \\n        idx= np.argmax(train_method.val_acc)\\n        final_acc= train_method.final_acc[idx]\\n        final_accuracy_source_val.append( final_acc  )\"}]},\"loss.terms\":{\"value\":[{\"name\":\"cross_entropy (ERM/RandMatch/PerfMatch: on the matched batch; MMD/CORAL variants: on the batch; DANN: classifier loss)\",\"weight\":1,\"weight_schedule\":\"constant\"},{\"name\":\"match penalty, l2 distance between matched logits (RandMatch penalty_ws 1.0 with match_case 0.0; PerfMatch penalty_ws 1.0 with match_case 1.0; ERM 0.0)\",\"weight\":1,\"weight_schedule\":\"linear ramp penalty_ws*(epoch+1)/(epochs+1), ramp from ~0 over 100 epochs (match_flag 0, penalty_s -1)\"},{\"name\":\"MMD (gaussian multi-kernel) / CORAL (mean_cov) on hidden features, marginal or class-conditional, averaged over domain pairs (MMD, CORAL, C-MMD, C-CORAL)\",\"weight\":0.1,\"weight_schedule\":\"constant\"},{\"name\":\"DANN domain discriminator term in generator loss: -lambda*disc_loss (disc_loss includes grad_penalty*input-gradient penalty); DANN penalty_ws 0.01, grad_penalty 0.1, d_steps 4; C-DANN penalty_ws 0.01, grad_penalty 1.0, d_steps 2, conditional class embedding\",\"weight\":0.01,\"weight_schedule\":\"constant\"}],\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"77-79\",\"code\":\"erm_loss+= F.cross_entropy(feat_match, label_match.long()).to(self.cuda)\\n                    penalty_erm+= float(erm_loss)           \\n                    loss_e += erm_loss\"},{\"file\":\"algorithms/erm_match.py\",\"lines\":\"106-109\",\"code\":\"if epoch >= self.args.match_interrupt and self.args.match_flag==1:\\n                        loss_e += ( self.args.penalty_ws*( epoch - self.args.penalty_s - self.args.match_interrupt )/(self.args.epochs - self.args.penalty_s - self.args.match_interrupt) )*wasserstein_loss\\n                    else:\\n                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss\"},{\"file\":\"algorithms/mmd.py\",\"lines\":\"140\",\"code\":\"loss_e+= self.mmd_gamma*mmd_loss                \"},{\"file\":\"algorithms/dann.py\",\"lines\":\"101-102\",\"code\":\"gen_loss = (classifier_loss +\\n                            (self.lambda_ * -disc_loss))\"},{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"39-42\",\"code\":\"script= base_script + ' --method_name dann --conditional 0 --penalty_ws 0.01 --grad_penalty 0.1 --d_steps_per_g_step 4 '\\n\\n    elif method == 'c-dann':\\n        script= base_script + ' --method_name dann --conditional 1 --penalty_ws 0.01 --grad_penalty 1.0 --d_steps_per_g_step 2 '\"}]},\"eval.n_seeds\":{\"value\":10,\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"10\",\"code\":\"total_seed= 10\"}]},\"eval.metric\":{\"value\":\"classification accuracy (%): target domain accuracy from train.py (test split of the target domain, at the epoch selected by source validation); per-domain accuracy on source domains from test.py per_domain_acc with acc_data_case train\",\"evidence\":[{\"file\":\"evaluation/per_domain_acc.py\",\"lines\":\"67\",\"code\":\"acc= torch.sum( torch.argmax(out_c, dim=1) == y_c ).item()\"},{\"file\":\"reproduce_scripts/reproduce_slab.py\",\"lines\":\"16\",\"code\":\"base_script= 'python test.py --test_metric per_domain_acc --acc_data_case train --dataset slab\"}]},\"eval.aggregation\":{\"value\":{\"Source 1 / Source 2 (test.py per_domain_acc)\":\"mean and standard error (np.std/sqrt(n_runs)) over 10 seeds\",\"Target (train.py)\":\"mean and population standard deviation (np.std, ddof=0) over 10 seeds\"},\"evidence\":[{\"file\":\"test.py\",\"lines\":\"399\",\"code\":\"print(key, ' : ', np.mean(curr_metric_score), np.std(curr_metric_score)/np.sqrt(curr_metric_score.shape[0]))\"},{\"file\":\"train.py\",\"lines\":\"314-315\",\"code\":\"print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) )\\n    print('Final Test Accuracy (Target Validation)', np.mean(final_accuracy_target_val), np.std(final_accuracy_target_val) )\"}]},\"data.preprocessing.resize\":{\"value\":[],\"evidence\":[{\"file\":\"data/slab_loader.py\",\"lines\":\"134-136\",\"code\":\"data_feat= data_feat.type(torch.FloatTensor)\\n        data_labels = data_labels.long()\"}]},\"data.preprocessing.normalization\":{\"value\":[{\"kind\":\"none\",\"mean\":null,\"std\":null,\"methods\":null,\"note\":\"2-D synthetic features are used as generated, only cast to float; with method mask_linear (not in this table) the linear coordinate is zeroed\"}],\"evidence\":[{\"file\":\"data/slab_loader.py\",\"lines\":\"134\",\"code\":\"data_feat= data_feat.type(torch.FloatTensor)\"}]},\"data.augmentation\":{\"value\":[],\"evidence\":[{\"file\":\"data/slab_loader.py\",\"lines\":\"98-122\",\"code\":\"data_feat = torch.cat(list_data)\\n        data_labels = torch.cat(list_labels)\\n...\\n        np.random.shuffle(inds)\\n        data_feat = data_feat[inds]\"}]},\"data.domain_transform\":{\"value\":[{\"kind\":\"label-noise-like corruption of the linear feature: each domain is a separately generated dataset with corrupt_lin = domain value (probability of corrupting the linear component), with slab corruption fixed at slab_noise\",\"domains\":[\"0.0\",\"0.10\",\"1.0\"],\"params\":\"corrupt_lin=spur_corr (0.0, 0.10 source; 1.0 target requested), corrupt_slab7=0.1, corrupt_lin_margin=True, 7 slabs\",\"direction\":\"not_applicable\",\"methods\":null,\"note\":\"data_gen_syn.py generates only 0.0, 0.1, 0.2, 0.9; domain 1.0 is not generated\"}],\"evidence\":[{\"file\":\"data_gen_syn.py\",\"lines\":\"77-80\",\"code\":\"'corrupt_lin': spur_corr, # p_noise\\n                    'corrupt_lin_margin': True, # noise model\\n                    'corrupt_slab': slab_noise_5, # slab corruption\\n                    'corrupt_slab7': slab_noise_7, # slab corruption\"},{\"file\":\"data/slab_loader.py\",\"lines\":\"43\",\"code\":\"self.spur_probs= [ float(domain) for domain in self.list_domains ]\"}]},\"train.model_selection_data\":{\"value\":[{\"use\":\"checkpoint\",\"split\":\"val\",\"domains\":\"source\",\"version\":\"plain\",\"metric\":\"accuracy\",\"methods\":null,\"phase\":null,\"note\":\"val split of the train domains (250 per domain), best epoch by strict >; the target test accuracy is computed each epoch but only used for the reported oracle max (train.py 'Target Validation') alongside the source-val-selected value\"},{\"use\":\"hyperparameter_tuning\",\"split\":\"test\",\"domains\":\"target\",\"version\":\"plain\",\"metric\":\"accuracy at the source-val-selected epoch, read from the 'Final Test Accuracy (Source Validation)' line\",\"methods\":null,\"phase\":null,\"note\":\"slab-tune.py runs train.py with --test_domains 1.0 and picks the config by that printed accuracy, which is computed on the target domain test data even though its comment says 'Source validation accuracy'\"}],\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"149-158\",\"code\":\"self.val_acc.append( self.get_test_accuracy('val') )\\n            \\n            #Test Dataset Accuracy\\n            self.final_acc.append( self.get_test_accuracy('test') )\\n            \\n            #Save the model if current best epoch as per validation loss\\n            if self.val_acc[-1] > self.max_val_acc:\"},{\"file\":\"reproduce_scripts/slab-tune.py\",\"lines\":\"94-96\",\"code\":\"# Source validation accuracy\\n        mean= float(data[-4].replace('\\\\n', '').split(' ')[-2])\\n        err= float(data[-4].replace('\\\\n', '').split(' ')[-1])\"},{\"file\":\"reproduce_scripts/slab-tune.py\",\"lines\":\"10\",\"code\":\"base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)\"}]}}}",
+  "usage": {
+   "input_tokens": 22,
+   "cache_creation_input_tokens": 60379,
+   "cache_read_input_tokens": 411506,
+   "output_tokens": 13934,
+   "output_tokens_details": {
+    "thinking_tokens": 898
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 60379,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "not_available",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 9510,
+     "cache_read_input_tokens": 59842,
+     "cache_creation_input_tokens": 537,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 537
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "total_cost_usd": 0.4632012,
+  "duration_ms": 93774,
+  "num_turns": 28,
+  "models": [
+   "claude-sonnet-5-5"
+  ],
+  "session_id": "64cd0192-b9be-497c-80b2-f5e697a0cefd",
+  "permission_denials": [],
+  "wall_seconds": 95.1
+ }
+}

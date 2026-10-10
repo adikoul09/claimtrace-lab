@@ -1,0 +1,23 @@
+{
+ "matchdg_lenet": {
+  "start_utc": "2026-10-03T11:29:57+00:00",
+  "end_utc": "2026-10-03T12:02:26+00:00",
+  "wall_minutes": 32.5,
+  "jobs": 24,
+  "job_minutes_sum": 118.4
+ },
+ "matchdg_lenet_confirm": {
+  "start_utc": "2026-10-03T12:33:49+00:00",
+  "end_utc": "2026-10-03T13:09:02+00:00",
+  "wall_minutes": 35.2,
+  "jobs": 24,
+  "job_minutes_sum": 128.8
+ },
+ "h7_no_flip": {
+  "start_utc": "2026-10-03T13:47:34+00:00",
+  "end_utc": "2026-10-03T14:02:10+00:00",
+  "wall_minutes": 14.6,
+  "jobs": 6,
+  "job_minutes_sum": 86.9
+ }
+}

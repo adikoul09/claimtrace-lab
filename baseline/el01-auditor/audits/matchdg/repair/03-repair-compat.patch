@@ -1,0 +1,14 @@
+diff --git a/algorithms/algo.py b/algorithms/algo.py
+index 23eee9d..6f3fac0 100644
+--- a/algorithms/algo.py
++++ b/algorithms/algo.py
+@@ -273,7 +273,8 @@ class BaseAlgo():
+         print(' Accuracy: ', case, 100*test_acc/test_size )         
+                 
+         #self.privacy_engine.module.enable_hooks()
+-        opacus.autograd_grad_sample.enable_hooks()        
++        if self.args.dp_noise:
++            opacus.autograd_grad_sample.enable_hooks()
+         return 100*test_acc/test_size
+     
+     def get_dp_noise(self):

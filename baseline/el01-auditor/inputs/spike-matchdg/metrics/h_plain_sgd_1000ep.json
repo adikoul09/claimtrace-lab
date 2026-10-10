@@ -1,0 +1,231 @@
+{
+ "commit": "4b37d3d944a3d3571018622a396c00c71897bd2b",
+ "erm": {
+  "target": {
+   "log": "/home/claude/spike/runs/h_plain_sgd_1000ep/train_erm.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 879,
+     "target_acc": 60.8,
+     "line": 6047
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 957,
+     "target_acc": 58.1,
+     "line": 12092
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 4,
+     "target_acc": 49.7,
+     "line": 18137
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 1,
+     "target_acc": 49.3,
+     "line": 24182
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 890,
+     "target_acc": 55.0,
+     "line": 30227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 797,
+     "target_acc": 57.9,
+     "line": 36272
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 0,
+     "target_acc": 50.5,
+     "line": 42317
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 2,
+     "target_acc": 48.3,
+     "line": 48362
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 6,
+     "target_acc": 50.3,
+     "line": 54407
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 458,
+     "target_acc": 52.7,
+     "line": 60452
+    }
+   ],
+   "mean": 53.26,
+   "sd_pop": 4.18,
+   "sd_sample": 4.4,
+   "code_reported": {
+    "mean": 53.260000000000005,
+    "sd": 4.177128200091541,
+    "line": 60456
+   }
+  }
+ },
+ "perf": {
+  "target": {
+   "log": "/home/claude/spike/runs/h_plain_sgd_1000ep/train_perf.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 753,
+     "target_acc": 87.6,
+     "line": 6047
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 529,
+     "target_acc": 85.2,
+     "line": 12092
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 566,
+     "target_acc": 83.2,
+     "line": 18137
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 520,
+     "target_acc": 80.3,
+     "line": 24182
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 518,
+     "target_acc": 81.5,
+     "line": 30227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 571,
+     "target_acc": 82.1,
+     "line": 36272
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 534,
+     "target_acc": 76.1,
+     "line": 42317
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 454,
+     "target_acc": 74.9,
+     "line": 48362
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 578,
+     "target_acc": 82.1,
+     "line": 54407
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 463,
+     "target_acc": 74.4,
+     "line": 60452
+    }
+   ],
+   "mean": 80.74,
+   "sd_pop": 4.16,
+   "sd_sample": 4.39,
+   "code_reported": {
+    "mean": 80.74000000000001,
+    "sd": 4.162979702088395,
+    "line": 60456
+   }
+  }
+ },
+ "rand": {
+  "target": {
+   "log": "/home/claude/spike/runs/h_plain_sgd_1000ep/train_rand.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 488,
+     "target_acc": 63.9,
+     "line": 6047
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 249,
+     "target_acc": 57.3,
+     "line": 12092
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 362,
+     "target_acc": 57.8,
+     "line": 18137
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 517,
+     "target_acc": 65.2,
+     "line": 24182
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 434,
+     "target_acc": 61.2,
+     "line": 30227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 911,
+     "target_acc": 66.0,
+     "line": 36272
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 0,
+     "target_acc": 50.5,
+     "line": 42317
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 722,
+     "target_acc": 67.8,
+     "line": 48362
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 81,
+     "target_acc": 51.8,
+     "line": 54407
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 277,
+     "target_acc": 54.8,
+     "line": 60452
+    }
+   ],
+   "mean": 59.63,
+   "sd_pop": 5.8,
+   "sd_sample": 6.11,
+   "code_reported": {
+    "mean": 59.629999999999995,
+    "sd": 5.79500647109216,
+    "line": 60456
+   }
+  }
+ }
+}

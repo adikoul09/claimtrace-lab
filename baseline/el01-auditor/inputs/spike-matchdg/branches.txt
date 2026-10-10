@@ -1,0 +1,104 @@
+# Experiment tree. Every run directory in logs/ ran on the commit below (logs/<run>/commit.txt).
+# REPAIR = allowed change to make the code run; HYPOTHESIS = changes what is measured; AUDIT(harness) = seed plumbing only.
+
+run directory                  commit   branch                               what differs from the baseline (paper_target_1.0)
+paper_target_1.0               7dde854  audit/h-paper-target-1.0             baseline: three repairs + h0 (paper's target domain p = 1.0); all nine Table 1 methods
+h_select_valloss               be16a6f  audit/h-select-valloss (tip~1)       h1: epoch chosen by lowest validation cross-entropy (code: highest validation accuracy)
+h_select_valloss_total         6805a5f  audit/h-select-valloss-total         h1b: epoch chosen by lowest validation total objective (cross-entropy + λ x matching penalty)
+h_omission_plain_sgd           4b37d3d  audit/h-omission-plain-sgd           h2: plain SGD, no momentum or Nesterov
+h_plain_sgd_1000ep             4b37d3d  audit/h-omission-plain-sgd           h2 check: same commit as h2, run with --epochs 1000
+h_combined                     bcf47a8  audit/h-combined                     h1 + h2 in one branch (interaction check)
+naive_target_0.9_3m            72c57a9  audit/confirm-base                   h3: no code change; evaluated with --test_domains 0.9 (the nearest domain the shipped generator builds)
+h_omission_constant_penalty    3130d46  audit/h-omission-constant-penalty    h4: matching weight constant at λ (code ramps it from about 0 to λ)
+h5_lambda_grid                 7dde854  audit/h-paper-target-1.0             h5: no code change; --penalty_ws 0.1 and 10.0 (the grid in reproduce_scripts/slab-tune.py), RandMatch and PerfMatch
+h_dann_lr                      3ea3d95  audit/h-dann-lr                      h6: DANN/CDANN learning rate from args (0.1, as the paper states) instead of hard-coded 0.01
+confirm_base                   72c57a9  audit/confirm-base                   confirmation baseline: fresh seeds 10-19 (seed plumbing only)
+confirm_select_valloss         12460e5  audit/h-select-valloss               confirmation of h1 on fresh seeds 10-19
+matchdg_lenet                  45e7771  audit/repair-env                     MatchDG Suppl. Table 11 (Rotated MNIST, LeNet): repairs only, no hypothesis changes; commands from reproduce_scripts/reproduce_rmnist_lenet.py
+matchdg_lenet_confirm          4657d6a  audit/lenet-confirm                  Table 11 confirmation on fresh MNIST subsets 3-5, seeds 30-50: repairs + seed plumbing only (--seed_offset, --train_seeds); rule pre-registered in audit/PREREGISTERED_table11_confirm.txt
+h7_no_flip                     26caa88  audit/h7-no-flip                     h7 (F7, SciCoQA row 67): MatchDG only, on the Table 11 confirmation's subsets and seeds; augmented Rotated MNIST copy without horizontal flips (same random draws); rule pre-registered in audit/PREREGISTERED_f7.txt
+
+### branch audit/confirm-base
+72c57a9 AUDIT(harness): --seed_offset and 20 data seeds for confirmation runs on fresh seeds
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-combined
+bcf47a8 HYPOTHESIS(omission): plain SGD as written in paper App. A.1; code adds undocumented momentum 0.9 + Nesterov (algo.py:185)
+12460e5 AUDIT(harness): --seed_offset and 20 data seeds for confirmation runs on fresh seeds
+be16a6f HYPOTHESIS(training): select epoch by min validation loss as stated in paper App. A.1 (code selects max val accuracy, erm_match.py:155)
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-dann-lr
+3ea3d95 HYPOTHESIS(training) h6: DANN and CDANN use --lr (0.1), as paper App. A.1 states for all methods; code hard-codes 0.01 (algorithms/dann.py:38)
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-omission-constant-penalty
+3130d46 HYPOTHESIS(omission) h4: constant matching-penalty weight; code ramps it linearly from ~0 to penalty_ws over training (erm_match.py:107,109), which paper Sec 3.2 / App. A.1 do not state
+8594d5f AUDIT(harness): --seed_offset and 20 data seeds for confirmation runs on fresh seeds
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-omission-plain-sgd
+4b37d3d HYPOTHESIS(omission): plain SGD as written in paper App. A.1; code adds undocumented momentum 0.9 + Nesterov (algo.py:185)
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-paper-target-1.0
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-select-valloss
+12460e5 AUDIT(harness): --seed_offset and 20 data seeds for confirmation runs on fresh seeds
+be16a6f HYPOTHESIS(training): select epoch by min validation loss as stated in paper App. A.1 (code selects max val accuracy, erm_match.py:155)
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h-select-valloss-total
+6805a5f HYPOTHESIS(training) h1b: early stopping on the full validation objective (cross-entropy + penalty_ws x matching penalty on matched val pairs), the other reading of App. A.1's 'validation loss'; RNG state preserved so training matches the baseline
+12460e5 AUDIT(harness): --seed_offset and 20 data seeds for confirmation runs on fresh seeds
+be16a6f HYPOTHESIS(training): select epoch by min validation loss as stated in paper App. A.1 (code selects max val accuracy, erm_match.py:155)
+7dde854 HYPOTHESIS(data): add target domain spur_corr=1.0 stated in paper Sec 3.2 (data_gen_syn.py:41)
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/h7-no-flip
+26caa88 AUDIT(harness): pre-registration for the F7 branch test (rule file and hashes, written before any run)
+2a57284 HYPOTHESIS(F7): no horizontal flip in the augmented Rotated MNIST copy (same random draws, so crops are unchanged)
+4657d6a AUDIT(harness): pre-registration for the Table 11 confirmation run (rule files and their sha256, written before any run)
+4c2dfd2 AUDIT(harness): --seed_offset (train.py) and --train_seeds (data_gen_mnist.py) for Table 11 confirmation runs on fresh MNIST subsets 3-5 and seeds 30-50
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/lenet-confirm
+4657d6a AUDIT(harness): pre-registration for the Table 11 confirmation run (rule files and their sha256, written before any run)
+4c2dfd2 AUDIT(harness): --seed_offset (train.py) and --train_seeds (data_gen_mnist.py) for Table 11 confirmation runs on fresh MNIST subsets 3-5 and seeds 30-50
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/repair-env
+45e7771 REPAIR(compat): guard DP-only opacus hook call like its disable twin (algo.py:276); no effect when dp_noise=0
+3f08ff7 REPAIR(env): fall back to CPU when no GPU (train.py:169, test.py:183)
+9b4a263 REPAIR(env): hard-coded absolute data path -> repo-relative (utils/slab_data.py:75)
+
+### branch audit/shipped
+

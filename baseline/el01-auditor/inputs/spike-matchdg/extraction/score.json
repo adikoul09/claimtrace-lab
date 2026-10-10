@@ -1,0 +1,747 @@
+{
+ "claims": {
+  "paper_run1": {
+   "target_cells_correct": "9/9",
+   "values": {
+    "ERM": [
+     57.6,
+     6.58
+    ],
+    "DANN": [
+     53.0,
+     1.41
+    ],
+    "MMD": [
+     62.9,
+     5.01
+    ],
+    "CORAL": [
+     63.1,
+     5.86
+    ],
+    "RandMatch": [
+     59.5,
+     3.5
+    ],
+    "CDANN": [
+     55.9,
+     2.47
+    ],
+    "C-MMD": [
+     58.9,
+     3.43
+    ],
+    "C-CORAL": [
+     64.7,
+     4.69
+    ],
+    "PerfMatch": [
+     77.8,
+     6.01
+    ]
+   }
+  },
+  "paper_run2": {
+   "target_cells_correct": "9/9",
+   "values": {
+    "ERM": [
+     57.6,
+     6.58
+    ],
+    "DANN": [
+     53.0,
+     1.41
+    ],
+    "MMD": [
+     62.9,
+     5.01
+    ],
+    "CORAL": [
+     63.1,
+     5.86
+    ],
+    "RandMatch": [
+     59.5,
+     3.5
+    ],
+    "CDANN": [
+     55.9,
+     2.47
+    ],
+    "C-MMD": [
+     58.9,
+     3.43
+    ],
+    "C-CORAL": [
+     64.7,
+     4.69
+    ],
+    "PerfMatch": [
+     77.8,
+     6.01
+    ]
+   }
+  }
+ },
+ "pairings": {
+  "paper_run1 x code_run1": {
+   "recovered": "5/5",
+   "by_finding": {
+    "F1 target domain p = 1.0 not generated": true,
+    "F2 selection: validation loss vs accuracy": true,
+    "F3 momentum 0.9 + Nesterov not in paper": true,
+    "F4 penalty weight ramps from 0, not in paper": true,
+    "F5 DANN/CDANN lr 0.01 vs paper's 0.1": true
+   },
+   "extra_findings": [
+    {
+     "key": "train.batch_size",
+     "kind": "difference",
+     "paper": 128,
+     "code": {
+      "erm": "128 matched tuples x 2 domains = 256 samples per step",
+      "rand": "128 matched tuples x 2 domains = 256 samples per step",
+      "perf": "128 matched tuples x 2 domains = 256 samples per step",
+      "mmd": 128,
+      "coral": 128,
+      "c-mmd": 128,
+      "c-coral": 128,
+      "dann": 128,
+      "c-dann": 128
+     }
+    }
+   ],
+   "all_findings": [
+    {
+     "key": "data.target_domains",
+     "kind": "code omission",
+     "paper": [
+      1.0
+     ],
+     "code_available": [
+      0.0,
+      0.1,
+      0.2,
+      0.9
+     ]
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": true
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": "linear_ramp: penalty_ws*(epoch+1)/101 with penalty_ws=0 -> always 0"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": "linear_ramp: 1.0*(epoch+1)/101, i.e. from ~0.0099 at epoch 0 to ~0.990 at epoch 99"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": "linear_ramp: 1.0*(epoch+1)/101, i.e. from ~0.0099 at epoch 0 to ~0.990 at epoch 99"
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "c-dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "train.batch_size",
+     "kind": "difference",
+     "paper": 128,
+     "code": {
+      "erm": "128 matched tuples x 2 domains = 256 samples per step",
+      "rand": "128 matched tuples x 2 domains = 256 samples per step",
+      "perf": "128 matched tuples x 2 domains = 256 samples per step",
+      "mmd": 128,
+      "coral": 128,
+      "c-mmd": 128,
+      "c-coral": 128,
+      "dann": 128,
+      "c-dann": 128
+     }
+    },
+    {
+     "key": "train.model_selection",
+     "kind": "difference",
+     "paper": "min_val_loss",
+     "code": "best_val_accuracy"
+    }
+   ]
+  },
+  "paper_run1 x code_run2": {
+   "recovered": "5/5",
+   "by_finding": {
+    "F1 target domain p = 1.0 not generated": true,
+    "F2 selection: validation loss vs accuracy": true,
+    "F3 momentum 0.9 + Nesterov not in paper": true,
+    "F4 penalty weight ramps from 0, not in paper": true,
+    "F5 DANN/CDANN lr 0.01 vs paper's 0.1": true
+   },
+   "extra_findings": [],
+   "all_findings": [
+    {
+     "key": "data.target_domains",
+     "kind": "code omission",
+     "paper": [
+      1.0
+     ],
+     "code_available": [
+      0.0,
+      0.1,
+      0.2,
+      0.9
+     ]
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": true
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": "linear_ramp: 0.0*(epoch+1)/101 (=0)"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": "linear_ramp: penalty_ws*(epoch+1)/(epochs+1), epoch=0..99 -> 1/101 ... 100/101"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": "linear_ramp: penalty_ws*(epoch+1)/(epochs+1), epoch=0..99 -> 1/101 ... 100/101"
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "c-dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "train.model_selection",
+     "kind": "difference",
+     "paper": "min_val_loss",
+     "code": "best_val_accuracy"
+    }
+   ]
+  },
+  "paper_run2 x code_run1": {
+   "recovered": "5/5",
+   "by_finding": {
+    "F1 target domain p = 1.0 not generated": true,
+    "F2 selection: validation loss vs accuracy": true,
+    "F3 momentum 0.9 + Nesterov not in paper": true,
+    "F4 penalty weight ramps from 0, not in paper": true,
+    "F5 DANN/CDANN lr 0.01 vs paper's 0.1": true
+   },
+   "extra_findings": [
+    {
+     "key": "train.batch_size",
+     "kind": "difference",
+     "paper": 128,
+     "code": {
+      "erm": "128 matched tuples x 2 domains = 256 samples per step",
+      "rand": "128 matched tuples x 2 domains = 256 samples per step",
+      "perf": "128 matched tuples x 2 domains = 256 samples per step",
+      "mmd": 128,
+      "coral": 128,
+      "c-mmd": 128,
+      "c-coral": 128,
+      "dann": 128,
+      "c-dann": 128
+     }
+    }
+   ],
+   "all_findings": [
+    {
+     "key": "data.target_domains",
+     "kind": "code omission",
+     "paper": [
+      1.0
+     ],
+     "code_available": [
+      0.0,
+      0.1,
+      0.2,
+      0.9
+     ]
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": true
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": "linear_ramp: penalty_ws*(epoch+1)/101 with penalty_ws=0 -> always 0"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": "linear_ramp: 1.0*(epoch+1)/101, i.e. from ~0.0099 at epoch 0 to ~0.990 at epoch 99"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": "linear_ramp: 1.0*(epoch+1)/101, i.e. from ~0.0099 at epoch 0 to ~0.990 at epoch 99"
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "c-dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "train.batch_size",
+     "kind": "difference",
+     "paper": 128,
+     "code": {
+      "erm": "128 matched tuples x 2 domains = 256 samples per step",
+      "rand": "128 matched tuples x 2 domains = 256 samples per step",
+      "perf": "128 matched tuples x 2 domains = 256 samples per step",
+      "mmd": 128,
+      "coral": 128,
+      "c-mmd": 128,
+      "c-coral": 128,
+      "dann": 128,
+      "c-dann": 128
+     }
+    },
+    {
+     "key": "train.model_selection",
+     "kind": "difference",
+     "paper": "min_val_loss",
+     "code": "best_val_accuracy"
+    }
+   ]
+  },
+  "paper_run2 x code_run2": {
+   "recovered": "5/5",
+   "by_finding": {
+    "F1 target domain p = 1.0 not generated": true,
+    "F2 selection: validation loss vs accuracy": true,
+    "F3 momentum 0.9 + Nesterov not in paper": true,
+    "F4 penalty weight ramps from 0, not in paper": true,
+    "F5 DANN/CDANN lr 0.01 vs paper's 0.1": true
+   },
+   "extra_findings": [],
+   "all_findings": [
+    {
+     "key": "data.target_domains",
+     "kind": "code omission",
+     "paper": [
+      1.0
+     ],
+     "code_available": [
+      0.0,
+      0.1,
+      0.2,
+      0.9
+     ]
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": 0.9
+    },
+    {
+     "key": "optim.momentum",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": 0.9
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "coral",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-mmd",
+     "code": true
+    },
+    {
+     "key": "optim.nesterov",
+     "kind": "paper omission",
+     "method": "c-coral",
+     "code": true
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "erm",
+     "code": "linear_ramp: 0.0*(epoch+1)/101 (=0)"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "rand",
+     "code": "linear_ramp: penalty_ws*(epoch+1)/(epochs+1), epoch=0..99 -> 1/101 ... 100/101"
+    },
+    {
+     "key": "loss.terms.weight_schedule",
+     "kind": "paper omission",
+     "method": "perf",
+     "code": "linear_ramp: penalty_ws*(epoch+1)/(epochs+1), epoch=0..99 -> 1/101 ... 100/101"
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "optim.lr",
+     "kind": "difference",
+     "method": "c-dann",
+     "paper": 0.1,
+     "code": 0.01
+    },
+    {
+     "key": "train.model_selection",
+     "kind": "difference",
+     "paper": "min_val_loss",
+     "code": "best_val_accuracy"
+    }
+   ]
+  }
+ },
+ "paper_runs_agree_on_all_27_cells": true
+}

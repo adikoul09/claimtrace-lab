@@ -1,0 +1,10 @@
+.venv/
+# .cache/llm/ is tracked: recorded LLM calls, so replay works from a clean checkout
+.cache/*
+!.cache/llm/
+workspace/
+audits/*/runs/
+*.pt
+__pycache__/
+.pytest_cache/
+.DS_Store

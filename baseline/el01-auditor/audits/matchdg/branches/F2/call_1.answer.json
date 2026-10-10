@@ -1,0 +1,51 @@
+{
+ "readings": [
+  {
+   "label": "min mean val loss",
+   "paper_value": "early stopping on minimum validation loss (mean cross-entropy)",
+   "rationale": "Computes mean validation cross-entropy each epoch inside get_test_accuracy, saves the checkpoint when it reaches a new minimum, and reports the test accuracy at the epoch of minimum validation loss.",
+   "edits": [
+    {
+     "file": "repo/algorithms/algo.py",
+     "old": "        self.val_acc=[]\n",
+     "new": "        self.val_acc=[]\n        self.val_loss=[]\n        self.min_val_loss= float('inf')\n"
+    },
+    {
+     "file": "repo/algorithms/algo.py",
+     "old": "        test_size=0\n",
+     "new": "        test_size=0\n        test_loss= 0.0\n"
+    },
+    {
+     "file": "repo/algorithms/algo.py",
+     "old": "                test_acc+= torch.sum( torch.argmax(out, dim=1) == y_e ).item()\n",
+     "new": "                test_acc+= torch.sum( torch.argmax(out, dim=1) == y_e ).item()\n                test_loss+= F.cross_entropy(out, y_e.long(), reduction='sum').item()\n"
+    },
+    {
+     "file": "repo/algorithms/algo.py",
+     "old": "        print(' Accuracy: ', case, 100*test_acc/test_size )         \n",
+     "new": "        print(' Accuracy: ', case, 100*test_acc/test_size )         \n        if case == 'val':\n            self.val_loss.append( test_loss/test_size )\n"
+    },
+    {
+     "file": "repo/algorithms/erm_match.py",
+     "old": "            if self.val_acc[-1] > self.max_val_acc:\n                self.max_val_acc=self.val_acc[-1]\n",
+     "new": "            if self.val_loss[-1] < self.min_val_loss:\n                self.min_val_loss=self.val_loss[-1]\n"
+    },
+    {
+     "file": "repo/algorithms/dann.py",
+     "old": "            if self.val_acc[-1] > self.max_val_acc:\n                self.max_val_acc=self.val_acc[-1]\n",
+     "new": "            if self.val_loss[-1] < self.min_val_loss:\n                self.min_val_loss=self.val_loss[-1]\n"
+    },
+    {
+     "file": "repo/algorithms/mmd.py",
+     "old": "            if self.val_acc[-1] > self.max_val_acc:\n                self.max_val_acc=self.val_acc[-1]\n",
+     "new": "            if self.val_loss[-1] < self.min_val_loss:\n                self.min_val_loss=self.val_loss[-1]\n"
+    },
+    {
+     "file": "repo/train.py",
+     "old": "        idx= np.argmax(train_method.val_acc)\n",
+     "new": "        idx= np.argmin(train_method.val_loss)\n"
+    }
+   ]
+  }
+ ]
+}

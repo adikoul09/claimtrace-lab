@@ -1,0 +1,155 @@
+{
+ "commit": "bcf47a82f91835e6f3c799f57b0a5a30d8f3a812",
+ "erm": {
+  "target": {
+   "log": "logs/h_combined/train_erm.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 99,
+     "target_acc": 51.2,
+     "line": 747
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 99,
+     "target_acc": 50.7,
+     "line": 1492
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 48,
+     "target_acc": 50.9,
+     "line": 2237
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 99,
+     "target_acc": 50.4,
+     "line": 2982
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 99,
+     "target_acc": 49.8,
+     "line": 3727
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 99,
+     "target_acc": 52.0,
+     "line": 4472
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 99,
+     "target_acc": 56.6,
+     "line": 5217
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 99,
+     "target_acc": 49.5,
+     "line": 5962
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 99,
+     "target_acc": 51.4,
+     "line": 6707
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 99,
+     "target_acc": 50.6,
+     "line": 7452
+    }
+   ],
+   "mean": 51.31,
+   "sd_pop": 1.89,
+   "sd_sample": 2.0,
+   "code_reported": {
+    "mean": 50.04,
+    "sd": 0.7512655988397188,
+    "line": 7456
+   }
+  }
+ },
+ "perf": {
+  "target": {
+   "log": "logs/h_combined/train_perf.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 4,
+     "target_acc": 49.7,
+     "line": 747
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 55,
+     "target_acc": 53.3,
+     "line": 1492
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 4,
+     "target_acc": 49.6,
+     "line": 2237
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 4,
+     "target_acc": 48.9,
+     "line": 2982
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 4,
+     "target_acc": 50.6,
+     "line": 3727
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 4,
+     "target_acc": 50.7,
+     "line": 4472
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 96,
+     "target_acc": 57.1,
+     "line": 5217
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 4,
+     "target_acc": 49.1,
+     "line": 5962
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 5,
+     "target_acc": 50.2,
+     "line": 6707
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 65,
+     "target_acc": 53.4,
+     "line": 7452
+    }
+   ],
+   "mean": 51.26,
+   "sd_pop": 2.45,
+   "sd_sample": 2.59,
+   "code_reported": {
+    "mean": 51.720000000000006,
+    "sd": 2.02869416127715,
+    "line": 7456
+   }
+  }
+ }
+}

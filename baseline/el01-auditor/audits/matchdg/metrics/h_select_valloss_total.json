@@ -1,0 +1,231 @@
+{
+ "commit": "6805a5fe35193694a57000ee61b32718acecd05a",
+ "erm": {
+  "target": {
+   "log": "logs/h_select_valloss_total/train_erm.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 99,
+     "target_acc": 64.1,
+     "line": 856
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 99,
+     "target_acc": 60.2,
+     "line": 1710
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 99,
+     "target_acc": 57.8,
+     "line": 2564
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 99,
+     "target_acc": 56.2,
+     "line": 3418
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 99,
+     "target_acc": 59.8,
+     "line": 4272
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 99,
+     "target_acc": 61.8,
+     "line": 5126
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 98,
+     "target_acc": 60.2,
+     "line": 5980
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 6,
+     "target_acc": 49.9,
+     "line": 6834
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 99,
+     "target_acc": 57.4,
+     "line": 7688
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 99,
+     "target_acc": 58.1,
+     "line": 8542
+    }
+   ],
+   "mean": 58.55,
+   "sd_pop": 3.62,
+   "sd_sample": 3.81,
+   "code_reported": {
+    "mean": 53.8,
+    "sd": 4.093409336970835,
+    "line": 8546
+   }
+  }
+ },
+ "perf": {
+  "target": {
+   "log": "logs/h_select_valloss_total/train_perf.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 96,
+     "target_acc": 83.7,
+     "line": 857
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 85,
+     "target_acc": 85.7,
+     "line": 1712
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 97,
+     "target_acc": 86.0,
+     "line": 2567
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 82,
+     "target_acc": 84.1,
+     "line": 3422
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 76,
+     "target_acc": 85.5,
+     "line": 4277
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 71,
+     "target_acc": 78.1,
+     "line": 5132
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 94,
+     "target_acc": 87.7,
+     "line": 5987
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 74,
+     "target_acc": 88.2,
+     "line": 6842
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 91,
+     "target_acc": 89.8,
+     "line": 7697
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 95,
+     "target_acc": 82.8,
+     "line": 8552
+    }
+   ],
+   "mean": 85.16,
+   "sd_pop": 3.11,
+   "sd_sample": 3.28,
+   "code_reported": {
+    "mean": 80.44,
+    "sd": 7.490954545316639,
+    "line": 8556
+   }
+  }
+ },
+ "rand": {
+  "target": {
+   "log": "logs/h_select_valloss_total/train_rand.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 68,
+     "target_acc": 61.2,
+     "line": 857
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 97,
+     "target_acc": 62.1,
+     "line": 1712
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 96,
+     "target_acc": 57.5,
+     "line": 2567
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 82,
+     "target_acc": 62.7,
+     "line": 3422
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 97,
+     "target_acc": 63.3,
+     "line": 4277
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 63,
+     "target_acc": 59.4,
+     "line": 5132
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 85,
+     "target_acc": 60.2,
+     "line": 5987
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 84,
+     "target_acc": 55.5,
+     "line": 6842
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 86,
+     "target_acc": 61.6,
+     "line": 7697
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 96,
+     "target_acc": 58.2,
+     "line": 8552
+    }
+   ],
+   "mean": 60.17,
+   "sd_pop": 2.38,
+   "sd_sample": 2.5,
+   "code_reported": {
+    "mean": 54.67,
+    "sd": 3.957031715819321,
+    "line": 8556
+   }
+  }
+ }
+}

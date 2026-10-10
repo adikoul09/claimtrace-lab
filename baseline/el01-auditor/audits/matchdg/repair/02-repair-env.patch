@@ -1,0 +1,26 @@
+diff --git a/test.py b/test.py
+index 0c88a39..be67d66 100644
+--- a/test.py
++++ b/test.py
+@@ -180,7 +180,7 @@ parser.add_argument('--logit_plot_path', default='', type=str,
+ args = parser.parse_args()
+ 
+ #GPU
+-cuda= torch.device("cuda:" + str(args.cuda_device))
++cuda= torch.device("cuda:" + str(args.cuda_device) if torch.cuda.is_available() else "cpu")
+ if cuda:
+     kwargs = {'num_workers': 1, 'pin_memory': False} 
+ else:
+diff --git a/train.py b/train.py
+index 8172f2f..2a5d3f8 100644
+--- a/train.py
++++ b/train.py
+@@ -166,7 +166,7 @@ parser.add_argument('--match_func_data_case', type=str, default='val',
+ args = parser.parse_args()
+ 
+ #GPU
+-cuda= torch.device("cuda:" + str(args.cuda_device))
++cuda= torch.device("cuda:" + str(args.cuda_device) if torch.cuda.is_available() else "cpu")
+ if cuda:
+     kwargs = {'num_workers': 0, 'pin_memory': False} 
+ else:

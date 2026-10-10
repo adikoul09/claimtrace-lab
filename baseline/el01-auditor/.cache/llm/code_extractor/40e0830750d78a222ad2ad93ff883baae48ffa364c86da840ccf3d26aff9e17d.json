@@ -1,0 +1,2231 @@
+{
+ "key": "40e0830750d78a222ad2ad93ff883baae48ffa364c86da840ccf3d26aff9e17d",
+ "agent": "code_extractor",
+ "model": "sonnet",
+ "backend": "claude_cli",
+ "created_utc": "2026-10-03T21:28:30Z",
+ "cli_version": "2.1.288",
+ "request": {
+  "schema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "commands",
+    "experiment",
+    "notes",
+    "settings"
+   ],
+   "properties": {
+    "experiment": {
+     "type": "string"
+    },
+    "settings": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "data.source_domains",
+      "data.target_domains",
+      "data.domains_data_available",
+      "data.train_samples_per_domain",
+      "data.val_samples_per_domain",
+      "data.generation_params",
+      "model.architecture",
+      "optim.name",
+      "optim.momentum",
+      "optim.nesterov",
+      "optim.lr",
+      "optim.lr_schedule",
+      "optim.weight_decay",
+      "train.batch_size",
+      "train.epochs",
+      "train.model_selection",
+      "loss.terms",
+      "eval.n_seeds",
+      "eval.metric",
+      "eval.aggregation",
+      "data.preprocessing.resize",
+      "data.preprocessing.normalization",
+      "data.augmentation",
+      "data.domain_transform",
+      "train.model_selection_data"
+     ],
+     "properties": {
+      "data.source_domains": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.target_domains": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.domains_data_available": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.train_samples_per_domain": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.val_samples_per_domain": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.generation_params": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "model.architecture": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.name": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.momentum": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.nesterov": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.lr": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.lr_schedule": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "optim.weight_decay": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.batch_size": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.epochs": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.model_selection": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "loss.terms": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "eval.n_seeds": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "eval.metric": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "eval.aggregation": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "array",
+          "object",
+          "null"
+         ]
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.preprocessing.resize": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "height",
+           "width",
+           "methods",
+           "note"
+          ],
+          "properties": {
+           "height": {
+            "type": [
+             "integer",
+             "null"
+            ]
+           },
+           "width": {
+            "type": [
+             "integer",
+             "null"
+            ]
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.preprocessing.normalization": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "kind",
+           "mean",
+           "std",
+           "methods",
+           "note"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string",
+            "enum": [
+             "none",
+             "mean_std",
+             "scale_0_1",
+             "other"
+            ]
+           },
+           "mean": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "number"
+            }
+           },
+           "std": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "number"
+            }
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.augmentation": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "ops",
+           "relative_to_domain_transform",
+           "applies_to",
+           "note"
+          ],
+          "properties": {
+           "ops": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "relative_to_domain_transform": {
+            "type": "string",
+            "enum": [
+             "before",
+             "after",
+             "no_domain_transform",
+             "unknown"
+            ]
+           },
+           "applies_to": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "additionalProperties": false,
+             "required": [
+              "split",
+              "domains",
+              "use",
+              "methods",
+              "phase"
+             ],
+             "properties": {
+              "split": {
+               "type": "string",
+               "enum": [
+                "train",
+                "val",
+                "test"
+               ]
+              },
+              "domains": {
+               "type": "string",
+               "enum": [
+                "source",
+                "target",
+                "all"
+               ]
+              },
+              "use": {
+               "type": "string",
+               "enum": [
+                "training",
+                "validation",
+                "model_selection",
+                "evaluation"
+               ]
+              },
+              "methods": {
+               "type": [
+                "array",
+                "null"
+               ],
+               "items": {
+                "type": "string"
+               }
+              },
+              "phase": {
+               "type": [
+                "string",
+                "null"
+               ]
+              }
+             }
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "data.domain_transform": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "kind",
+           "domains",
+           "params",
+           "direction",
+           "methods",
+           "note"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "domains": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": [
+              "number",
+              "string"
+             ]
+            }
+           },
+           "params": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "direction": {
+            "type": "string",
+            "enum": [
+             "counterclockwise",
+             "clockwise",
+             "not_applicable",
+             "unknown"
+            ]
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      },
+      "train.model_selection_data": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "value",
+        "evidence"
+       ],
+       "properties": {
+        "value": {
+         "type": [
+          "array",
+          "null"
+         ],
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "use",
+           "split",
+           "domains",
+           "version",
+           "metric",
+           "methods",
+           "phase",
+           "note"
+          ],
+          "properties": {
+           "use": {
+            "type": "string",
+            "enum": [
+             "checkpoint",
+             "hyperparameter_tuning"
+            ]
+           },
+           "split": {
+            "type": "string",
+            "enum": [
+             "train",
+             "val",
+             "test",
+             "other"
+            ]
+           },
+           "domains": {
+            "type": "string",
+            "enum": [
+             "source",
+             "target",
+             "source_and_target",
+             "unknown"
+            ]
+           },
+           "version": {
+            "type": "string",
+            "enum": [
+             "plain",
+             "augmented",
+             "other"
+            ]
+           },
+           "metric": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "methods": {
+            "type": [
+             "array",
+             "null"
+            ],
+            "items": {
+             "type": "string"
+            }
+           },
+           "phase": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "note": {
+            "type": [
+             "string",
+             "null"
+            ]
+           }
+          }
+         }
+        },
+        "evidence": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "file",
+           "lines",
+           "code"
+          ],
+          "properties": {
+           "file": {
+            "type": "string",
+            "description": "path relative to the repository root"
+           },
+           "lines": {
+            "type": "string",
+            "description": "\"42\" or \"34-35\""
+           },
+           "code": {
+            "type": "string",
+            "description": "the code on those lines, verbatim"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "notes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "commands": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "command",
+       "source"
+      ],
+      "properties": {
+       "command": {
+        "type": "string"
+       },
+       "source": {
+        "type": "string",
+        "description": "path:line"
+       }
+      }
+     }
+    }
+   }
+  },
+  "inputs": {
+   "repo_tree": "dcf7ae0d6c2a47464943a2435868f9224676a1ab",
+   "replicate": "2"
+  },
+  "tools": [
+   "Read",
+   "Grep",
+   "Glob"
+  ],
+  "max_turns": 120,
+  "prompt": "You are the repository-analysis step of an automated ML reproducibility pipeline. Work only from the code, by reading\nit. The repository, exactly as shipped at the audited commit and without its git history, is in the directory `./repo`\n(relative to your working directory). Read it with Read, Grep and Glob.\n\nRepository: https://github.com/microsoft/robustdg\nExperiment: the one the associated paper reports in Suppl. Table 11, whose caption reads: \"Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017).\"\nIts columns: 0, 15, 30, 45, 60, 75, Average.\nIts rows that the paper's own runs produce (use these names for methods): ERM, RandMatch, MatchDG, PerfMatch.\n\nSteps:\n1. Find the command(s) the repository provides to reproduce this experiment (reproduce scripts, README, docs,\n   notebooks), including the steps that prepare its data.\n2. Trace what those commands actually do, statically: argument values and defaults; which data the data-preparation\n   code produces versus which domains the commands ask for; how each domain is made from the base data;\n   preprocessing (resizing, normalization); any random transforms applied to the data, in which order relative to the\n   domain transform, and every split and use that reads the transformed data (training, validation, model selection,\n   evaluation), per method and training phase; the model; how the optimizer is constructed (type, momentum, nesterov,\n   lr, weight decay, any schedule); the training loop and every loss term with its weight and how that weight changes\n   across epochs; how the reported epoch or checkpoint is chosen and which data that choice reads, in every training\n   phase; how hyperparameters are chosen, if the repository has tuning scripts, and which data that choice reads; the\n   number of seeds and how seeds are set; the metric, and how results are aggregated across seeds, including what\n   spread is printed.\n3. Fill the schema below for this experiment from the code only.\n\nRules:\n- Read only files under ./repo. Do not use the web and do not look for the paper. Do not run anything.\n- Evidence for each non-null value: one or more items {file, lines, code}: `file` is the path relative to the\n  repository root (without `repo/`), `lines` the line or line range as the Read tool numbers them (\"42\" or \"34-35\"),\n  and `code` the code on those lines, copied verbatim (inside a range you may skip lines with \"...\"). Code checks\n  every item against the file.\n- Use null only when the code genuinely does not determine the value.\n- Where a setting differs by method, give it per method inside `value` as {\"<method>\": value}.\n- Keys marked \"entries\" take a list of entries: `[]` means the code has no such step for this experiment (cite where\n  the data is built); give one entry per distinct case; `methods: null` means every method, `phase: null` every\n  training phase. Use the enumerated values shown; put anything that does not fit in the entry's `note`.\n- Report what the code does, even where it looks like a mistake, and say so in `notes`.\n- `commands`: each command you traced and where the repository gives it (path:line). `experiment`: one line naming\n  the experiment (dataset, model, domains). `notes`: anything that matters for reproducing this experiment but does\n  not fit a key.\n\nSchema keys (`value` shape, then what the key means):\n- `data.source_domains`: [..]: the domains the model trains on\n- `data.target_domains`: [..]: the domains the reported numbers are evaluated on\n- `data.domains_data_available`: [..]: code: the domains for which data actually exists or is produced by the provided scripts; paper: the domains it states are used\n- `data.train_samples_per_domain`: 0: training examples per domain\n- `data.val_samples_per_domain`: 0: validation examples per domain\n- `data.generation_params`: {\"name\": value}: parameters of the data generation (synthetic data, subsets)\n- `model.architecture`: \"..\": the model\n- `optim.name`: \"sgd | adam | ..\": the optimizer\n- `optim.momentum`: 0.0: 0.0 means plain SGD with no momentum; null means the source does not say\n- `optim.nesterov`: false: Nesterov momentum\n- `optim.lr`: 0.0: the learning rate\n- `optim.lr_schedule`: \"constant | step(..) | ..\": how the learning rate changes over training\n- `optim.weight_decay`: 0.0: weight decay\n- `train.batch_size`: 0: batch size\n- `train.epochs`: 0: number of training epochs\n- `train.model_selection`: \"best_val_accuracy | min_val_loss | min_val_objective | last_epoch | test_domain_validation | other: ..\": how the reported epoch or checkpoint is chosen\n- `loss.terms`: [{\"name\": \"..\", \"weight\": 0.0, \"weight_schedule\": \"constant | linear_ramp_from_0 | ..\"}]: one entry per term in the training objective (e.g. cross-entropy, a penalty), with its weight and how the weight changes over training\n- `eval.n_seeds`: 0: number of runs (seeds) behind each reported number\n- `eval.metric`: \"..\": what the reported numbers measure\n- `eval.aggregation`: \"mean_sd_over_seeds | mean_se_over_seeds | best_of_n | single_run | ..\": how the reported numbers aggregate the runs, including what the printed spread is (standard deviation or standard error); give it per reported quantity as {\"<quantity>\": value} where it differs\n- `data.preprocessing.resize`: entries [{height, width, methods: [..], note}]: resizing of the inputs before they reach the model\n- `data.preprocessing.normalization`: entries [{kind: none|mean_std|scale_0_1|other, mean: [..], std: [..], methods: [..], note}]: normalization of the inputs (e.g. subtracting a mean and dividing by a standard deviation)\n- `data.augmentation`: entries [{ops: [..], relative_to_domain_transform: before|after|no_domain_transform|unknown, applies_to: [{split: train|val|test, domains: source|target|all, use: training|validation|model_selection|evaluation, methods: [..], phase}], note}]: random transforms applied to the data, on the fly or as a stored augmented copy: what they are (snake_case names, in the order applied), whether they come before or after the transform that makes each domain, and every split and use that reads the augmented data (training, validation, model selection, evaluation), per method and training phase\n- `data.domain_transform`: entries [{kind, domains: [..], params, direction: counterclockwise|clockwise|not_applicable|unknown, methods: [..], note}]: how each domain is made from the base data (e.g. a rotation angle, a noise level, a style), including the direction (sign) of a rotation\n- `train.model_selection_data`: entries [{use: checkpoint|hyperparameter_tuning, split: train|val|test|other, domains: source|target|source_and_target|unknown, version: plain|augmented|other, metric, methods: [..], phase, note}]: the data each selection step reads: the choice of the reported epoch or checkpoint (use checkpoint) and the choice of hyperparameters (use hyperparameter_tuning): which split, of which domains, and which version of it (plain or augmented), per method and training phase\n"
+ },
+ "response": {
+  "output": {
+   "commands": [
+    {
+     "command": "python data/data_gen_mnist.py --dataset rot_mnist --model lenet --img_h 32 --img_w 32 --subset_size 1000",
+     "source": "docs/notebooks/reproduce_results.ipynb:273"
+    },
+    {
+     "command": "python3 reproduce_rmnist_lenet.py  (default methods erm rand matchdg_ctr matchdg_erm perf; loops over test domains 0,15,30,45,60,75 with the other five as train domains)",
+     "source": "reproduce_scripts/reproduce_rmnist_lenet.py:6-46"
+    },
+    {
+     "command": "python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 0.0 --penalty_ws 0.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 --train_domains <5 others> --test_domains <d>   (ERM)",
+     "source": "reproduce_scripts/reproduce_rmnist_lenet.py:19"
+    },
+    {
+     "command": "python train.py ... --method_name erm_match --match_case 0.0 --penalty_ws 1.0 --epochs 100 ... --total_matches_per_point 100   (RandMatch)",
+     "source": "reproduce_scripts/reproduce_rmnist_lenet.py:22"
+    },
+    {
+     "command": "python train.py ... --method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 ...   (PerfMatch)",
+     "source": "reproduce_scripts/reproduce_rmnist_lenet.py:16"
+    },
+    {
+     "command": "python train.py ... --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --match_func_aug_case 1 ...   (MatchDG phase 1)",
+     "source": "reproduce_scripts/reproduce_rmnist_lenet.py:25"
+    },
+    {
+     "command": "python train.py ... --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name lenet --total_matches_per_point 100 ...   (MatchDG phase 2)",
+     "source": "reproduce_scripts/reproduce_rmnist_lenet.py:28"
+    }
+   ],
+   "experiment": "Rotated MNIST (MNIST 0-75 degree rotations, 32x32), LeNet-5, leave-one-domain-out: train on five of {0,15,30,45,60,75}, test on the held-out one; methods ERM, RandMatch, MatchDG, PerfMatch",
+   "notes": [
+    "The data-prep command comes from the notebook, with --subset_size 1000. The reproduce script itself does not prepare data. data_gen_mnist.py defaults to subset_size 2000, so the notebook command gives 1000 train and 200 val per domain, not the 2000 and 400 of the default. I report the notebook value (1000/200).",
+    "Train, val and test images for a domain all come from MNIST (train and test sets concatenated, 70000 images). The train and test splits use the same indices res[:subset_size] (np.random.choice with replacement), so the held-out test domain contains the same base images as the training domains, only rotated differently. Val uses res[subset_size:]. Test and train share seed numbers 0-2 for lenet (mnist_subset=run).",
+    "For lenet the generator makes domains 0-75 only for train, val and test, with seeds 0,1,2. Domain 90 is in the loop list but is not generated in the lenet branch.",
+    "The generator also stores an augmented copy (_data.pt: RandomResizedCrop(32, scale 0.7-1.0) + RandomHorizontalFlip, applied after the rotation). Training does not read it, because mnist_aug defaults to 0 and the loader reads _org_data.pt. Only the MatchDG phase-1 validation reads it (MnistRotatedAugEval, via --match_func_aug_case 1), as 'aug' vs 'org' pairs for the top-k match score that picks the checkpoint.",
+    "Generation seeds (random.seed(seed*10) etc.) and the random-resized-crop/flip draws are not fixed per image beyond that global seeding.",
+    "ERM, RandMatch and PerfMatch are all method erm_match. The CE loss is computed on the matched batch (one randomly chosen sample per domain from each match group), not on the plain loader batch. ERM is match_case 0 with penalty_ws 0. Since match_case 0 means random match within class and penalty_ws is 0, ERM is effectively CE on class-matched random tuples.",
+    "The matching penalty weight ramps up linearly. With match_flag 0 (the default for the erm_match runs) the weight is penalty_ws*(epoch+1)/(epochs+1), which is about 0 at epoch 0 and about 1 at the end. The penalty is the mean squared L2 distance between logits (pos_metric default l2, match_layer logit_match) over all domain pairs of the matched tuples.",
+    "MatchDG phase 2 (matchdg_erm) uses loss = CE on matched batches + CE on the ordinary batch (erm_loss_extra) + ramped penalty_ws * logit L2 matching loss. Its matches are inferred from the phase-1 contrastive LeNet (match_case -1), and its batch size is the default 16. Phase 1 uses NT-Xent-style contrastive loss (tau 0.05, cos), weighted by (epoch-penalty_s)/(epochs-penalty_s), a linear ramp. Phase 1 matches are re-inferred every 5 epochs (match_flag 1, match_interrupt 5).",
+    "The optimizer is rebuilt at every LR step (epoch % 25 == 0, epoch>0), so momentum buffers reset. The StepLR created in BaseAlgo is never stepped. The LR is halved cumulatively: lr/2^(epoch//25). Phase 1 (matchdg_ctr) uses the base optimizer with no schedule, since the schedule is only in the ERM-phase loops.",
+    "Checkpoint choice for the reported number: train.py prints two numbers. 'Source Validation' is the test accuracy at the epoch with max val accuracy (val = held-out samples from the training domains). 'Target Validation' is np.max over epochs of test accuracy, an oracle pick on the test domain. I take Source Validation as the proper number, but the code prints both and the reproduction script only redirects stdout to files. Test accuracy is computed every epoch.",
+    "Spread printed: np.std, i.e. the population standard deviation over the 3 runs (ddof=0). The mean over domains in the 'Average' column is not computed by the repository code. The paper's average must be computed externally.",
+    "train.py's matchdg_erm branch uses ctr_load_post_string with run, so phase 2 needs phase-1 models for each run from the same train_domains list. The model-save paths use str(train_domains) from the CLI.",
+    "Phase-1 (matchdg_ctr) selection reads the val loader built with eval_case=1 (the 'aug'/'org' pair loader), 'TopK Perfect Match Score' evaluated every 5 epochs. Strict '>' means that ties keep the earlier checkpoint.",
+    "Other scripts also exist: reproduce_rmnist_domainbed.py and mnist_run.py use different models (resnet18 and DomainBed). They are not for this experiment."
+   ],
+   "settings": {
+    "data.source_domains": {
+     "value": "Leave-one-domain-out: the five of {0,15,30,45,60,75} other than the held-out test domain (e.g. test 0 -> train 15,30,45,60,75)",
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "11",
+       "code": "domains= [0, 15, 30, 45, 60, 75]"
+      },
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "30-35",
+       "code": "    for test_domain in domains:\n\n        train_domains=''\n        for d in domains:\n            if d != test_domain:\n                train_domains+= str(d) + ' '"
+      }
+     ]
+    },
+    "data.target_domains": {
+     "value": "One held-out domain per run, each of 0,15,30,45,60,75 in turn",
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "42",
+       "code": "        script= base_script + ' --train_domains ' + str(train_domains) + ' --test_domains ' + str(test_domain) "
+      }
+     ]
+    },
+    "data.domains_data_available": {
+     "value": [
+      0,
+      15,
+      30,
+      45,
+      60,
+      75
+     ],
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "176",
+       "code": "domains= [0, 15, 30, 45, 60, 75, 90]"
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "214-216",
+       "code": "        elif model in ['lenet']:\n            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:\n                generate_rotated_domain_data("
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "244-246",
+       "code": "        elif model in ['lenet', 'lenet_mdg']:\n            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:"
+      }
+     ]
+    },
+    "data.train_samples_per_domain": {
+     "value": 1000,
+     "evidence": [
+      {
+       "file": "docs/notebooks/reproduce_results.ipynb",
+       "lines": "273",
+       "code": "    \"`python data/data_gen_mnist.py --dataset rot_mnist --model lenet --img_h 32 --img_w 32 --subset_size 1000`\\n\","
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "209",
+       "code": "        indices= res[:subset_size]      "
+      }
+     ]
+    },
+    "data.val_samples_per_domain": {
+     "value": 200,
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "122",
+       "code": "val_size= int(args.subset_size/5)"
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "224",
+       "code": "        indices= res[subset_size:]"
+      }
+     ]
+    },
+    "data.generation_params": {
+     "value": {
+      "subset_size": 1000,
+      "val_size": 200,
+      "data_size": 60000,
+      "seeds_for_subsets": [
+       0,
+       1,
+       2
+      ],
+      "seed_multiplier": 10,
+      "base_data": "MNIST train+test concatenated, indices sampled with np.random.choice (with replacement)",
+      "img_h": 32,
+      "img_w": 32,
+      "test_indices": "same as train indices res[:subset_size]"
+     },
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "108-109",
+       "code": "parser.add_argument('--data_size', type=int, default=60000)\nparser.add_argument('--subset_size', type=int, default=2000)"
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "181-188",
+       "code": "    random.seed(seed*10)\n    np.random.seed(seed*10)     \n    torch.manual_seed(seed*10)    \n    if torch.cuda.is_available():\n        torch.cuda.manual_seed_all(seed*10)\n        \n    # Indices\n    res=np.random.choice(data_size, subset_size+val_size)"
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "238-239",
+       "code": "        save_dir= data_dir + data_case + '/' + 'seed_' + str(seed) + '_domain_' + str(domain)\n        indices= res[:subset_size]"
+      }
+     ]
+    },
+    "model.architecture": {
+     "value": "LeNet-5 (conv 6@5x5, maxpool, conv 16@5x5, maxpool, FC 400-120-84-10), 32x32x1 input",
+     "evidence": [
+      {
+       "file": "models/lenet.py",
+       "lines": "18-38",
+       "code": "nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=0, bias=True),\n ... nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0, bias=True),\n ... nn.Linear(16*5*5, 120),   \n ... nn.Linear(120, 84),       \n ... nn.Linear(84, 10),"
+      }
+     ]
+    },
+    "optim.name": {
+     "value": "sgd",
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "61",
+       "code": "parser.add_argument('--opt', type=str, default='sgd', "
+      },
+      {
+       "file": "algorithms/algo.py",
+       "lines": "182-185",
+       "code": "        if self.args.opt == 'sgd':\n            opt= optim.SGD([\n                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \n                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        "
+      }
+     ]
+    },
+    "optim.momentum": {
+     "value": 0.9,
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "185",
+       "code": "                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        "
+      }
+     ]
+    },
+    "optim.nesterov": {
+     "value": true,
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "185",
+       "code": "                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        "
+      }
+     ]
+    },
+    "optim.lr": {
+     "value": 0.01,
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "65",
+       "code": "parser.add_argument('--lr', type=float, default=0.01, "
+      }
+     ]
+    },
+    "optim.lr_schedule": {
+     "value": "step: LR halved every 25 epochs (lr/2^(epoch//25)) by rebuilding the SGD optimizer (momentum reset) in ERM/erm_match/matchdg_erm loops; MatchDG phase 1 (contrastive) has no schedule (constant 0.01); the StepLR in BaseAlgo is never stepped",
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "163-173",
+       "code": "                if self.args.model_name == 'lenet':\n                    lr_schedule_step= 25\n ...\n                if epoch % lr_schedule_step==0 :\n                    lr=self.args.lr/(2**(int(epoch/lr_schedule_step)))\n ...\n                    self.opt= optim.SGD([\n                             {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \n                    ], lr= lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )     "
+      },
+      {
+       "file": "algorithms/match_dg.py",
+       "lines": "389-397",
+       "code": "                    if self.args.model_name == 'lenet':\n                        lr_schedule_step= 25\n ...\n                        lr=self.args.lr/(2**(int(epoch/lr_schedule_step)))"
+      },
+      {
+       "file": "algorithms/algo.py",
+       "lines": "102",
+       "code": "        self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, step_size=25)    "
+      }
+     ]
+    },
+    "optim.weight_decay": {
+     "value": 0.0005,
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "63",
+       "code": "parser.add_argument('--weight_decay', type=float, default=5e-4,"
+      }
+     ]
+    },
+    "train.batch_size": {
+     "value": {
+      "ERM": 16,
+      "RandMatch": 16,
+      "PerfMatch": 16,
+      "MatchDG": "16 in phase 2 (default); 512 in contrastive phase 1"
+     },
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "67",
+       "code": "parser.add_argument('--batch_size', type=int, default=16, "
+      },
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "25",
+       "code": "        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name lenet --img_h 32 --img_w 32 --match_func_aug_case 1 '"
+      }
+     ]
+    },
+    "train.epochs": {
+     "value": {
+      "ERM": 100,
+      "RandMatch": 100,
+      "PerfMatch": 100,
+      "MatchDG": "50 (phase 1 contrastive) + 100 (phase 2)"
+     },
+     "evidence": [
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "16",
+       "code": "--method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 --model_name lenet"
+      },
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "25",
+       "code": "--method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512"
+      },
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "28",
+       "code": "--method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100"
+      }
+     ]
+    },
+    "train.model_selection": {
+     "value": {
+      "ERM": "best_val_accuracy (val = held-out samples of the source domains; reported 'Source Validation' number = test acc at that epoch; train.py also prints an oracle max-over-epochs test accuracy)",
+      "RandMatch": "best_val_accuracy (same)",
+      "PerfMatch": "best_val_accuracy (same)",
+      "MatchDG": "phase 1: best TopK Perfect Match Score on val (every 5 epochs, aug vs org pairs of source domains); phase 2: best_val_accuracy on source-domain val"
+     },
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "155-158",
+       "code": "            if self.val_acc[-1] > self.max_val_acc:\n                self.max_val_acc=self.val_acc[-1]\n                self.max_epoch= epoch\n                self.save_model()"
+      },
+      {
+       "file": "train.py",
+       "lines": "303-308",
+       "code": "        final_acc= np.max(train_method.final_acc)\n        final_accuracy_target_val.append( final_acc )\n        \n        idx= np.argmax(train_method.val_acc)\n        final_acc= train_method.final_acc[idx]\n        final_accuracy_source_val.append( final_acc  )"
+      },
+      {
+       "file": "algorithms/match_dg.py",
+       "lines": "263-266",
+       "code": "                if test_method.metric_score['TopK Perfect Match Score'] > self.max_val_score:\n                    self.max_val_score= test_method.metric_score['TopK Perfect Match Score']\n                    self.max_epoch= epoch\n                    self.save_model_ctr_phase(epoch)"
+      },
+      {
+       "file": "algorithms/match_dg.py",
+       "lines": "381-384",
+       "code": "                if self.val_acc[-1] > self.max_val_acc:\n                    self.max_val_acc= self.val_acc[-1]\n                    self.max_epoch= epoch\n                    self.save_model_erm_phase(run_erm)"
+      }
+     ]
+    },
+    "loss.terms": {
+     "value": {
+      "ERM": [
+       {
+        "name": "cross_entropy on matched batch (random class-matched tuples across source domains)",
+        "weight": 1,
+        "weight_schedule": "constant"
+       },
+       {
+        "name": "matching penalty (L2 on logits)",
+        "weight": 0,
+        "weight_schedule": "penalty_ws=0, so zero throughout"
+       }
+      ],
+      "RandMatch": [
+       {
+        "name": "cross_entropy on matched batch (random matches)",
+        "weight": 1,
+        "weight_schedule": "constant"
+       },
+       {
+        "name": "matching penalty (mean squared L2 distance of logits across domain pairs)",
+        "weight": 1,
+        "weight_schedule": "linear_ramp_from_0: penalty_ws*(epoch+1)/(epochs+1)"
+       }
+      ],
+      "PerfMatch": [
+       {
+        "name": "cross_entropy on matched batch (perfect matches)",
+        "weight": 1,
+        "weight_schedule": "constant"
+       },
+       {
+        "name": "matching penalty (mean squared L2 distance of logits across domain pairs)",
+        "weight": 1,
+        "weight_schedule": "linear_ramp_from_0: penalty_ws*(epoch+1)/(epochs+1)"
+       }
+      ],
+      "MatchDG": [
+       {
+        "name": "phase 1: contrastive NT-Xent-style hinge loss (cos, tau 0.05)",
+        "weight": 1,
+        "weight_schedule": "linear_ramp_from_0: (epoch+1)/epochs"
+       },
+       {
+        "name": "phase 2: cross_entropy on matched batch",
+        "weight": 1,
+        "weight_schedule": "constant"
+       },
+       {
+        "name": "phase 2: cross_entropy on ordinary batch",
+        "weight": 1,
+        "weight_schedule": "constant"
+       },
+       {
+        "name": "phase 2: matching penalty (L2 on logits, inferred matches)",
+        "weight": 1,
+        "weight_schedule": "linear_ramp_from_0: penalty_ws*(epoch+1)/(epochs+1)"
+       }
+      ]
+     },
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "77-79",
+       "code": "                    erm_loss+= F.cross_entropy(feat_match, label_match.long()).to(self.cuda)\n                    penalty_erm+= float(erm_loss)           \n                    loss_e += erm_loss"
+      },
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "106-109",
+       "code": "                    if epoch >= self.args.match_interrupt and self.args.match_flag==1:\n                        loss_e += ( self.args.penalty_ws*( epoch - self.args.penalty_s - self.args.match_interrupt )/(self.args.epochs - self.args.penalty_s - self.args.match_interrupt) )*wasserstein_loss\n                    else:\n                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss"
+      },
+      {
+       "file": "algorithms/match_dg.py",
+       "lines": "233",
+       "code": "                    loss_e += ( ( epoch- self.args.penalty_s )/(self.args.epochs -self.args.penalty_s) )*diff_hinge_loss"
+      },
+      {
+       "file": "algorithms/match_dg.py",
+       "lines": "354-356",
+       "code": "                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss\n                        loss_e += erm_loss\n                        loss_e += erm_loss_extra"
+      },
+      {
+       "file": "train.py",
+       "lines": "71-72",
+       "code": "parser.add_argument('--penalty_s', type=int, default=-1, \n                    help='Epoch threshold over which Matching Loss to be optimised')"
+      }
+     ]
+    },
+    "eval.n_seeds": {
+     "value": 3,
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "93-94",
+       "code": "parser.add_argument('--n_runs', type=int, default=3, \n                    help='Number of iterations to repeat the training process')"
+      },
+      {
+       "file": "train.py",
+       "lines": "206-213",
+       "code": "for run in range(args.n_runs):\n    print('Run', run)\n    #Seed for repoduability\n    random.seed(run*10)\n    np.random.seed(run*10) \n    torch.manual_seed(run*10)    \n    if torch.cuda.is_available():\n        torch.cuda.manual_seed_all(run*10)    "
+      }
+     ]
+    },
+    "eval.metric": {
+     "value": "Top-1 classification accuracy (%) on the held-out test rotation domain (test samples = same base images as train indices, rotated)",
+     "evidence": [
+      {
+       "file": "algorithms/algo.py",
+       "lines": "266-267",
+       "code": "                test_acc+= torch.sum( torch.argmax(out, dim=1) == y_e ).item()\n                test_size+= y_e.shape[0]"
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "238-239",
+       "code": "        save_dir= data_dir + data_case + '/' + 'seed_' + str(seed) + '_domain_' + str(domain)\n        indices= res[:subset_size]"
+      }
+     ]
+    },
+    "eval.aggregation": {
+     "value": {
+      "per_test_domain": "mean and population standard deviation (np.std, ddof=0) over 3 runs (seeds 0,1,2), printed for source-validation-selected test accuracy and for oracle max-over-epochs test accuracy",
+      "Average_column": "not computed in the repository code"
+     },
+     "evidence": [
+      {
+       "file": "train.py",
+       "lines": "314-315",
+       "code": "    print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) )\n    print('Final Test Accuracy (Target Validation)', np.mean(final_accuracy_target_val), np.std(final_accuracy_target_val) )"
+      }
+     ]
+    },
+    "data.preprocessing.resize": {
+     "value": [
+      {
+       "height": 32,
+       "width": 32,
+       "methods": null,
+       "note": "Resize((img_w, img_h)) on the 28x28 PIL image before rotation, via --img_h 32 --img_w 32; done offline at data generation"
+      }
+     ],
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "28-31",
+       "code": "    to_pil=  transforms.Compose([\n            transforms.ToPILImage(),\n            transforms.Resize((img_w, img_h))\n        ])"
+      },
+      {
+       "file": "reproduce_scripts/reproduce_rmnist_lenet.py",
+       "lines": "19",
+       "code": "--model_name lenet --img_h 32 --img_w 32 "
+      }
+     ]
+    },
+    "data.preprocessing.normalization": {
+     "value": [
+      {
+       "kind": "mean_std",
+       "mean": [
+        0.1307
+       ],
+       "std": [
+        0.3081
+       ],
+       "methods": null,
+       "note": "ToTensor then Normalize applied after the rotation, stored in _org_data.pt and _data.pt"
+      }
+     ],
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "38-41",
+       "code": "    to_tensor=  transforms.Compose([\n            transforms.ToTensor(),\n            transforms.Normalize((0.1307,), (0.3081,))\n        ])"
+      }
+     ]
+    },
+    "data.augmentation": {
+     "value": [
+      {
+       "ops": [
+        "random_resized_crop(32, scale=(0.7,1.0))",
+        "random_horizontal_flip"
+       ],
+       "relative_to_domain_transform": "after",
+       "applies_to": [
+        {
+         "split": "val",
+         "domains": "source",
+         "use": "model_selection",
+         "methods": [
+          "MatchDG"
+         ],
+         "phase": "phase 1 (matchdg_ctr): top-k match score on augmented vs original pairs, every 5 epochs"
+        }
+       ],
+       "note": "The stored augmented copy (_data.pt) is applied after the rotation. It is not used for training (mnist_aug default 0 reads _org_data.pt) and not for test evaluation. Only the MatchDG phase-1 validation (MnistRotatedAugEval, --match_func_aug_case 1) loads the augmented tensors. ERM, RandMatch and PerfMatch and MatchDG phase 2 never see augmented data."
+      }
+     ],
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "33-36",
+       "code": "    to_augment= transforms.Compose([\n            transforms.RandomResizedCrop(img_w, scale=(0.7,1.0)),\n            transforms.RandomHorizontalFlip()\n        ])"
+      },
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "83-85",
+       "code": "        mnist_img_rot_org[i]= to_tensor(img_rotated)        \n        #Augmentation\n        mnist_img_rot[i]= to_tensor(to_augment(img_rotated))        "
+      },
+      {
+       "file": "data/mnist_loader.py",
+       "lines": "37-40",
+       "code": "            if self.data_case =='train' and self.args.mnist_aug:                \n                mnist_imgs= torch.load( load_dir +  '_data.pt')\n            else:\n                mnist_imgs= torch.load( load_dir +  '_org_data.pt')"
+      },
+      {
+       "file": "data/mnist_loader_match_eval.py",
+       "lines": "38-39",
+       "code": "            mnist_imgs= torch.load( load_dir +  '_data.pt')\n            mnist_imgs_org= torch.load( load_dir +  '_org_data.pt')"
+      },
+      {
+       "file": "train.py",
+       "lines": "217-218",
+       "code": "    if args.method_name == 'matchdg_ctr':\n        val_dataset= get_dataloader( args, run, train_domains, 'val', 1, kwargs )            "
+      }
+     ]
+    },
+    "data.domain_transform": {
+     "value": [
+      {
+       "kind": "rotation",
+       "domains": [
+        0,
+        15,
+        30,
+        45,
+        60,
+        75
+       ],
+       "params": "angle = domain value in degrees (torchvision.transforms.functional.rotate on the PIL image); domain 0 is unrotated",
+       "direction": "counterclockwise",
+       "methods": null,
+       "note": "torchvision rotate with a positive angle rotates counterclockwise. The rotation is applied after resize and before ToTensor/Normalize and the augmentation."
+      }
+     ],
+     "evidence": [
+      {
+       "file": "data/data_gen_mnist.py",
+       "lines": "78-81",
+       "code": "        if domain == '0':\n            img_rotated= curr_image\n        else:\n            img_rotated= transforms.functional.rotate( curr_image, int(domain) )"
+      }
+     ]
+    },
+    "train.model_selection_data": {
+     "value": [
+      {
+       "use": "checkpoint",
+       "split": "val",
+       "domains": "source",
+       "version": "plain",
+       "metric": "val accuracy (max, strict >); reported number = test acc at that epoch",
+       "methods": [
+        "ERM",
+        "RandMatch",
+        "PerfMatch",
+        "MatchDG"
+       ],
+       "phase": "erm_match / matchdg_erm (MatchDG phase 2)",
+       "note": "Val is held-out samples (res[subset_size:]) rotated into the source domains, from _org_data.pt. The target (test) accuracy is computed each epoch, and train.py also prints the oracle np.max over epochs of the test accuracy ('Target Validation')."
+      },
+      {
+       "use": "checkpoint",
+       "split": "val",
+       "domains": "source",
+       "version": "augmented",
+       "metric": "TopK Perfect Match Score (top_k 10)",
+       "methods": [
+        "MatchDG"
+       ],
+       "phase": "phase 1 (matchdg_ctr), every 5 epochs",
+       "note": "Val loader with aug/org pairs of the source domains, via --match_func_aug_case 1."
+      },
+      {
+       "use": "checkpoint",
+       "split": "test",
+       "domains": "target",
+       "version": "plain",
+       "metric": "max over epochs of test accuracy (printed as 'Target Validation', oracle)",
+       "methods": [
+        "ERM",
+        "RandMatch",
+        "PerfMatch",
+        "MatchDG"
+       ],
+       "phase": "erm_match / matchdg_erm",
+       "note": "Also printed by train.py, but not the source-validation-selected number."
+      }
+     ],
+     "evidence": [
+      {
+       "file": "algorithms/erm_match.py",
+       "lines": "149-158",
+       "code": "            self.val_acc.append( self.get_test_accuracy('val') )\n            \n            #Test Dataset Accuracy\n            self.final_acc.append( self.get_test_accuracy('test') )\n            \n            #Save the model if current best epoch as per validation loss\n            if self.val_acc[-1] > self.max_val_acc:"
+      },
+      {
+       "file": "train.py",
+       "lines": "303-308",
+       "code": "        final_acc= np.max(train_method.final_acc)\n        final_accuracy_target_val.append( final_acc )\n        \n        idx= np.argmax(train_method.val_acc)\n        final_acc= train_method.final_acc[idx]\n        final_accuracy_source_val.append( final_acc  )"
+      },
+      {
+       "file": "algorithms/match_dg.py",
+       "lines": "263-266",
+       "code": "                if test_method.metric_score['TopK Perfect Match Score'] > self.max_val_score:\n                    self.max_val_score= test_method.metric_score['TopK Perfect Match Score']\n                    self.max_epoch= epoch\n                    self.save_model_ctr_phase(epoch)"
+      }
+     ]
+    }
+   }
+  },
+  "result_text": "{\"commands\":[{\"command\":\"python data/data_gen_mnist.py --dataset rot_mnist --model lenet --img_h 32 --img_w 32 --subset_size 1000\",\"source\":\"docs/notebooks/reproduce_results.ipynb:273\"},{\"command\":\"python3 reproduce_rmnist_lenet.py  (default methods erm rand matchdg_ctr matchdg_erm perf; loops over test domains 0,15,30,45,60,75 with the other five as train domains)\",\"source\":\"reproduce_scripts/reproduce_rmnist_lenet.py:6-46\"},{\"command\":\"python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 0.0 --penalty_ws 0.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 --train_domains <5 others> --test_domains <d>   (ERM)\",\"source\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\"},{\"command\":\"python train.py ... --method_name erm_match --match_case 0.0 --penalty_ws 1.0 --epochs 100 ... --total_matches_per_point 100   (RandMatch)\",\"source\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\"},{\"command\":\"python train.py ... --method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 ...   (PerfMatch)\",\"source\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\"},{\"command\":\"python train.py ... --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --match_func_aug_case 1 ...   (MatchDG phase 1)\",\"source\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25\"},{\"command\":\"python train.py ... --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name lenet --total_matches_per_point 100 ...   (MatchDG phase 2)\",\"source\":\"reproduce_scripts/reproduce_rmnist_lenet.py:28\"}],\"experiment\":\"Rotated MNIST (MNIST 0-75 degree rotations, 32x32), LeNet-5, leave-one-domain-out: train on five of {0,15,30,45,60,75}, test on the held-out one; methods ERM, RandMatch, MatchDG, PerfMatch\",\"notes\":[\"The data-prep command comes from the notebook, with --subset_size 1000. The reproduce script itself does not prepare data. data_gen_mnist.py defaults to subset_size 2000, so the notebook command gives 1000 train and 200 val per domain, not the 2000 and 400 of the default. I report the notebook value (1000/200).\",\"Train, val and test images for a domain all come from MNIST (train and test sets concatenated, 70000 images). The train and test splits use the same indices res[:subset_size] (np.random.choice with replacement), so the held-out test domain contains the same base images as the training domains, only rotated differently. Val uses res[subset_size:]. Test and train share seed numbers 0-2 for lenet (mnist_subset=run).\",\"For lenet the generator makes domains 0-75 only for train, val and test, with seeds 0,1,2. Domain 90 is in the loop list but is not generated in the lenet branch.\",\"The generator also stores an augmented copy (_data.pt: RandomResizedCrop(32, scale 0.7-1.0) + RandomHorizontalFlip, applied after the rotation). Training does not read it, because mnist_aug defaults to 0 and the loader reads _org_data.pt. Only the MatchDG phase-1 validation reads it (MnistRotatedAugEval, via --match_func_aug_case 1), as 'aug' vs 'org' pairs for the top-k match score that picks the checkpoint.\",\"Generation seeds (random.seed(seed*10) etc.) and the random-resized-crop/flip draws are not fixed per image beyond that global seeding.\",\"ERM, RandMatch and PerfMatch are all method erm_match. The CE loss is computed on the matched batch (one randomly chosen sample per domain from each match group), not on the plain loader batch. ERM is match_case 0 with penalty_ws 0. Since match_case 0 means random match within class and penalty_ws is 0, ERM is effectively CE on class-matched random tuples.\",\"The matching penalty weight ramps up linearly. With match_flag 0 (the default for the erm_match runs) the weight is penalty_ws*(epoch+1)/(epochs+1), which is about 0 at epoch 0 and about 1 at the end. The penalty is the mean squared L2 distance between logits (pos_metric default l2, match_layer logit_match) over all domain pairs of the matched tuples.\",\"MatchDG phase 2 (matchdg_erm) uses loss = CE on matched batches + CE on the ordinary batch (erm_loss_extra) + ramped penalty_ws * logit L2 matching loss. Its matches are inferred from the phase-1 contrastive LeNet (match_case -1), and its batch size is the default 16. Phase 1 uses NT-Xent-style contrastive loss (tau 0.05, cos), weighted by (epoch-penalty_s)/(epochs-penalty_s), a linear ramp. Phase 1 matches are re-inferred every 5 epochs (match_flag 1, match_interrupt 5).\",\"The optimizer is rebuilt at every LR step (epoch % 25 == 0, epoch>0), so momentum buffers reset. The StepLR created in BaseAlgo is never stepped. The LR is halved cumulatively: lr/2^(epoch//25). Phase 1 (matchdg_ctr) uses the base optimizer with no schedule, since the schedule is only in the ERM-phase loops.\",\"Checkpoint choice for the reported number: train.py prints two numbers. 'Source Validation' is the test accuracy at the epoch with max val accuracy (val = held-out samples from the training domains). 'Target Validation' is np.max over epochs of test accuracy, an oracle pick on the test domain. I take Source Validation as the proper number, but the code prints both and the reproduction script only redirects stdout to files. Test accuracy is computed every epoch.\",\"Spread printed: np.std, i.e. the population standard deviation over the 3 runs (ddof=0). The mean over domains in the 'Average' column is not computed by the repository code. The paper's average must be computed externally.\",\"train.py's matchdg_erm branch uses ctr_load_post_string with run, so phase 2 needs phase-1 models for each run from the same train_domains list. The model-save paths use str(train_domains) from the CLI.\",\"Phase-1 (matchdg_ctr) selection reads the val loader built with eval_case=1 (the 'aug'/'org' pair loader), 'TopK Perfect Match Score' evaluated every 5 epochs. Strict '>' means that ties keep the earlier checkpoint.\",\"Other scripts also exist: reproduce_rmnist_domainbed.py and mnist_run.py use different models (resnet18 and DomainBed). They are not for this experiment.\"],\"settings\":{\"data.source_domains\":{\"value\":\"Leave-one-domain-out: the five of {0,15,30,45,60,75} other than the held-out test domain (e.g. test 0 -> train 15,30,45,60,75)\",\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"11\",\"code\":\"domains= [0, 15, 30, 45, 60, 75]\"},{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"30-35\",\"code\":\"    for test_domain in domains:\\n\\n        train_domains=''\\n        for d in domains:\\n            if d != test_domain:\\n                train_domains+= str(d) + ' '\"}]},\"data.target_domains\":{\"value\":\"One held-out domain per run, each of 0,15,30,45,60,75 in turn\",\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"42\",\"code\":\"        script= base_script + ' --train_domains ' + str(train_domains) + ' --test_domains ' + str(test_domain) \"}]},\"data.domains_data_available\":{\"value\":[0,15,30,45,60,75],\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"176\",\"code\":\"domains= [0, 15, 30, 45, 60, 75, 90]\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"214-216\",\"code\":\"        elif model in ['lenet']:\\n            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:\\n                generate_rotated_domain_data(\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"244-246\",\"code\":\"        elif model in ['lenet', 'lenet_mdg']:\\n            if seed in [0, 1, 2] and domain in [0, 15, 30, 45, 60, 75]:\"}]},\"data.train_samples_per_domain\":{\"value\":1000,\"evidence\":[{\"file\":\"docs/notebooks/reproduce_results.ipynb\",\"lines\":\"273\",\"code\":\"    \\\"`python data/data_gen_mnist.py --dataset rot_mnist --model lenet --img_h 32 --img_w 32 --subset_size 1000`\\\\n\\\",\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"209\",\"code\":\"        indices= res[:subset_size]      \"}]},\"data.val_samples_per_domain\":{\"value\":200,\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"122\",\"code\":\"val_size= int(args.subset_size/5)\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"224\",\"code\":\"        indices= res[subset_size:]\"}]},\"data.generation_params\":{\"value\":{\"subset_size\":1000,\"val_size\":200,\"data_size\":60000,\"seeds_for_subsets\":[0,1,2],\"seed_multiplier\":10,\"base_data\":\"MNIST train+test concatenated, indices sampled with np.random.choice (with replacement)\",\"img_h\":32,\"img_w\":32,\"test_indices\":\"same as train indices res[:subset_size]\"},\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"108-109\",\"code\":\"parser.add_argument('--data_size', type=int, default=60000)\\nparser.add_argument('--subset_size', type=int, default=2000)\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"181-188\",\"code\":\"    random.seed(seed*10)\\n    np.random.seed(seed*10)     \\n    torch.manual_seed(seed*10)    \\n    if torch.cuda.is_available():\\n        torch.cuda.manual_seed_all(seed*10)\\n        \\n    # Indices\\n    res=np.random.choice(data_size, subset_size+val_size)\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"238-239\",\"code\":\"        save_dir= data_dir + data_case + '/' + 'seed_' + str(seed) + '_domain_' + str(domain)\\n        indices= res[:subset_size]\"}]},\"model.architecture\":{\"value\":\"LeNet-5 (conv 6@5x5, maxpool, conv 16@5x5, maxpool, FC 400-120-84-10), 32x32x1 input\",\"evidence\":[{\"file\":\"models/lenet.py\",\"lines\":\"18-38\",\"code\":\"nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=0, bias=True),\\n ... nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0, bias=True),\\n ... nn.Linear(16*5*5, 120),   \\n ... nn.Linear(120, 84),       \\n ... nn.Linear(84, 10),\"}]},\"optim.name\":{\"value\":\"sgd\",\"evidence\":[{\"file\":\"train.py\",\"lines\":\"61\",\"code\":\"parser.add_argument('--opt', type=str, default='sgd', \"},{\"file\":\"algorithms/algo.py\",\"lines\":\"182-185\",\"code\":\"        if self.args.opt == 'sgd':\\n            opt= optim.SGD([\\n                         {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \\n                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        \"}]},\"optim.momentum\":{\"value\":0.9,\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"185\",\"code\":\"                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        \"}]},\"optim.nesterov\":{\"value\":true,\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"185\",\"code\":\"                ], lr= self.args.lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )        \"}]},\"optim.lr\":{\"value\":0.01,\"evidence\":[{\"file\":\"train.py\",\"lines\":\"65\",\"code\":\"parser.add_argument('--lr', type=float, default=0.01, \"}]},\"optim.lr_schedule\":{\"value\":\"step: LR halved every 25 epochs (lr/2^(epoch//25)) by rebuilding the SGD optimizer (momentum reset) in ERM/erm_match/matchdg_erm loops; MatchDG phase 1 (contrastive) has no schedule (constant 0.01); the StepLR in BaseAlgo is never stepped\",\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"163-173\",\"code\":\"                if self.args.model_name == 'lenet':\\n                    lr_schedule_step= 25\\n ...\\n                if epoch % lr_schedule_step==0 :\\n                    lr=self.args.lr/(2**(int(epoch/lr_schedule_step)))\\n ...\\n                    self.opt= optim.SGD([\\n                             {'params': filter(lambda p: p.requires_grad, self.phi.parameters()) }, \\n                    ], lr= lr, weight_decay= self.args.weight_decay, momentum= 0.9,  nesterov=True )     \"},{\"file\":\"algorithms/match_dg.py\",\"lines\":\"389-397\",\"code\":\"                    if self.args.model_name == 'lenet':\\n                        lr_schedule_step= 25\\n ...\\n                        lr=self.args.lr/(2**(int(epoch/lr_schedule_step)))\"},{\"file\":\"algorithms/algo.py\",\"lines\":\"102\",\"code\":\"        self.scheduler = torch.optim.lr_scheduler.StepLR(self.opt, step_size=25)    \"}]},\"optim.weight_decay\":{\"value\":0.0005,\"evidence\":[{\"file\":\"train.py\",\"lines\":\"63\",\"code\":\"parser.add_argument('--weight_decay', type=float, default=5e-4,\"}]},\"train.batch_size\":{\"value\":{\"ERM\":16,\"RandMatch\":16,\"PerfMatch\":16,\"MatchDG\":\"16 in phase 2 (default); 512 in contrastive phase 1\"},\"evidence\":[{\"file\":\"train.py\",\"lines\":\"67\",\"code\":\"parser.add_argument('--batch_size', type=int, default=16, \"},{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"25\",\"code\":\"        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name lenet --img_h 32 --img_w 32 --match_func_aug_case 1 '\"}]},\"train.epochs\":{\"value\":{\"ERM\":100,\"RandMatch\":100,\"PerfMatch\":100,\"MatchDG\":\"50 (phase 1 contrastive) + 100 (phase 2)\"},\"evidence\":[{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"16\",\"code\":\"--method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 --model_name lenet\"},{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"25\",\"code\":\"--method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512\"},{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"28\",\"code\":\"--method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100\"}]},\"train.model_selection\":{\"value\":{\"ERM\":\"best_val_accuracy (val = held-out samples of the source domains; reported 'Source Validation' number = test acc at that epoch; train.py also prints an oracle max-over-epochs test accuracy)\",\"RandMatch\":\"best_val_accuracy (same)\",\"PerfMatch\":\"best_val_accuracy (same)\",\"MatchDG\":\"phase 1: best TopK Perfect Match Score on val (every 5 epochs, aug vs org pairs of source domains); phase 2: best_val_accuracy on source-domain val\"},\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"155-158\",\"code\":\"            if self.val_acc[-1] > self.max_val_acc:\\n                self.max_val_acc=self.val_acc[-1]\\n                self.max_epoch= epoch\\n                self.save_model()\"},{\"file\":\"train.py\",\"lines\":\"303-308\",\"code\":\"        final_acc= np.max(train_method.final_acc)\\n        final_accuracy_target_val.append( final_acc )\\n        \\n        idx= np.argmax(train_method.val_acc)\\n        final_acc= train_method.final_acc[idx]\\n        final_accuracy_source_val.append( final_acc  )\"},{\"file\":\"algorithms/match_dg.py\",\"lines\":\"263-266\",\"code\":\"                if test_method.metric_score['TopK Perfect Match Score'] > self.max_val_score:\\n                    self.max_val_score= test_method.metric_score['TopK Perfect Match Score']\\n                    self.max_epoch= epoch\\n                    self.save_model_ctr_phase(epoch)\"},{\"file\":\"algorithms/match_dg.py\",\"lines\":\"381-384\",\"code\":\"                if self.val_acc[-1] > self.max_val_acc:\\n                    self.max_val_acc= self.val_acc[-1]\\n                    self.max_epoch= epoch\\n                    self.save_model_erm_phase(run_erm)\"}]},\"loss.terms\":{\"value\":{\"ERM\":[{\"name\":\"cross_entropy on matched batch (random class-matched tuples across source domains)\",\"weight\":1,\"weight_schedule\":\"constant\"},{\"name\":\"matching penalty (L2 on logits)\",\"weight\":0,\"weight_schedule\":\"penalty_ws=0, so zero throughout\"}],\"RandMatch\":[{\"name\":\"cross_entropy on matched batch (random matches)\",\"weight\":1,\"weight_schedule\":\"constant\"},{\"name\":\"matching penalty (mean squared L2 distance of logits across domain pairs)\",\"weight\":1,\"weight_schedule\":\"linear_ramp_from_0: penalty_ws*(epoch+1)/(epochs+1)\"}],\"PerfMatch\":[{\"name\":\"cross_entropy on matched batch (perfect matches)\",\"weight\":1,\"weight_schedule\":\"constant\"},{\"name\":\"matching penalty (mean squared L2 distance of logits across domain pairs)\",\"weight\":1,\"weight_schedule\":\"linear_ramp_from_0: penalty_ws*(epoch+1)/(epochs+1)\"}],\"MatchDG\":[{\"name\":\"phase 1: contrastive NT-Xent-style hinge loss (cos, tau 0.05)\",\"weight\":1,\"weight_schedule\":\"linear_ramp_from_0: (epoch+1)/epochs\"},{\"name\":\"phase 2: cross_entropy on matched batch\",\"weight\":1,\"weight_schedule\":\"constant\"},{\"name\":\"phase 2: cross_entropy on ordinary batch\",\"weight\":1,\"weight_schedule\":\"constant\"},{\"name\":\"phase 2: matching penalty (L2 on logits, inferred matches)\",\"weight\":1,\"weight_schedule\":\"linear_ramp_from_0: penalty_ws*(epoch+1)/(epochs+1)\"}]},\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"77-79\",\"code\":\"                    erm_loss+= F.cross_entropy(feat_match, label_match.long()).to(self.cuda)\\n                    penalty_erm+= float(erm_loss)           \\n                    loss_e += erm_loss\"},{\"file\":\"algorithms/erm_match.py\",\"lines\":\"106-109\",\"code\":\"                    if epoch >= self.args.match_interrupt and self.args.match_flag==1:\\n                        loss_e += ( self.args.penalty_ws*( epoch - self.args.penalty_s - self.args.match_interrupt )/(self.args.epochs - self.args.penalty_s - self.args.match_interrupt) )*wasserstein_loss\\n                    else:\\n                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss\"},{\"file\":\"algorithms/match_dg.py\",\"lines\":\"233\",\"code\":\"                    loss_e += ( ( epoch- self.args.penalty_s )/(self.args.epochs -self.args.penalty_s) )*diff_hinge_loss\"},{\"file\":\"algorithms/match_dg.py\",\"lines\":\"354-356\",\"code\":\"                        loss_e += ( self.args.penalty_ws*( epoch- self.args.penalty_s )/(self.args.epochs - self.args.penalty_s) )*wasserstein_loss\\n                        loss_e += erm_loss\\n                        loss_e += erm_loss_extra\"},{\"file\":\"train.py\",\"lines\":\"71-72\",\"code\":\"parser.add_argument('--penalty_s', type=int, default=-1, \\n                    help='Epoch threshold over which Matching Loss to be optimised')\"}]},\"eval.n_seeds\":{\"value\":3,\"evidence\":[{\"file\":\"train.py\",\"lines\":\"93-94\",\"code\":\"parser.add_argument('--n_runs', type=int, default=3, \\n                    help='Number of iterations to repeat the training process')\"},{\"file\":\"train.py\",\"lines\":\"206-213\",\"code\":\"for run in range(args.n_runs):\\n    print('Run', run)\\n    #Seed for repoduability\\n    random.seed(run*10)\\n    np.random.seed(run*10) \\n    torch.manual_seed(run*10)    \\n    if torch.cuda.is_available():\\n        torch.cuda.manual_seed_all(run*10)    \"}]},\"eval.metric\":{\"value\":\"Top-1 classification accuracy (%) on the held-out test rotation domain (test samples = same base images as train indices, rotated)\",\"evidence\":[{\"file\":\"algorithms/algo.py\",\"lines\":\"266-267\",\"code\":\"                test_acc+= torch.sum( torch.argmax(out, dim=1) == y_e ).item()\\n                test_size+= y_e.shape[0]\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"238-239\",\"code\":\"        save_dir= data_dir + data_case + '/' + 'seed_' + str(seed) + '_domain_' + str(domain)\\n        indices= res[:subset_size]\"}]},\"eval.aggregation\":{\"value\":{\"per_test_domain\":\"mean and population standard deviation (np.std, ddof=0) over 3 runs (seeds 0,1,2), printed for source-validation-selected test accuracy and for oracle max-over-epochs test accuracy\",\"Average_column\":\"not computed in the repository code\"},\"evidence\":[{\"file\":\"train.py\",\"lines\":\"314-315\",\"code\":\"    print('Final Test Accuracy (Source Validation)', np.mean(final_accuracy_source_val), np.std(final_accuracy_source_val) )\\n    print('Final Test Accuracy (Target Validation)', np.mean(final_accuracy_target_val), np.std(final_accuracy_target_val) )\"}]},\"data.preprocessing.resize\":{\"value\":[{\"height\":32,\"width\":32,\"methods\":null,\"note\":\"Resize((img_w, img_h)) on the 28x28 PIL image before rotation, via --img_h 32 --img_w 32; done offline at data generation\"}],\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"28-31\",\"code\":\"    to_pil=  transforms.Compose([\\n            transforms.ToPILImage(),\\n            transforms.Resize((img_w, img_h))\\n        ])\"},{\"file\":\"reproduce_scripts/reproduce_rmnist_lenet.py\",\"lines\":\"19\",\"code\":\"--model_name lenet --img_h 32 --img_w 32 \"}]},\"data.preprocessing.normalization\":{\"value\":[{\"kind\":\"mean_std\",\"mean\":[0.1307],\"std\":[0.3081],\"methods\":null,\"note\":\"ToTensor then Normalize applied after the rotation, stored in _org_data.pt and _data.pt\"}],\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"38-41\",\"code\":\"    to_tensor=  transforms.Compose([\\n            transforms.ToTensor(),\\n            transforms.Normalize((0.1307,), (0.3081,))\\n        ])\"}]},\"data.augmentation\":{\"value\":[{\"ops\":[\"random_resized_crop(32, scale=(0.7,1.0))\",\"random_horizontal_flip\"],\"relative_to_domain_transform\":\"after\",\"applies_to\":[{\"split\":\"val\",\"domains\":\"source\",\"use\":\"model_selection\",\"methods\":[\"MatchDG\"],\"phase\":\"phase 1 (matchdg_ctr): top-k match score on augmented vs original pairs, every 5 epochs\"}],\"note\":\"The stored augmented copy (_data.pt) is applied after the rotation. It is not used for training (mnist_aug default 0 reads _org_data.pt) and not for test evaluation. Only the MatchDG phase-1 validation (MnistRotatedAugEval, --match_func_aug_case 1) loads the augmented tensors. ERM, RandMatch and PerfMatch and MatchDG phase 2 never see augmented data.\"}],\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"33-36\",\"code\":\"    to_augment= transforms.Compose([\\n            transforms.RandomResizedCrop(img_w, scale=(0.7,1.0)),\\n            transforms.RandomHorizontalFlip()\\n        ])\"},{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"83-85\",\"code\":\"        mnist_img_rot_org[i]= to_tensor(img_rotated)        \\n        #Augmentation\\n        mnist_img_rot[i]= to_tensor(to_augment(img_rotated))        \"},{\"file\":\"data/mnist_loader.py\",\"lines\":\"37-40\",\"code\":\"            if self.data_case =='train' and self.args.mnist_aug:                \\n                mnist_imgs= torch.load( load_dir +  '_data.pt')\\n            else:\\n                mnist_imgs= torch.load( load_dir +  '_org_data.pt')\"},{\"file\":\"data/mnist_loader_match_eval.py\",\"lines\":\"38-39\",\"code\":\"            mnist_imgs= torch.load( load_dir +  '_data.pt')\\n            mnist_imgs_org= torch.load( load_dir +  '_org_data.pt')\"},{\"file\":\"train.py\",\"lines\":\"217-218\",\"code\":\"    if args.method_name == 'matchdg_ctr':\\n        val_dataset= get_dataloader( args, run, train_domains, 'val', 1, kwargs )            \"}]},\"data.domain_transform\":{\"value\":[{\"kind\":\"rotation\",\"domains\":[0,15,30,45,60,75],\"params\":\"angle = domain value in degrees (torchvision.transforms.functional.rotate on the PIL image); domain 0 is unrotated\",\"direction\":\"counterclockwise\",\"methods\":null,\"note\":\"torchvision rotate with a positive angle rotates counterclockwise. The rotation is applied after resize and before ToTensor/Normalize and the augmentation.\"}],\"evidence\":[{\"file\":\"data/data_gen_mnist.py\",\"lines\":\"78-81\",\"code\":\"        if domain == '0':\\n            img_rotated= curr_image\\n        else:\\n            img_rotated= transforms.functional.rotate( curr_image, int(domain) )\"}]},\"train.model_selection_data\":{\"value\":[{\"use\":\"checkpoint\",\"split\":\"val\",\"domains\":\"source\",\"version\":\"plain\",\"metric\":\"val accuracy (max, strict >); reported number = test acc at that epoch\",\"methods\":[\"ERM\",\"RandMatch\",\"PerfMatch\",\"MatchDG\"],\"phase\":\"erm_match / matchdg_erm (MatchDG phase 2)\",\"note\":\"Val is held-out samples (res[subset_size:]) rotated into the source domains, from _org_data.pt. The target (test) accuracy is computed each epoch, and train.py also prints the oracle np.max over epochs of the test accuracy ('Target Validation').\"},{\"use\":\"checkpoint\",\"split\":\"val\",\"domains\":\"source\",\"version\":\"augmented\",\"metric\":\"TopK Perfect Match Score (top_k 10)\",\"methods\":[\"MatchDG\"],\"phase\":\"phase 1 (matchdg_ctr), every 5 epochs\",\"note\":\"Val loader with aug/org pairs of the source domains, via --match_func_aug_case 1.\"},{\"use\":\"checkpoint\",\"split\":\"test\",\"domains\":\"target\",\"version\":\"plain\",\"metric\":\"max over epochs of test accuracy (printed as 'Target Validation', oracle)\",\"methods\":[\"ERM\",\"RandMatch\",\"PerfMatch\",\"MatchDG\"],\"phase\":\"erm_match / matchdg_erm\",\"note\":\"Also printed by train.py, but not the source-validation-selected number.\"}],\"evidence\":[{\"file\":\"algorithms/erm_match.py\",\"lines\":\"149-158\",\"code\":\"            self.val_acc.append( self.get_test_accuracy('val') )\\n            \\n            #Test Dataset Accuracy\\n            self.final_acc.append( self.get_test_accuracy('test') )\\n            \\n            #Save the model if current best epoch as per validation loss\\n            if self.val_acc[-1] > self.max_val_acc:\"},{\"file\":\"train.py\",\"lines\":\"303-308\",\"code\":\"        final_acc= np.max(train_method.final_acc)\\n        final_accuracy_target_val.append( final_acc )\\n        \\n        idx= np.argmax(train_method.val_acc)\\n        final_acc= train_method.final_acc[idx]\\n        final_accuracy_source_val.append( final_acc  )\"},{\"file\":\"algorithms/match_dg.py\",\"lines\":\"263-266\",\"code\":\"                if test_method.metric_score['TopK Perfect Match Score'] > self.max_val_score:\\n                    self.max_val_score= test_method.metric_score['TopK Perfect Match Score']\\n                    self.max_epoch= epoch\\n                    self.save_model_ctr_phase(epoch)\"}]}}}",
+  "usage": {
+   "input_tokens": 12,
+   "cache_creation_input_tokens": 49616,
+   "cache_read_input_tokens": 179099,
+   "output_tokens": 14101,
+   "output_tokens_details": {
+    "thinking_tokens": 1634
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 49616,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "not_available",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 12148,
+     "cache_read_input_tokens": 57368,
+     "cache_creation_input_tokens": 3263,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 3263
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "total_cost_usd": 0.37531780000000003,
+  "duration_ms": 93622,
+  "num_turns": 15,
+  "models": [
+   "claude-sonnet-5-5"
+  ],
+  "session_id": "a22a2f01-a87a-465b-8b34-63da909edad5",
+  "permission_denials": [],
+  "wall_seconds": 94.8
+ }
+}

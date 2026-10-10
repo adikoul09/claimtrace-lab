@@ -1,0 +1,231 @@
+{
+ "commit": "72c57a92d6885e96139208a4fd469f5f5b4c0ea7",
+ "erm": {
+  "target": {
+   "log": "logs/naive_target_0.9_3m/train_erm.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 76,
+     "target_acc": 63.6,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 73,
+     "target_acc": 60.1,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 1,
+     "target_acc": 57.1,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 0,
+     "target_acc": 53.9,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 93,
+     "target_acc": 64.0,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 76,
+     "target_acc": 61.5,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 0,
+     "target_acc": 54.0,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 0,
+     "target_acc": 59.4,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 32,
+     "target_acc": 59.6,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 4,
+     "target_acc": 53.9,
+     "line": 6452
+    }
+   ],
+   "mean": 58.71,
+   "sd_pop": 3.66,
+   "sd_sample": 3.86,
+   "code_reported": {
+    "mean": 58.71,
+    "sd": 3.6596311289527534,
+    "line": 6456
+   }
+  }
+ },
+ "perf": {
+  "target": {
+   "log": "logs/naive_target_0.9_3m/train_perf.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 92,
+     "target_acc": 89.4,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 64,
+     "target_acc": 83.7,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 80,
+     "target_acc": 87.1,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 94,
+     "target_acc": 86.0,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 58,
+     "target_acc": 82.0,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 91,
+     "target_acc": 88.3,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 77,
+     "target_acc": 83.4,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 58,
+     "target_acc": 79.6,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 38,
+     "target_acc": 68.0,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 70,
+     "target_acc": 77.9,
+     "line": 6452
+    }
+   ],
+   "mean": 82.54,
+   "sd_pop": 5.97,
+   "sd_sample": 6.3,
+   "code_reported": {
+    "mean": 82.53999999999999,
+    "sd": 5.974646433053591,
+    "line": 6456
+   }
+  }
+ },
+ "rand": {
+  "target": {
+   "log": "logs/naive_target_0.9_3m/train_rand.log",
+   "n": 10,
+   "per_seed": [
+    {
+     "seed_run": 0,
+     "best_epoch": 64,
+     "target_acc": 65.7,
+     "line": 647
+    },
+    {
+     "seed_run": 1,
+     "best_epoch": 29,
+     "target_acc": 59.1,
+     "line": 1292
+    },
+    {
+     "seed_run": 2,
+     "best_epoch": 42,
+     "target_acc": 62.0,
+     "line": 1937
+    },
+    {
+     "seed_run": 3,
+     "best_epoch": 0,
+     "target_acc": 53.8,
+     "line": 2582
+    },
+    {
+     "seed_run": 4,
+     "best_epoch": 39,
+     "target_acc": 64.0,
+     "line": 3227
+    },
+    {
+     "seed_run": 5,
+     "best_epoch": 27,
+     "target_acc": 58.7,
+     "line": 3872
+    },
+    {
+     "seed_run": 6,
+     "best_epoch": 3,
+     "target_acc": 55.9,
+     "line": 4517
+    },
+    {
+     "seed_run": 7,
+     "best_epoch": 3,
+     "target_acc": 58.5,
+     "line": 5162
+    },
+    {
+     "seed_run": 8,
+     "best_epoch": 32,
+     "target_acc": 61.3,
+     "line": 5807
+    },
+    {
+     "seed_run": 9,
+     "best_epoch": 6,
+     "target_acc": 55.2,
+     "line": 6452
+    }
+   ],
+   "mean": 59.42,
+   "sd_pop": 3.66,
+   "sd_sample": 3.86,
+   "code_reported": {
+    "mean": 59.42,
+    "sd": 3.6586336247293203,
+    "line": 6456
+   }
+  }
+ }
+}

@@ -1,0 +1,636 @@
+<title>EL-01 Feature Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: one reading column (~72ch) for prose; figures and tables break out to 1040px. Lab-audit feel: cool paper, ink blue. */
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --fg:#15202B; --muted:#5A6775; --line:#D3DAE3;
+  --accent:#2C54C6; --accent-soft:#E5EBFA;
+  --ok:#1D7A4E; --ok-soft:#E3F3EA; --warn:#9A5B00; --warn-soft:#FBF0DC; --bad:#B0281F; --bad-soft:#FBE6E4; --na:#56616D; --na-soft:#ECEFF2;
+  --s1:#2a78d6; --s2:#eb6834;
+  --display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F151C; --surface:#161F29; --fg:#E5EBF1; --muted:#9AA7B5; --line:#2B3744;
+  --accent:#8AA8FF; --accent-soft:#1E2B4C;
+  --ok:#55C58F; --ok-soft:#14301F; --warn:#E7A748; --warn-soft:#352711; --bad:#F27A72; --bad-soft:#3A1A18; --na:#A3AEBA; --na-soft:#222C37;
+  --s1:#3987e5; --s2:#d95926;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#161F29; --fg:#E5EBF1; --muted:#9AA7B5; --line:#2B3744;
+  --accent:#8AA8FF; --accent-soft:#1E2B4C;
+  --ok:#55C58F; --ok-soft:#14301F; --warn:#E7A748; --warn-soft:#352711; --bad:#F27A72; --bad-soft:#3A1A18; --na:#A3AEBA; --na-soft:#222C37;
+  --s1:#3987e5; --s2:#d95926;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--fg); font:15px/1.6 var(--body); padding-inline:16px; padding-block:0 64px}
+.wrap{max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:56px}
+.col{max-width:72ch}
+header{padding-top:48px; display:flex; flex-direction:column; gap:12px}
+.eyebrow{font:500 12px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--accent)}
+h1{font:700 clamp(30px,5vw,44px)/1.1 var(--display); margin:0; text-wrap:balance}
+h2{font:600 26px/1.2 var(--display); margin:0; text-wrap:balance}
+h3{font:600 16px/1.3 var(--body); margin:0}
+p{margin:0}
+.lead{font-size:17px; color:var(--muted); max-width:64ch}
+section{display:flex; flex-direction:column; gap:18px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono); font-size:.92em; overflow-wrap:anywhere}
+a{color:var(--accent)}
+.facts{display:flex; flex-wrap:wrap; gap:8px 20px; font:500 12.5px/1.4 var(--mono); color:var(--muted)}
+.facts b{color:var(--fg); font-weight:500}
+.tbl{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:720px; font-size:14px}
+th,td{text-align:left; vertical-align:top; padding:11px 14px; border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{font:500 11px/1.2 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:var(--bg)}
+td.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.chip{display:inline-block; font:500 11px/1.25 var(--mono); letter-spacing:.03em; padding:5px 9px; border-radius:999px}
+.chip.sm{padding:2px 7px; font-size:10.5px}
+.c-ok{background:var(--ok-soft); color:var(--ok)}
+.c-warn{background:var(--warn-soft); color:var(--warn)}
+.c-bad{background:var(--bad-soft); color:var(--bad)}
+.c-na{background:var(--na-soft); color:var(--na)}
+.c-acc{background:var(--accent-soft); color:var(--accent)}
+.finds{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px}
+.find{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px 20px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.find .k{font:500 11.5px/1.2 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--accent)}
+.find h3{font:600 19px/1.3 var(--display)}
+.find p{font-size:14.5px; color:var(--muted)}
+.feats{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px}
+.feat{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 18px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.feat .k{font:500 12px/1 var(--mono); color:var(--accent)}
+.feat p{font-size:14px; color:var(--muted)}
+.feat .st{font:500 11.5px/1.3 var(--mono); color:var(--ok)}
+.feat .st.part{color:var(--warn)}
+figure{margin:0; display:flex; flex-direction:column; gap:10px}
+.fig{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; overflow-x:auto}
+.fig svg{display:block; width:100%; height:auto; min-width:680px}
+figcaption{font-size:14px; color:var(--muted); max-width:76ch}
+figcaption b{color:var(--fg); font-weight:600}
+.legend{display:flex; gap:18px; flex-wrap:wrap; font-size:13px; color:var(--muted); padding:0 4px 8px}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.legend i{width:10px; height:10px; border-radius:50%; display:inline-block}
+.legend i.d{border-radius:0; transform:rotate(45deg); width:9px; height:9px; background:var(--surface); border:2px solid var(--fg)}
+details{font-size:14px}
+summary{cursor:pointer; color:var(--accent); font-weight:500}
+summary:focus-visible, a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+details .tbl{margin-top:10px}
+.note{font-size:13px; color:var(--muted); max-width:80ch}
+/* evidence browser */
+.ev{display:grid; grid-template-columns:minmax(0,260px) minmax(0,1fr); gap:14px}
+@media (max-width:760px){ .ev{grid-template-columns:minmax(0,1fr)} }
+.ev-list{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:2px; max-height:520px; overflow:auto; min-width:0}
+.ev-list .grp{font:500 10.5px/1.2 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:10px 8px 4px}
+.ev-list button{all:unset; cursor:pointer; font:400 12.5px/1.35 var(--mono); padding:5px 8px; border-radius:6px; color:var(--fg); overflow-wrap:anywhere}
+.ev-list button:hover{background:var(--accent-soft)}
+.ev-list button[aria-current="true"]{background:var(--accent-soft); color:var(--accent)}
+.ev-view{background:var(--surface); border:1px solid var(--line); border-radius:10px; display:flex; flex-direction:column; min-width:0}
+.ev-bar{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--line); font:500 12px/1.3 var(--mono); color:var(--muted)}
+.ev-bar b{color:var(--fg); font-weight:500; overflow-wrap:anywhere}
+.ev-bar input{width:90px; font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg)}
+.ev-bar button, .trace button{font:500 12px/1 var(--mono); padding:6px 9px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--accent); cursor:pointer}
+.ev pre{margin:0; padding:10px 0; overflow:auto; max-height:520px; font:12px/1.5 var(--mono); tab-size:4}
+.ev pre .l{display:block; padding:0 12px; white-space:pre}
+.ev pre .l::before{content:attr(data-n); display:inline-block; width:6ch; margin-right:12px; text-align:right; color:var(--muted)}
+.ev pre .l.hit{background:var(--warn-soft)}
+.trace{display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:13.5px}
+.trace .lbl{color:var(--muted); margin-right:4px}
+.print-only{display:none}
+/* SVG classes */
+.n{fill:var(--surface); stroke:var(--line); stroke-width:1.5}
+.n-acc{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.5}
+.n-ok{fill:var(--ok-soft); stroke:var(--ok); stroke-width:1.5}
+.n-warn{fill:var(--warn-soft); stroke:var(--warn); stroke-width:1.5}
+.n-bad{fill:var(--bad-soft); stroke:var(--bad); stroke-width:1.5; stroke-dasharray:5 4}
+.n-na{fill:var(--na-soft); stroke:var(--na); stroke-width:1.5}
+.zone{fill:none; stroke:var(--accent); stroke-width:1.5; stroke-dasharray:6 5}
+.t{fill:var(--fg); font:600 13px var(--body)}
+.ts{fill:var(--muted); font:400 12px var(--body)}
+.tl{fill:var(--muted); font:500 11px var(--mono)}
+.tacc{fill:var(--accent); font:600 11.5px var(--mono)}
+.tbad{fill:var(--bad)} .tok{fill:var(--ok)} .twarn{fill:var(--warn)}
+.halo{paint-order:stroke; stroke:var(--surface); stroke-width:5px; stroke-linejoin:round}
+.ln{stroke:var(--muted); stroke-width:1.5; fill:none}
+.ln-acc{stroke:var(--accent); stroke-width:2; fill:none}
+.ln-dash{stroke:var(--muted); stroke-width:1.5; fill:none; stroke-dasharray:5 4}
+.ln-bad{stroke:var(--bad); stroke-width:1.5; fill:none; stroke-dasharray:5 4}
+.mk{fill:var(--muted)} .mk-acc{fill:var(--accent)} .mk-bad{fill:var(--bad)}
+.grid{stroke:var(--line); stroke-width:1}
+.axis0{stroke:var(--fg); stroke-width:1.5}
+.wh{stroke-width:2; stroke-linecap:round}
+.wh.s1{stroke:var(--s1)} .wh.s2{stroke:var(--s2)} .wh.fx{stroke:var(--fg)}
+.dot{stroke:var(--surface); stroke-width:2}
+.dot.s1{fill:var(--s1)} .dot.s2{fill:var(--s2)} .dot.fx{fill:var(--fg)}
+.dot-open{fill:var(--surface); stroke:var(--fg); stroke-width:2}
+.dmd{fill:var(--surface); stroke:var(--fg); stroke-width:2}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+/* Print: A4, light palette, nothing clipped, no screen-only controls */
+@page{size:A4; margin:14mm 12mm 14mm 12mm}
+.setup-list{margin:10px 0 0; padding-left:20px; font-size:14px; line-height:1.5; display:grid; gap:6px; max-width:78ch}
+h3.sub{font-size:16px; margin:24px 0 6px}
+@media print{
+  :root, :root[data-theme="dark"]{--bg:#FFFFFF; --surface:#FFFFFF; --fg:#15202B; --muted:#4A5663; --line:#C9D1DB; --accent:#2C54C6; --accent-soft:#E5EBFA;
+    --ok:#1D7A4E; --ok-soft:#E3F3EA; --warn:#8A5200; --warn-soft:#FBF0DC; --bad:#B0281F; --bad-soft:#FBE6E4; --na:#56616D; --na-soft:#ECEFF2; --s1:#2a78d6; --s2:#eb6834; color-scheme:light}
+  body{font-size:10pt; line-height:1.45; padding:0}
+  .wrap{max-width:none; gap:22px}
+  header{padding-top:0}
+  h1{font-size:24pt} h2{font-size:15pt; break-after:avoid; break-inside:avoid} h3{break-after:avoid; break-inside:avoid}
+  section > h2 + *{break-before:avoid}
+  .lead{font-size:11pt}
+  .tbl, .fig{overflow:visible; border-radius:4px}
+  table{min-width:0; font-size:8.6pt}
+  th{font-size:7.4pt}
+  th,td{padding:4px 6px}
+  td.num{white-space:normal}
+  tr, figure, .find, .feat, .callout{break-inside:avoid}
+  .fig{padding:8px}
+  .fig svg{min-width:0}
+  .screen-only, details > summary{display:none !important}
+  .print-only{display:block}
+  details{display:block}
+  a{color:var(--fg); text-decoration:none}
+  .finds{grid-template-columns:1fr 1fr}
+  .feats{grid-template-columns:1fr 1fr}
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">ELEVATE 1.0 · EL-01 · Round 0</span>
+  <h1>A claim-level reproducibility auditor</h1>
+  <p class="lead">It checks each claim in an ML paper against the paper's own code, and when the two disagree it re-runs the code to measure which difference moves the number. We ran it on a real paper before writing this page.</p>
+  <div class="facts">
+    <span>Paper <b>MatchDG, ICML 2021</b></span>
+    <span>Code <b>microsoft/robustdg @ 3eee173</b></span>
+    <span>Audited <b>Suppl. Table 11 (MatchDG) · Table 1 (motivating oracle)</b></span>
+    <span>Runs <b>{{TOTAL_RUNS}} training runs, CPU only</b></span>
+    <span>Evidence <b><a href="{{EVIDENCE_URL}}">{{EVIDENCE_LABEL}}</a></b></span>
+  </div>
+</header>
+
+<section>
+  <h2>What the audit found</h2>
+  <div class="finds">
+    <div class="find">
+      <span class="k">The paper's method · Suppl. Table 11</span>
+      <h3>MatchDG's own table: nothing refuted, {{N11:confirm:floor:Reproduced}} of 28 numbers confirmed within a point</h3>
+      <p>Re-run on fresh MNIST subsets with the rule and a 1-point margin floor hashed first, {{N11:confirm:floor:Reproduced}} numbers are Reproduced and {{N11:confirm:floor:Inconclusive}} are Inconclusive, including every cell at the two hardest rotations (0° and 75°); none is Not reproduced. MatchDG's average is {{CA:matchdg:ours}} against the paper's {{CA:matchdg:paper}}, and its gain over ERM reproduces ({{CR:matchdg_vs_erm:ours}} against {{CR:matchdg_vs_erm:paper}}). Its edge over RandMatch, {{CR:matchdg_vs_rand:paper}} in the paper, is too small for 3 runs to resolve in either of our runs.</p>
+    </div>
+    <div class="find">
+      <span class="k">The motivating oracle result · Table 1</span>
+      <h3>The oracle's advantage reproduces, but it depends on how one appendix sentence is read</h3>
+      <p>PerfMatch, which matches on the true stable feature and is not available in practice, beats ERM as the paper says. Read "early stopping based on the validation loss" as cross-entropy and the advantage disappears ({{H1_PERF}} points, confirmed {{H1C_PERF}} on fresh seeds); read it as the full training objective and it stays.</p>
+    </div>
+  </div>
+  <p class="col muted"><b style="color:var(--fg)">What works today:</b> the runner and the grader. Repairs, branch patches and the link from each claim to a runnable command were done by hand; claim cards and the settings diff were built by hand and then re-done blind by LLM extractors as a test (see <a href="#auto">What was automatic</a>).</p>
+</section>
+
+<section id="t11">
+  <h2>MatchDG itself: Rotated MNIST with LeNet (Suppl. Table 11)</h2>
+  <p class="col muted">The one table with the paper's own method that fits a CPU budget: 1,000 images per rotation, six rotations, each held out in turn. Run with the repo's own commands and the three logged repairs only. The paper's Tables 8 and 9 match the code's training settings for this experiment. One data difference does reach it, through MatchDG's checkpoint choice: F7, tested <a href="#f7">below</a> with no detectable effect.</p>
+  <p class="col">We ran it twice. The first run's rule, written and hashed before any run finished, used the paper's sd as the margin. Those sds are as small as 0.1 points, so with 3 runs every number came out Inconclusive, even where our mean landed within a tenth of a point. We then set the margin to max(paper's sd, 1 point), but only after seeing that run. So we re-ran the whole table on fresh MNIST subsets and new seeds, with the floor declared and every rule file hashed first, and graded that run alone. The headline quotes the confirmation.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Run</th><th>Margin</th><th>Margin declared</th><th class="num">Reproduced</th><th class="num">Inconclusive</th><th class="num">Not reproduced</th><th>MatchDG beats ERM</th></tr></thead>
+    <tbody>{{T11_SUMMARY}}</tbody>
+  </table></div>
+  <p class="note">Counts over 28 numbers per run: 24 cells and 4 six-domain averages, 3 runs each.</p>
+  <figure>
+    <div class="fig">
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--s1)"></i>confirmation, fresh subsets 3–5</span><span><i style="background:var(--surface);border:2px solid var(--fg)"></i>first run, subsets 0–2</span><span><i class="d"></i>paper</span><span>bar = 95% CI over 3 runs</span></div>
+      {{T11_SVG}}
+    </div>
+    <figcaption><b>Six-domain average target accuracy, both runs.</b> Filled dots are the confirmation, hollow dots the first run, diamonds the paper. Both runs land near the paper for every method, and MatchDG's gain over ERM is clear in both. The gaps between RandMatch, MatchDG and the oracle are a few tenths of a point in the paper, smaller than 3 runs can resolve.</figcaption>
+  </figure>
+  <div class="tbl"><table>{{T11_TABLE}}</table></div>
+  <p class="note">Confirmation run, ours / paper, target accuracy (%). <span class="chip sm c-ok">R</span> Reproduced: 90% CI of the difference inside ± max(paper's sd, 1 point). <span class="chip sm c-bad">N</span> Not reproduced: 95% CI excludes 0. <span class="chip sm c-na">I</span> Inconclusive: neither. The first run's cells, under both margins, are in the report (Part A2).</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Claim, six-domain average</th><th>Paper gap</th><th>First run: our gap (95% CI), verdict</th>{{T11_REL_HEAD}}</tr></thead>
+    <tbody>{{T11_REL}}</tbody>
+  </table></div>
+  <p class="col muted">On fresh data MatchDG's edge over RandMatch is {{CR:matchdg_vs_rand:ours}} points (first run {{LR:matchdg_vs_rand:ours}}, paper {{CR:matchdg_vs_rand:paper}}); Inconclusive both times, so the paper's ordering of the two matching methods is neither confirmed nor refuted. No Table 11 claim is flagged "setup differs": no code omission had to be filled for this table, and the one branch run on it (F7, <a href="#f7">below</a>) had no detectable effect. F3 (undocumented momentum) and F4 (ramped matching weight) apply and are recorded as notes; F4 had no detectable effect on Table 1. The text says RandMatch and MatchDG beat prior work at every domain except 0°. Against the prior-work rows printed in Table 11 (copied from other papers, not re-run), our MatchDG was clearly above the best one at {{LPRIOR1:matchdg:above}} in the first run, but in the confirmation it is not separable from it at {{LPRIOR:matchdg:not separable}}, so that claim is not confirmed.</p>
+</section>
+
+<section>
+  <h2>Table 1: the motivating oracle result depends on how the selection rule is read</h2>
+  <figure>
+    <div class="fig">
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--s2)"></i>ERM (baseline)</span><span><i style="background:var(--s1)"></i>PerfMatch (oracle)</span><span>dot = mean of 10 seeds, bar = ± 1 sd</span></div>
+      {{DOTS_SVG}}
+    </div>
+    <figcaption><b>Target-domain accuracy on the slab data, 10 seeds per point.</b> With the code's settings the oracle beats ERM by a wide margin, as the paper says. The appendix says "early stopping based on the validation loss". Read as cross-entropy (h1), it stops PerfMatch at epoch 1, before the matching weight has ramped up, and the advantage is gone. Read as the full training objective (h1b), it stops near epoch 88 and the advantage stays. With the paper's plain SGD (h2), no method learns the stable feature in 100 epochs; with 1000 epochs, plain SGD gives the code's result.</figcaption>
+  </figure>
+  <details>
+    <summary class="screen-only">Show as a table</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Setting</th><th>ERM</th><th>PerfMatch (oracle)</th><th>Gap</th></tr></thead>
+      <tbody>{{DOTS_TABLE}}</tbody>
+    </table></div>
+  </details>
+</section>
+
+<section>
+  <h2>Table 1 report card</h2>
+  <p class="col muted">Target-domain accuracy (%), mean ± sd over 10 seeds, all nine rows of the table. <b style="color:var(--fg)">Reproduced</b> requires the whole 90% CI of (ours − paper) inside ± max(the paper's sd, 1 point), an equivalence test; every Table 1 sd is above 1 point. "Tightest margin" is the smallest margin our data could confirm, so a reader can apply their own. Verdicts and the "setup differs" flag are computed by code from parsed logs.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Claim</th><th>Paper</th><th>Ours</th><th>Δ (95% CI)</th><th>Tightest margin vs margin used</th><th>Verdict</th><th>Setup differs</th></tr></thead>
+    <tbody>{{T1_VERDICTS}}</tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Relative claim</th><th>Paper gap</th><th>Our gap, paired (95% CI)</th><th>Our gap − paper gap, both uncertainties (95% CI)</th><th>Verdict</th><th>Setup differs</th></tr></thead>
+    <tbody>{{T1_RELATIVE}}</tbody>
+  </table></div>
+  <p class="col muted">The oracle's advantage over ERM reproduces in direction and size once the paper's own uncertainty is counted. Over RandMatch the direction holds but our gap is larger than reported, so it is Partially reproduced. No single number can be confirmed to within the paper's spread at 10 seeds, because the paper's sds are as large as the effects. Four numbers fall outside it (RandMatch, C-CORAL, DANN, CDANN).</p>
+  <p class="col muted"><b style="color:var(--fg)">"Setup differs" is a rule, not a judgement:</b> a claim gets it when a code omission had to be filled to run it, or when a finding's branch moves a method the claim names by an amount that survives Holm. Every Table 1 claim needed the target domain the code never generates (F1). F2 and F3 add to it where their branches move the number. F4 is not a reason anywhere: its branch had no detectable effect. Findings that apply but were not tested are listed as notes.</p>
+  <details>
+    <summary class="screen-only">Show the reasons and notes for each claim</summary>
+    {{T1_SETUP_HTML}}
+  </details>
+</section>
+
+<section>
+  <h2>Paper vs code settings</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Setting</th><th>Paper</th><th>Code</th><th>Kind</th><th>Found by</th></tr></thead>
+    <tbody>
+      <tr><td>F1</td><td>Target domain</td><td>p = 1.0 (Sec 3.2, App. A.1)</td><td>never generated <span class="mono">data_gen_syn.py:42</span></td><td><span class="chip c-bad">code omission</span></td><td>hand, blind extraction, SciCoQA</td></tr>
+      <tr><td>F2</td><td>Model selection</td><td>"early stopping based on the validation loss"</td><td>epoch with best validation <em>accuracy</em> <span class="mono">train.py:306</span></td><td><span class="chip c-warn">difference</span></td><td>hand, blind extraction</td></tr>
+      <tr><td>F3</td><td>Optimizer</td><td>"SGD"</td><td>momentum 0.9 + Nesterov <span class="mono">algo.py:185</span></td><td><span class="chip c-warn">paper omission</span></td><td>hand, blind extraction</td></tr>
+      <tr><td>F4</td><td>Matching weight</td><td>λ (Table 7), no schedule</td><td>ramps from ≈0 to λ over training <span class="mono">erm_match.py:109</span></td><td><span class="chip c-warn">paper omission</span></td><td>blind extraction, epoch trace</td></tr>
+      <tr><td>F5</td><td>DANN / CDANN learning rate</td><td>0.1 for all methods</td><td>hard-coded 0.01 <span class="mono">dann.py:38</span></td><td><span class="chip c-warn">difference</span></td><td>blind extraction</td></tr>
+      <tr><td>F6</td><td>Hyperparameter tuning</td><td>on 250 extra source-domain points</td><td>ranks settings by a log line holding <em>target</em> accuracy <span class="mono">slab-tune.py:82-100</span></td><td><span class="chip c-warn">difference</span></td><td>blind extraction (1 of 2 runs)</td></tr>
+      <tr><td>F7</td><td>Rotated MNIST augmented copy (Table 11)</td><td>no augmentation described for Rotated MNIST</td><td>random crop, then horizontal flip <em>after</em> rotation, so a flipped +θ digit is a mirrored digit at −θ <span class="mono">data_gen_mnist.py:34-35, 85</span></td><td><span class="chip c-warn">paper omission</span></td><td>SciCoQA only (missed by hand and blind extraction)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col muted">F1 to F6 concern Table 1; F7 concerns Table 11. SciCoQA, a benchmark of real paper-code discrepancies, lists two for this repo, both from one ML Reproducibility Challenge report: F1 (<a href="https://github.com/UKPLab/scicoqa/blob/463162906459be508ed4a2294fcaede9fa072036/data/scicoqa-real-v1.1.jsonl#L68">row 68</a>) and F7 (<a href="https://github.com/UKPLab/scicoqa/blob/463162906459be508ed4a2294fcaede9fa072036/data/scicoqa-real-v1.1.jsonl#L67">row 67</a>). Our hand audit and the blind extraction found F1 and missed F7, so our recall against SciCoQA on this repo is 1 of 2; we added F7 after checking SciCoQA's rows for the repo. F2 to F6 are not in SciCoQA. No finding carries a severity label: the one a reader would rank highest (F1) moved the oracle result by {{EB:naive_target_0.9_3m:perf}} points, while F2 and F3 each moved it by more than 25.</p>
+</section>
+
+<section id="f7">
+  <h2>F7: SciCoQA's second row reaches MatchDG's checkpoint choice, and does not move Table 11</h2>
+  <p class="col">The data generator saves two copies of every rotated digit: a plain one and an augmented one, made by a random crop and then a random horizontal flip <em>after</em> the rotation (<span class="mono">data/data_gen_mnist.py:34-35, 85</span> at 3eee173). Half the augmented images are mirrored digits that look rotated the other way. The paper never says Rotated MNIST is augmented (the supplement describes augmentation for PACS and Chest X-ray only), and it does not say how MatchDG's first, contrastive phase picks its checkpoint.</p>
+  <p class="col"><b>Is it on the Table 11 path?</b> For training and testing, no. ERM, RandMatch, the oracle and MatchDG's second phase read only the plain copy (<span class="mono">--mnist_aug 0</span>, <span class="mono">data/mnist_loader.py:37-40</span>). But MatchDG's first phase validates on pairs of plain and augmented images (<span class="mono">reproduce_rmnist_lenet.py:25</span> → <span class="mono">train.py:217-218</span> → <span class="mono">utils/helper.py:173-175</span> → <span class="mono">data/mnist_loader_match_eval.py:38</span>) and keeps the epoch with the best match score on them (<span class="mono">algorithms/match_dg.py:263-266</span>). The second phase builds its matches with that checkpoint, so F7 can reach MatchDG's numbers in Table 11, and only those.</p>
+  <p class="col"><b>The test.</b> Branch h7 removes the flips and keeps every crop: it draws the same random number the flip would. Against the confirmation's data, {{F7:data:plain}} plain and label files are byte-identical, and of {{F7:data:aug}} augmented images {{F7:data:flip}} differ only by the flip and none in any other way. MatchDG was re-run on the confirmation's subsets and seeds, paired by run, with the rule hashed before any run: the six-domain average is the primary test, cells are Holm-corrected, and F7 becomes a "setup differs" reason only if its effect survives.</p>
+  <div class="tbl"><table>{{F7_HTML}}</table></div>
+  <p class="note">Target accuracy (%), mean of 3 runs. "Same contrastive-phase checkpoint": runs where both arms kept the same first-phase epoch.</p>
+  <p class="col muted">Without flips, the first phase's selection score (the share of validation images whose own augmented copy ranks in the top k) rises from about {{F7:topk:base}}% to {{F7:topk:branch}}% at the chosen epoch, and the chosen checkpoint changes in {{F7:changed}} runs. Where it did not change, the final accuracy was identical ({{F7:same_identical}} runs), so the pipeline is deterministic; where it did, single runs moved by up to {{F7:maxrun}} points in either direction. On the six-domain average the effect is {{F7:avg:effect}} points (95% CI {{F7:avg:ci}}) and {{F7:holm}} of 6 cells survive Holm. So F7 is real and on the path, but it does not change any Table 11 verdict; it is a note on MatchDG's claims. Grader: <span class="mono">scripts/grade_f7.py</span>; after the runs it was edited only to cast two numpy booleans for JSON (statistics unchanged; the hashed copy is in the evidence).</p>
+</section>
+
+<section>
+  <h2>Which differences move the number</h2>
+  <figure>
+    <div class="fig">
+      {{FOREST_SVG}}
+    </div>
+    <figcaption><b>Effect of each branch on target accuracy, points, with 95% CI, paired by seed.</b> Filled dots survive a Holm correction across all {{N_EFFECTS}} exploratory effects; hollow dots do not. The two confirmation rows are a separate pre-specified test on fresh seeds. Together, h1 and h2 cost PerfMatch {{H12_PERF}} points, less than their separate effects add up to, because accuracy cannot fall below chance; so the report never gives a share of the gap.</figcaption>
+  </figure>
+  <details>
+    <summary class="screen-only">Show every effect, the epoch each rule picked and source accuracy</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Branch</th><th>Method</th><th>Branch mean</th><th>Effect (95% CI)</th><th>After Holm</th><th>Epoch picked (median)</th><th>Source val. acc. there</th></tr></thead>
+      <tbody>{{EFFECTS_TABLE}}</tbody>
+    </table></div>
+  </details>
+  <div class="finds">
+    <div class="find"><span class="k">F2 · selection rule</span><p>Decisive and ambiguous. Training is identical under all three rules (last-epoch numbers match exactly); only the reported checkpoint changes. Cross-entropy picks epoch 1 at 98% source accuracy; the full objective picks epoch 88 ({{H1B_PERF}}, no detectable effect).</p></div>
+    <div class="find"><span class="k">F3 · momentum</span><p>A training-budget detail, not a failure to train. Under plain SGD every method reaches about 98.5% source accuracy using the spurious feature, and none learns the stable one in 100 epochs ({{H2_PERF}} for PerfMatch). At 1000 epochs plain SGD matches the code ({{H2L_PERF}}).</p></div>
+    <div class="find"><span class="k">F4, F5, F6</span><p>No detectable effect on the oracle. The ramped weight matters only through F2. DANN and CDANN stay at chance at the paper's learning rate, so their gap is reported as unexplained. Re-tuning λ on source data picks the published λ = 1.0.</p></div>
+    <div class="find"><span class="k">F1 · the missing domain (h3)</span><p>A "make it run" agent might quietly evaluate on p = 0.9, the nearest domain the code builds. Run as a branch, every number lands near the paper and RandMatch reaches {{H3_RAND}} against 59.5. Two other changes also bring RandMatch near 59.5, so we report an open question, not a cause.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>How the run was made to work</h2>
+  <figure>
+    <div class="fig">
+    <svg viewBox="0 0 1000 330" role="img" aria-label="Git history of the audit: the shipped commit, three logged repairs with an inertness check, then the paper's missing target domain as branch h0, which is the baseline. Hypothesis branches come off the baseline. A naive repair that evaluates on the wrong domain is shown as not allowed; it was run as branch h3 instead.">
+      <defs>
+        <marker id="aG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+        <marker id="aGb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk-bad"/></marker>
+      </defs>
+      <rect x="20" y="40" width="150" height="62" rx="8" class="n"/>
+      <text x="95" y="64" text-anchor="middle" class="t">3eee173</text><text x="95" y="82" text-anchor="middle" class="ts">as shipped</text><text x="95" y="96" text-anchor="middle" class="tl tbad">not runnable</text>
+      <rect x="210" y="40" width="190" height="62" rx="8" class="n"/>
+      <text x="305" y="62" text-anchor="middle" class="t">3 logged repairs</text><text x="305" y="80" text-anchor="middle" class="ts">path · CPU · DP hook guard</text><text x="305" y="95" text-anchor="middle" class="tl">trace: 0 opacus calls</text>
+      <rect x="440" y="40" width="190" height="62" rx="8" class="n-acc"/>
+      <text x="535" y="62" text-anchor="middle" class="t">h0 · baseline</text><text x="535" y="80" text-anchor="middle" class="ts">adds paper's p = 1.0 domain</text><text x="535" y="95" text-anchor="middle" class="tl">flagged, not a repair</text>
+      <line x1="170" y1="71" x2="208" y2="71" class="ln" marker-end="url(#aG)"/>
+      <line x1="400" y1="71" x2="438" y2="71" class="ln" marker-end="url(#aG)"/>
+      <rect x="690" y="10" width="290" height="50" rx="8" class="n"/>
+      <text x="706" y="31" class="t">h1 · select on validation cross-entropy</text><text x="706" y="49" class="ts">PerfMatch {{H1_PERF}} · confirmed {{H1C_PERF}}</text>
+      <rect x="690" y="70" width="290" height="50" rx="8" class="n"/>
+      <text x="706" y="91" class="t">h1b · select on full objective</text><text x="706" y="109" class="ts">PerfMatch {{H1B_PERF}}, not detectable</text>
+      <rect x="690" y="130" width="290" height="50" rx="8" class="n"/>
+      <text x="706" y="151" class="t">h2 · plain SGD</text><text x="706" y="169" class="ts">{{H2_PERF}} at 100 epochs · {{H2L_PERF}} at 1000</text>
+      <rect x="690" y="190" width="290" height="50" rx="8" class="n"/>
+      <text x="706" y="211" class="t">h1 + h2 · interaction · h4, h5, h6</text><text x="706" y="229" class="ts">{{H12_PERF}} combined · others not detectable</text>
+      <polyline points="630,56 660,56 660,35 688,35" class="ln" marker-end="url(#aG)"/>
+      <polyline points="630,66 668,66 668,95 688,95" class="ln" marker-end="url(#aG)"/>
+      <polyline points="630,76 676,76 676,155 688,155" class="ln" marker-end="url(#aG)"/>
+      <polyline points="630,86 684,86 684,215 686,215" class="ln" marker-end="url(#aG)"/>
+      <rect x="440" y="262" width="400" height="56" rx="8" class="n-bad"/>
+      <text x="456" y="284" class="t tbad">Naive repair: evaluate on p = 0.9</text><text x="456" y="303" class="ts">not allowed as a repair; run as branch h3 instead</text>
+      <polyline points="305,102 305,290 438,290" class="ln-bad" marker-end="url(#aGb)"/>
+      <text x="315" y="230" class="tl tbad">not allowed</text>
+    </svg>
+    </div>
+    <figcaption><b>Every change is a commit, and only some changes count as repairs.</b> A repair may only make the code run, and must pass an inertness check: here the shipped code crashes without the third repair, so a run with it was traced and made zero calls into the privacy library. Anything touching data, model, loss, optimizer, metric or selection becomes a hypothesis branch.</figcaption>
+  </figure>
+</section>
+
+<section id="auto">
+  <h2>What was automatic, and what was by hand</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>How it was done in this audit</th></tr></thead>
+    <tbody>
+      <tr><td>Run the shipped code, pin dependencies to the commit date</td><td><span class="chip c-ok">script</span></td></tr>
+      <tr><td>Three repairs</td><td><span class="chip c-warn">by hand</span> each a logged commit; inertness check scripted</td></tr>
+      <tr><td>Claim cards (Table 1 numbers)</td><td><span class="chip c-warn">by hand</span>, then <span class="chip c-acc">blind LLM test</span>: 9/9 target cells right in both runs; caught a typo in our hand table (C-CORAL sd)</td></tr>
+      <tr><td>Paper vs code settings diff</td><td><span class="chip c-warn">by hand</span> (3 findings), then <span class="chip c-acc">blind LLM test</span>: separate paper and code extractors plus a fixed diff script recover our 3 findings in 4 of 4 run pairings, and add F4, F5 and F6</td></tr>
+      <tr><td>Claim to runnable command (e.g. "Table 1, PerfMatch" to a <span class="mono">train.py</span> call)</td><td><span class="chip c-warn">by hand</span> from the repo's reproduce scripts</td></tr>
+      <tr><td>Hypothesis branches</td><td><span class="chip c-warn">by hand</span> code edits, one commit each; runs scripted</td></tr>
+      <tr><td>Parsing, statistics, verdicts, every number on this page</td><td><span class="chip c-ok">script</span> no LLM involved</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col muted">The extraction test is on the same paper we audited by hand, so it shows the step works on MatchDG, not that it generalises. One bug in the diff script (a name filter that also matched "cross-domain") was fixed after the first scoring run; before the fix, F4 was missed in every pairing.</p>
+</section>
+
+<section>
+  <h2>Four features</h2>
+  <div class="feats">
+    <div class="feat"><span class="k">1</span><h3>Claim cards</h3><p>Each reported number becomes a typed claim (absolute, relative or trend), pinned to page, cell and quote, and tagged as the paper's method, a baseline or an oracle.</p><span class="st part">blind extraction tested on MatchDG; claim-to-command link by hand</span></div>
+    <div class="feat"><span class="k">2</span><h3>Paper vs code diff</h3><p>Separate extractors fill one schema; a fixed script labels each mismatch a difference, a code omission or a paper omission. No severity labels.</p><span class="st part">blind extraction tested on MatchDG</span></div>
+    <div class="feat"><span class="k">3</span><h3>Controlled runs</h3><p>Execution ladder, date-pinned dependencies, repair policy with an inertness check, hard-coded-seed check, verdicts computed by code.</p><span class="st part">runner and grader working; repairs by hand</span></div>
+    <div class="feat"><span class="k">4</span><h3>Diff-guided ablation</h3><p>One git branch per finding, one per reading of an ambiguous one. Paired effects, Holm correction, a confirmation run on fresh seeds and an interaction check.</p><span class="st part">runner and grader working; branch patches by hand</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Architecture</h2>
+  <figure>
+    <div class="fig">
+    <svg viewBox="0 0 1000 470" role="img" aria-label="Architecture: paper and repo are read by separate extractor agents into claim cards and a settings diff; a sandbox builds the environment, runs seeds and runs one branch per diff finding; logs go to an evidence store; a deterministic grader computes verdicts; an LLM writes only the explanation text.">
+      <defs><marker id="aA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker></defs>
+      <rect x="20" y="70" width="130" height="56" rx="8" class="n"/><text x="85" y="94" text-anchor="middle" class="t">Paper</text><text x="85" y="112" text-anchor="middle" class="ts">PDF</text>
+      <rect x="20" y="190" width="130" height="56" rx="8" class="n"/><text x="85" y="214" text-anchor="middle" class="t">Code repo</text><text x="85" y="232" text-anchor="middle" class="ts">URL + commit</text>
+      <rect x="200" y="70" width="160" height="56" rx="8" class="n"/><text x="280" y="94" text-anchor="middle" class="t">Paper extractor</text><text x="280" y="112" text-anchor="middle" class="ts">LLM agent, cached</text>
+      <rect x="200" y="190" width="160" height="56" rx="8" class="n"/><text x="280" y="214" text-anchor="middle" class="t">Code extractor</text><text x="280" y="232" text-anchor="middle" class="ts">LLM agent, separate</text>
+      <rect x="450" y="70" width="170" height="56" rx="8" class="n"/><text x="535" y="94" text-anchor="middle" class="t">Claim cards</text><text x="535" y="112" text-anchor="middle" class="ts">typed, pinned, roles</text>
+      <rect x="450" y="190" width="170" height="56" rx="8" class="n-acc"/><text x="535" y="214" text-anchor="middle" class="t">Settings diff</text><text x="535" y="232" text-anchor="middle" class="ts">fixed rules, 3 kinds</text>
+      <rect x="680" y="24" width="300" height="290" rx="12" class="zone"/>
+      <text x="696" y="46" class="tacc">SANDBOX · fetch online, run offline</text>
+      <rect x="700" y="62" width="260" height="56" rx="8" class="n"/><text x="830" y="86" text-anchor="middle" class="t">Env builder</text><text x="830" y="104" text-anchor="middle" class="ts">ladder, deps pinned to commit date</text>
+      <rect x="700" y="146" width="260" height="56" rx="8" class="n"/><text x="830" y="170" text-anchor="middle" class="t">Runner</text><text x="830" y="188" text-anchor="middle" class="ts">seeds, repairs, inertness check</text>
+      <rect x="700" y="230" width="260" height="56" rx="8" class="n-acc"/><text x="830" y="254" text-anchor="middle" class="t">Hypothesis branches</text><text x="830" y="272" text-anchor="middle" class="ts">one git worktree per finding</text>
+      <rect x="200" y="350" width="780" height="40" rx="8" class="n"/><text x="590" y="375" text-anchor="middle" class="t">Evidence store · commits, logs, parsed numbers with line refs</text>
+      <rect x="430" y="414" width="220" height="44" rx="8" class="n-acc"/><text x="540" y="441" text-anchor="middle" class="t">Grader (plain code)</text>
+      <rect x="720" y="414" width="260" height="44" rx="8" class="n"/><text x="850" y="441" text-anchor="middle" class="t">Report</text>
+      <rect x="200" y="414" width="180" height="44" rx="8" class="n"/><text x="290" y="434" text-anchor="middle" class="t">LLM</text><text x="290" y="450" text-anchor="middle" class="ts">explanation text only</text>
+      <line x1="150" y1="98" x2="198" y2="98" class="ln" marker-end="url(#aA)"/>
+      <line x1="150" y1="218" x2="198" y2="218" class="ln" marker-end="url(#aA)"/>
+      <line x1="360" y1="98" x2="448" y2="98" class="ln" marker-end="url(#aA)"/><text x="404" y="90" text-anchor="middle" class="tl">claims</text>
+      <line x1="360" y1="218" x2="448" y2="218" class="ln" marker-end="url(#aA)"/><text x="404" y="238" text-anchor="middle" class="tl">code settings</text>
+      <line x1="352" y1="126" x2="458" y2="190" class="ln" marker-end="url(#aA)"/><text x="405" y="162" text-anchor="middle" class="tl halo">paper settings</text>
+      <line x1="620" y1="94" x2="698" y2="90" class="ln" marker-end="url(#aA)"/><text x="658" y="84" text-anchor="middle" class="tl">what to run</text>
+      <line x1="620" y1="226" x2="698" y2="252" class="ln-acc" marker-end="url(#aA)"/><text x="652" y="226" text-anchor="middle" class="tacc halo">findings</text>
+      <line x1="830" y1="118" x2="830" y2="144" class="ln" marker-end="url(#aA)"/>
+      <line x1="830" y1="202" x2="830" y2="228" class="ln" marker-end="url(#aA)"/>
+      <line x1="830" y1="286" x2="830" y2="348" class="ln-dash" marker-end="url(#aA)"/><text x="840" y="330" class="tl">logs, commits</text>
+      <line x1="540" y1="390" x2="540" y2="412" class="ln" marker-end="url(#aA)"/>
+      <line x1="650" y1="436" x2="718" y2="436" class="ln" marker-end="url(#aA)"/><text x="684" y="428" text-anchor="middle" class="tl">verdicts</text>
+      <polyline points="290,390 290,412" class="ln-dash" marker-end="url(#aA)"/>
+      <polyline points="380,452 400,452 400,466 980,466 980,460" class="ln-dash"/>
+    </svg>
+    </div>
+    <figcaption><b>No model judges a number.</b> LLM agents read the paper and the code and write explanations; every number and verdict comes from code that parses logs and cites the log line and commit. A number that cannot be traced blocks the report as a pipeline bug.</figcaption>
+  </figure>
+</section>
+
+<section id="ui">
+  <h2>What the user sees: paper and repo in, report out</h2>
+  <figure>
+    <div class="fig">
+    <svg viewBox="0 0 1000 380" role="img" aria-label="Wireframe of three screens. One: submit a paper, its code repository and commit, the claims to audit and a compute budget. Two: watch the job, with each pipeline step ticked off, run progress and the latest logged repair. Three: read the report, with a verdict per claim, the setup-differs flag, and which paper-code differences move the number. Screens one and two are to be built; screen three exists as this page.">
+      <defs><marker id="aW" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker></defs>
+      <!-- screen 1 -->
+      <rect x="20" y="30" width="300" height="335" rx="10" class="n"/>
+      <rect x="20" y="30" width="300" height="38" rx="10" class="n-acc"/>
+      <text x="36" y="54" class="t">1 · Submit a paper</text>
+      <rect x="236" y="40" width="72" height="20" rx="10" class="n-na"/><text x="272" y="54" text-anchor="middle" class="tl">to build</text>
+      <text x="36" y="96" class="tl">PAPER</text><rect x="36" y="102" width="268" height="30" rx="6" class="n"/><text x="46" y="122" class="ts">PMLR v139 · mahajan21b.pdf</text>
+      <text x="36" y="152" class="tl">CODE</text><rect x="36" y="158" width="268" height="30" rx="6" class="n"/><text x="46" y="178" class="ts">microsoft/robustdg @ 3eee173</text>
+      <text x="36" y="208" class="tl">CLAIMS TO AUDIT</text><rect x="36" y="214" width="268" height="30" rx="6" class="n"/><text x="46" y="234" class="ts">Table 1 · Suppl. Table 11</text>
+      <text x="36" y="264" class="tl">BUDGET</text><rect x="36" y="270" width="268" height="30" rx="6" class="n"/><text x="46" y="290" class="ts">CPU only · 4 jobs · 2 h cap</text>
+      <rect x="36" y="316" width="128" height="34" rx="8" class="n-acc"/><text x="100" y="338" text-anchor="middle" class="t">Start audit</text>
+      <!-- screen 2 -->
+      <rect x="350" y="30" width="300" height="335" rx="10" class="n"/>
+      <rect x="350" y="30" width="300" height="38" rx="10" class="n-acc"/>
+      <text x="366" y="54" class="t">2 · Watch the job</text>
+      <rect x="566" y="40" width="72" height="20" rx="10" class="n-na"/><text x="602" y="54" text-anchor="middle" class="tl">to build</text>
+      <text x="366" y="100" class="t tok">✓</text><text x="386" y="100" class="ts">Claim cards extracted</text>
+      <text x="366" y="130" class="t tok">✓</text><text x="386" y="130" class="ts">Paper vs code diff: 7 findings</text>
+      <text x="366" y="160" class="t tok">✓</text><text x="386" y="160" class="ts">Environment pinned to 2022-03-21</text>
+      <text x="366" y="190" class="t tacc">●</text><text x="386" y="190" class="ts">Runs: 18 of 24 jobs</text>
+      <rect x="386" y="198" width="248" height="8" rx="4" class="n"/><rect x="386" y="198" width="186" height="8" rx="4" class="n-acc"/>
+      <text x="366" y="232" class="ts">○</text><text x="386" y="232" class="ts">One branch per finding</text>
+      <text x="366" y="262" class="ts">○</text><text x="386" y="262" class="ts">Grade, then write the report</text>
+      <rect x="366" y="290" width="268" height="58" rx="6" class="n"/>
+      <text x="378" y="310" class="tl">LATEST REPAIR</text>
+      <text x="378" y="330" class="ts">45e7771 compat guard · inert</text>
+      <!-- screen 3 -->
+      <rect x="680" y="30" width="300" height="335" rx="10" class="n"/>
+      <rect x="680" y="30" width="300" height="38" rx="10" class="n-acc"/>
+      <text x="696" y="54" class="t">3 · Read the report</text>
+      <rect x="896" y="40" width="72" height="20" rx="10" class="n-ok"/><text x="932" y="54" text-anchor="middle" class="tl tok">built</text>
+      <text x="696" y="100" class="ts">MatchDG avg {{CA:matchdg:ours}} vs {{CA:matchdg:paper}}</text><rect x="878" y="86" width="92" height="22" rx="11" class="n-ok"/><text x="924" y="101" text-anchor="middle" class="tl tok">Reproduced</text>
+      <text x="696" y="134" class="ts">MatchDG beats ERM</text><rect x="878" y="120" width="92" height="22" rx="11" class="n-ok"/><text x="924" y="135" text-anchor="middle" class="tl tok">Reproduced</text>
+      <text x="696" y="168" class="ts">MatchDG beats RandMatch</text><rect x="878" y="154" width="92" height="22" rx="11" class="n-na"/><text x="924" y="169" text-anchor="middle" class="tl">Inconclusive</text>
+      <text x="696" y="202" class="ts">Oracle beats ERM (Table 1)</text><rect x="878" y="188" width="92" height="22" rx="11" class="n-ok"/><text x="924" y="203" text-anchor="middle" class="tl tok">Reproduced</text>
+      <text x="696" y="222" class="tl twarn">setup differs: F1, F2, F3</text>
+      <text x="696" y="258" class="tacc">WHICH DIFFERENCES MOVE IT</text>
+      <text x="696" y="282" class="ts">F2 selection rule: oracle {{EB:h_select_valloss:perf}}</text>
+      <text x="696" y="306" class="ts">F3 momentum: 1000 epochs to match</text>
+      <text x="696" y="344" class="tl">every number links to its log line</text>
+      <line x1="322" y1="198" x2="347" y2="198" class="ln" marker-end="url(#aW)"/>
+      <line x1="652" y1="198" x2="677" y2="198" class="ln" marker-end="url(#aW)"/>
+    </svg>
+    </div>
+    <figcaption><b>Wireframe; values from the MatchDG audit, job state illustrative.</b> The third screen already exists: this page and the audit report are rendered by script from <span class="mono">grades.json</span>, so the report half of the interface is built. The submit screen, the job queue and the live status are not.</figcaption>
+  </figure>
+</section>
+
+<section id="scaling">
+  <h2>Cost and scaling</h2>
+  <p class="col">Compute grows with <b>claims × seeds × (1 + branches)</b>: every claim needs its seeds, and every finding adds a branch that re-runs the methods it touches. What one paper cost, measured on MatchDG (4 vCPUs, 16 GB RAM, no GPU, one thread per job):</p>
+  <div class="tbl"><table>{{SCALING_HTML}}</table></div>
+  <p class="note">A full 72-run Table 11 pass took {{WALL:matchdg_lenet}} and {{WALL:matchdg_lenet_confirm}} minutes of wall-clock with 4 jobs at a time; the 18-run F7 branch took {{WALL:h7_no_flip}} minutes with 6 at a time. The whole audit is about {{WALLEST}} minutes at that rate [inferred: single-thread minutes ÷ 4]. Timings come from the run logs and the run scripts' start and end files (<span class="mono">metrics/run_counts.json</span>, <span class="mono">metrics/wallclock.json</span>).</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Lever</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><b>Selection-rule branches need no retraining.</b> A branch that only changes which checkpoint is reported trains exactly like the baseline, so logging every candidate selection metric once turns it into a lookup.</td><td><b>Measured:</b> the per-epoch traces of h1 and h1b are {{SEL:identical}} to the baseline's ({{SEL:lines}} lines in {{SEL:checks}} logs). {{SEL:runs}} of the {{SLAB_RUNS}} slab runs were such branches.</td></tr>
+      <tr><td><b>Cache environments by commit date and datasets by checksum.</b></td><td>Environments: done (dependencies pinned to the commit date). Datasets: planned; the F7 check found the generated plain and label files byte-identical across branches ({{F7:data:plain}}), so they can be shared.</td></tr>
+      <tr><td><b>Run branches in parallel.</b> Each branch is a git worktree and each job one (method, test domain) pair, so jobs are independent.</td><td>Done on one machine (4 jobs at a time); several machines planned.</td></tr>
+      <tr><td><b>Set the budget from a smoke run.</b> One seed and a few epochs first, then seeds × branches sized to the cap; branches not run are listed in the report.</td><td>Planned.</td></tr>
+      <tr><td><b>Measure tokens per paper.</b></td><td>Not measured yet; measured during the second-paper run.</td></tr>
+      <tr><td><b>CPU papers only.</b> The problem statement limits the task to small CPU papers.</td><td>GPU papers are out of scope.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Verdict rules</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Verdict</th><th>Absolute claim</th><th>Relative claim ("A beats B by g")</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip c-ok">Reproduced</span></td><td>90% CI of (ours − paper) inside ± margin; margin = max(the paper's sd, a practical floor), declared before the runs</td><td>our paired CI excludes 0 in the claimed direction, and (our gap − paper gap) is consistent with 0, counting both uncertainties</td></tr>
+      <tr><td><span class="chip c-warn">Partially reproduced</span></td><td>n/a</td><td>direction holds, but our gap is significantly larger or smaller than the paper's; a note says which ("gap larger than reported")</td></tr>
+      <tr><td><span class="chip c-bad">Not reproduced</span></td><td>95% CI excludes 0 and not equivalent</td><td>direction not shown and the gap is significantly smaller</td></tr>
+      <tr><td><span class="chip c-na">Inconclusive</span></td><td colspan="2">anything else after the seed budget; the report prints the tightest margin the data supports</td></tr>
+      <tr><td><span class="chip c-bad">Not runnable</span></td><td colspan="2">no number after the execution ladder and allowed repairs; the failing step is shown</td></tr>
+      <tr><td><span class="chip c-na">Not assessable</span></td><td colspan="2">the paper does not pin the experiment; the missing details are listed</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col muted"><b style="color:var(--fg)">"Setup differs" is a flag shown next to any verdict, never a verdict of its own.</b> Code sets it when a code omission had to be filled to run the claim, or when a finding's branch has a Holm-surviving effect on a method the claim names; findings that apply but were not tested become notes. <b style="color:var(--fg)">The practical floor</b> is a user setting (default 1 accuracy point): the smallest difference a reader would care about. Without it, a paper with sds of 0.1 points (one test image in 1,000) can only ever grade Inconclusive.</p>
+  <p class="col muted">Branch effects are paired by seed with 95% CIs, Holm-corrected across the report; the largest is re-run on fresh seeds as a separate test.</p>
+</section>
+
+<section>
+  <h2>What exists, and what is new</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Work</th><th>Runs the code</th><th>Verdict per claim</th><th>Finds paper-code differences</th><th>Measures which difference matters</th></tr></thead>
+    <tbody>
+      <tr><td>alphaXiv autoarxiv (2026)<sup>*</sup></td><td>yes; the template allows toy-scale runs when full scale is out of budget</td><td>aligned / partially aligned / inconclusive; the template tells the agent not to call a claim "not reproduced"</td><td>not as a systematic step</td><td>tests changes the agent chooses; no fixed statistics</td></tr>
+      <tr><td>NLPCC 2026 Shared Task 11 (arXiv 2609.11117)</td><td>yes (150 papers); execution is the main bottleneck</td><td>process rubrics on agent traces</td><td>no</td><td>no</td></tr>
+      <tr><td>SciCoQA (arXiv 2601.12910)</td><td>no</td><td>no</td><td>yes, static; best LLMs find 46.7%</td><td>no</td></tr>
+      <tr><td>REPRO-Bench (arXiv 2507.18901)</td><td>assesses reproduction packages (social science)</td><td>yes; best agent 36.6%, random guessing 25%</td><td>partly</td><td>no</td></tr>
+      <tr><td>CORE-Bench, SUPER</td><td>yes (benchmarks; CORE-Bench reported solved in 2025)</td><td>task answers</td><td>no</td><td>no</td></tr>
+      <tr><td>RECLAIM, PaperBench, Paper2Agent</td><td>yes</td><td>per paper, rubric or tool output</td><td>no</td><td>no</td></tr>
+      <tr><td><b>This project</b></td><td>yes, at the paper's configuration</td><td>yes, typed, with an equivalence rule</td><td>yes; by hand in the audit, blind extraction tested</td><td><b>yes, every finding, paired CIs, Holm</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note"><sup>*</sup> autoarxiv appears to use alphaXiv's reproduce-paper template: <span class="mono">src/local/skills.rs</span>, lines 30–31, in openresearch-cli at commit <span class="mono">f4cec9f</span>. The row describes that template.</p>
+  <p class="col muted">The sharpest contrast is with autoarxiv: its agent may run a scaled-down reproduction (a smaller model, fewer steps), which cannot grade a published number. We ran the paper's own configuration and graded its actual numbers. Our method is a one-factor-at-a-time ablation whose factors come from the settings diff, the idea behind delta debugging and <span class="mono">git bisect</span> applied to experiment settings; the contribution is wiring it to the diff and the verdicts so every flagged difference is tested.</p>
+</section>
+
+<section>
+  <h2>How we will know it works</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>What</th><th>Ground truth</th><th>Metric</th><th>So far</th></tr></thead>
+    <tbody>
+      <tr><td>Claim extraction</td><td>hand-labelled tables</td><td>exact match on value and coordinates</td><td>MatchDG Table 1: 9/9 cells, 2 of 2 runs</td></tr>
+      <tr><td>Settings diff</td><td>SciCoQA's 92 real discrepancies from 72 papers</td><td>recall and precision per kind</td><td>MatchDG: 3/3 hand findings in 4 of 4 pairings, plus 3 new; SciCoQA recall on this repo 1 of 2 (F7 missed)</td></tr>
+      <tr><td>Verdicts</td><td>ML Reproducibility Challenge reports</td><td>agreement with the human reproducer</td><td>MatchDG compared; the human run scored higher than both paper and us</td></tr>
+      <tr><td>Determinism</td><td>each paper run twice</td><td>identical verdicts</td><td>grading is pure code; extraction runs agreed on all 27 cells</td></tr>
+      <tr><td>Regression</td><td>MatchDG golden outputs (the hand-built tables and every verdict)</td><td>every pipeline change reproduces them exactly</td><td>{{REGRESSION}}</td></tr>
+      <tr><td>Generality</td><td>a second paper, run blind end to end</td><td>findings against its known discrepancy; verdicts against its human reproduction</td><td>first milestone; candidates picked (see the build plan)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Build plan</h2>
+  <p class="col muted">The extraction steps have had a blind test. The three agentic steps that make this an automated auditor have not, so they come first, each with a test, and the grader rules were fixed before any UI.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Order</th><th>Step</th><th>Test that says it works</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><b>Repair agent</b>: classify each patch as environment, compatibility or hypothesis, then run the inertness check</td><td>on MatchDG it must reproduce our three repair commits and send the missing target domain to a branch</td></tr>
+      <tr><td class="num">2</td><td><b>Claim-to-command linker</b>: turn "Table 1, PerfMatch" into a runnable command</td><td>on MatchDG it must produce the commands we wrote by hand for all 9 Table 1 rows and all 24 Table 11 cells</td></tr>
+      <tr><td class="num">3</td><td><b>Branch-patch writer</b>: one commit per finding</td><td>self-check on every branch: re-run the code extractor and require that exactly one setting changed, the one the finding names</td></tr>
+      <tr><td class="num">4</td><td><b>Code extractor on a data-pipeline question</b>, with schema version 2 (adds resizing, normalisation, augmentation, domain construction and the data the selection metric reads)</td><td>on robustdg it must trace SciCoQA row 67 to the path we traced by hand for F7</td></tr>
+      <tr><td class="num">5</td><td><b>Second paper, end to end, blind</b> (first milestone)</td><td>two CPU-runnable papers with a SciCoQA row or an MLRC report, run before any UI; the known discrepancy is read only after the run. The run also measures wall-clock time and tokens per paper</td></tr>
+      <tr><td class="num">6</td><td><b>Regression</b>: MatchDG as golden outputs</td><td>every pipeline change re-derives all MatchDG verdicts exactly (<span class="mono">scripts/regression.py</span>)</td></tr>
+      <tr><td class="num">7</td><td>Report UI and demo</td><td>the report screen exists (this page); add submit and job status. Demo is precomputed, plus one live run</td></tr>
+    </tbody>
+  </table></div>
+  {{CANDIDATES_HTML}}
+</section>
+
+<section>
+  <h2>Risks we know about</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Response</th></tr></thead>
+    <tbody>
+      <tr><td>The diff misses differences (SciCoQA: under half found)</td><td>Ablate code-only components; allow "unexplained"; measure our own recall (on robustdg we found 1 of SciCoQA's 2 rows)</td></tr>
+      <tr><td>Repairs change results</td><td>Environment and compatibility fixes only, each a commit with an inertness check; the rest become branches</td></tr>
+      <tr><td>Seed noise read as an effect (sd 4 to 7 points on the slab data)</td><td>Paired CIs, Holm correction, confirmation on fresh seeds</td></tr>
+      <tr><td>Ambiguous paper text ("validation loss" here)</td><td>One branch per reading; flagged as load-bearing and ambiguous, never called wrong</td></tr>
+      <tr><td>Heavier papers than these (a tiny MLP and a LeNet)</td><td>Smoke run first; seed and branch budget computed from its timing; GPU papers out of scope (see <a href="#scaling">Cost and scaling</a>)</td></tr>
+      <tr><td>Hard-coded seeds collapse variance</td><td>Static scan and variance check; logged seed injection</td></tr>
+      <tr><td>Datasets need the network; claims only in figures</td><td>Online fetch with checksums, offline runs; figure-only claims marked and skipped</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="evidence">
+  <h2>Evidence</h2>
+  <p class="col muted">Every number on this page is rendered by a script from the grades, and every grade traces to a line in a raw training log.<span class="screen-only"> Pick a claim to see the log lines its mean comes from, or browse any file.</span></p>
+  <div class="screen-only">
+    <div class="trace" id="trace"><span class="lbl">Trace Table 1 target accuracy:</span></div>
+    <div class="trace" id="seeds" style="margin-top:8px"></div>
+  </div>
+  <div class="ev screen-only">
+    <div class="ev-list" id="evlist" aria-label="Evidence files"></div>
+    <div class="ev-view">
+      <div class="ev-bar"><b id="evname">report</b><label for="evline">line</label><input id="evline" type="number" min="1" inputmode="numeric"><button id="evgo" type="button">Go</button><button id="evmore" type="button">Show more</button><span id="evinfo"></span></div>
+      <pre id="evpre" aria-live="polite"></pre>
+    </div>
+  </div>
+  <p class="note">Fixed at submission: the manifest lists every evidence file with its sha256, and the manifest's own sha256 is <span class="mono">{{EVIDENCE_SHA}}</span>. If a file changes after submission, its hash stops matching. {{FREEZE_NOTE}}</p>
+  <div class="print-only note">The evidence (report, raw logs, parsed metrics with log line numbers, grades, patches, branch map, extraction prompts and outputs) is published with this page at {{EVIDENCE_URL}} and as a git bundle that applies on top of microsoft/robustdg.</div>
+</section>
+
+<p class="muted" style="font-size:13px">Sources: Mahajan et al., ICML 2021 (PMLR v139) and supplement; microsoft/robustdg @ 3eee173; SciCoQA arXiv 2601.12910; REPRO-Bench arXiv 2507.18901; NLPCC 2026 Shared Task 11 arXiv 2609.11117; CORE-Bench arXiv 2409.11363; SUPER arXiv 2409.07440; RECLAIM arXiv 2609.28850; PaperBench arXiv 2504.01848; Paper2Agent arXiv 2509.06917; alphaXiv openresearch-cli reproduce-paper template (src/local/skills.rs, lines 30–31, commit f4cec9f); Jiles and Chakraborty, ReScience C 8(2) #18 (2022).</p>
+
+</div>
+
+<script>
+(function(){
+  addEventListener('beforeprint', function(){ document.querySelectorAll('details').forEach(function(d){ d.open = true; }); });
+  var list = document.getElementById('evlist'), pre = document.getElementById('evpre'), nameEl = document.getElementById('evname'),
+      lineIn = document.getElementById('evline'), info = document.getElementById('evinfo');
+  if (!list) return;
+  var cur = {path:null, lines:[], from:0, to:0, hit:0};
+  function render(){
+    var frag = document.createDocumentFragment();
+    for (var i = cur.from; i < cur.to; i++){
+      var s = document.createElement('span'); s.className = 'l' + (i + 1 === cur.hit ? ' hit' : ''); s.setAttribute('data-n', i + 1);
+      s.textContent = cur.lines[i] === '' ? ' ' : cur.lines[i]; frag.appendChild(s);
+    }
+    pre.textContent = ''; pre.appendChild(frag);
+    info.textContent = 'lines ' + (cur.from + 1) + '–' + cur.to + ' of ' + cur.lines.length;
+    var h = pre.querySelector('.hit'); if (h) pre.scrollTop = h.offsetTop - pre.clientHeight / 3; else pre.scrollTop = 0;
+  }
+  function show(path, line){
+    nameEl.textContent = path; info.textContent = 'loading…';
+    list.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-current', b.dataset.p === path ? 'true' : 'false'); });
+    var go = function(){ cur.hit = line || 0; cur.from = Math.max(0, (line || 1) - 40); cur.to = Math.min(cur.lines.length, cur.from + 400); render(); };
+    if (cur.path === path) return go();
+    fetch(path).then(function(r){ if (!r.ok) throw new Error(r.status); return r.text(); }).then(function(t){
+      cur.path = path; cur.lines = t.split('\n'); go();
+    }).catch(function(){ info.textContent = 'could not load ' + path; pre.textContent = ''; });
+  }
+  document.getElementById('evgo').onclick = function(){ var n = parseInt(lineIn.value, 10); if (cur.path && n > 0) show(cur.path, n); };
+  lineIn.addEventListener('keydown', function(e){ if (e.key === 'Enter') document.getElementById('evgo').click(); });
+  document.getElementById('evmore').onclick = function(){ if (!cur.path) return; cur.to = Math.min(cur.lines.length, cur.to + 400); render(); };
+  fetch('evidence/manifest.json').then(function(r){ return r.json(); }).then(function(m){
+    m.groups.forEach(function(g){
+      var h = document.createElement('div'); h.className = 'grp'; h.textContent = g.name; list.appendChild(h);
+      g.files.forEach(function(f){ var b = document.createElement('button'); b.type = 'button'; b.dataset.p = f.path; b.textContent = f.label; b.onclick = function(){ show(f.path); }; list.appendChild(b); });
+    });
+    show(m.groups[0].files[0].path);
+    var tr = document.getElementById('trace'), seeds = document.getElementById('seeds');
+    (m.trace || []).forEach(function(t){
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = t.label + ' ' + t.mean;
+      b.onclick = function(){
+        seeds.textContent = '';
+        var s = document.createElement('span'); s.className = 'lbl'; s.textContent = t.label + ', 10 seeds:'; seeds.appendChild(s);
+        t.seeds.forEach(function(x){ var c = document.createElement('button'); c.type = 'button'; c.textContent = x.v + ' (line ' + x.line + ')'; c.onclick = function(){ show(t.log, x.line); }; seeds.appendChild(c); });
+        show(t.log, t.seeds[0].line);
+      };
+      tr.appendChild(b);
+    });
+  }).catch(function(){ info.textContent = 'Evidence files are not available in this view.'; });
+})();
+</script>

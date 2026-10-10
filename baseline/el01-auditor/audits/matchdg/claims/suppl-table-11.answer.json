@@ -1,0 +1,520 @@
+{
+ "table": "Table 11",
+ "doc": "supplement",
+ "page": 12,
+ "caption_quote": "Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017).",
+ "header_line": "Algorithm 0 15 30 45 60 75 Average",
+ "row_label_header": "Algorithm",
+ "columns": [
+  "0",
+  "15",
+  "30",
+  "45",
+  "60",
+  "75",
+  "Average"
+ ],
+ "metric": {
+  "name": "Accuracy",
+  "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+  "unit": "percent",
+  "quote": "For each test domain, the remaining ﬁve domains are used as source training do- mains.",
+  "quote_doc": "supplement",
+  "quote_page": 11
+ },
+ "aggregation": {
+  "kind": "mean",
+  "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+  "n_runs": 3,
+  "quote": "All the numbers are averaged over 3 runs with standard deviation in brackets.",
+  "quote_doc": "main",
+  "quote_page": 7
+ },
+ "rows": [
+  {
+   "label": "ERM",
+   "line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+   "role": "baseline",
+   "role_quote": "We compare to 1) ERM: Standard empirical risk minimization,",
+   "role_doc": "main",
+   "role_page": 7,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "0",
+     "mean": 88.2,
+     "sd": 1
+    },
+    {
+     "column": "15",
+     "mean": 98.6,
+     "sd": 0.5
+    },
+    {
+     "column": "30",
+     "mean": 97.7,
+     "sd": 0.6
+    },
+    {
+     "column": "45",
+     "mean": 97.5,
+     "sd": 0.3
+    },
+    {
+     "column": "60",
+     "mean": 97,
+     "sd": 0.1
+    },
+    {
+     "column": "75",
+     "mean": 85.6,
+     "sd": 2.1
+    },
+    {
+     "column": "Average",
+     "mean": 94.1,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "CCSA",
+   "line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+   "role": "baseline",
+   "role_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "role_doc": "supplement",
+   "role_page": 12,
+   "provenance": "cited",
+   "provenance_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "cells": [
+    {
+     "column": "0",
+     "mean": 84.6,
+     "sd": null
+    },
+    {
+     "column": "15",
+     "mean": 95.6,
+     "sd": null
+    },
+    {
+     "column": "30",
+     "mean": 94.6,
+     "sd": null
+    },
+    {
+     "column": "45",
+     "mean": 82.9,
+     "sd": null
+    },
+    {
+     "column": "60",
+     "mean": 94.8,
+     "sd": null
+    },
+    {
+     "column": "75",
+     "mean": 82.1,
+     "sd": null
+    },
+    {
+     "column": "Average",
+     "mean": 89.1,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "D-MTAE",
+   "line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+   "role": "baseline",
+   "role_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "role_doc": "supplement",
+   "role_page": 12,
+   "provenance": "cited",
+   "provenance_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "cells": [
+    {
+     "column": "0",
+     "mean": 82.5,
+     "sd": null
+    },
+    {
+     "column": "15",
+     "mean": 96.3,
+     "sd": null
+    },
+    {
+     "column": "30",
+     "mean": 93.4,
+     "sd": null
+    },
+    {
+     "column": "45",
+     "mean": 78.6,
+     "sd": null
+    },
+    {
+     "column": "60",
+     "mean": 94.2,
+     "sd": null
+    },
+    {
+     "column": "75",
+     "mean": 80.5,
+     "sd": null
+    },
+    {
+     "column": "Average",
+     "mean": 87.6,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "LabelGrad",
+   "line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+   "role": "baseline",
+   "role_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "role_doc": "supplement",
+   "role_page": 12,
+   "provenance": "cited",
+   "provenance_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "cells": [
+    {
+     "column": "0",
+     "mean": 89.7,
+     "sd": null
+    },
+    {
+     "column": "15",
+     "mean": 97.8,
+     "sd": null
+    },
+    {
+     "column": "30",
+     "mean": 98,
+     "sd": null
+    },
+    {
+     "column": "45",
+     "mean": 97.1,
+     "sd": null
+    },
+    {
+     "column": "60",
+     "mean": 96.6,
+     "sd": null
+    },
+    {
+     "column": "75",
+     "mean": 92.1,
+     "sd": null
+    },
+    {
+     "column": "Average",
+     "mean": 95.2,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "DAN",
+   "line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+   "role": "baseline",
+   "role_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "role_doc": "supplement",
+   "role_page": 12,
+   "provenance": "cited",
+   "provenance_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "cells": [
+    {
+     "column": "0",
+     "mean": 86.7,
+     "sd": null
+    },
+    {
+     "column": "15",
+     "mean": 98,
+     "sd": null
+    },
+    {
+     "column": "30",
+     "mean": 97.8,
+     "sd": null
+    },
+    {
+     "column": "45",
+     "mean": 97.4,
+     "sd": null
+    },
+    {
+     "column": "60",
+     "mean": 96.9,
+     "sd": null
+    },
+    {
+     "column": "75",
+     "mean": 89.1,
+     "sd": null
+    },
+    {
+     "column": "Average",
+     "mean": 94.3,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "CrossGrad",
+   "line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+   "role": "baseline",
+   "role_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "role_doc": "supplement",
+   "role_page": 12,
+   "provenance": "cited",
+   "provenance_quote": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+   "cells": [
+    {
+     "column": "0",
+     "mean": 88.3,
+     "sd": null
+    },
+    {
+     "column": "15",
+     "mean": 98.6,
+     "sd": null
+    },
+    {
+     "column": "30",
+     "mean": 98,
+     "sd": null
+    },
+    {
+     "column": "45",
+     "mean": 97.7,
+     "sd": null
+    },
+    {
+     "column": "60",
+     "mean": 97.7,
+     "sd": null
+    },
+    {
+     "column": "75",
+     "mean": 91.4,
+     "sd": null
+    },
+    {
+     "column": "Average",
+     "mean": 95.3,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "DIV A",
+   "line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+   "role": "baseline",
+   "role_quote": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+   "role_doc": "supplement",
+   "role_page": 12,
+   "provenance": "cited",
+   "provenance_quote": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+   "cells": [
+    {
+     "column": "0",
+     "mean": 93.5,
+     "sd": 0.3
+    },
+    {
+     "column": "15",
+     "mean": 99.3,
+     "sd": 0.1
+    },
+    {
+     "column": "30",
+     "mean": 99.1,
+     "sd": 0.1
+    },
+    {
+     "column": "45",
+     "mean": 99.2,
+     "sd": 0.1
+    },
+    {
+     "column": "60",
+     "mean": 99.3,
+     "sd": 0.1
+    },
+    {
+     "column": "75",
+     "mean": 93,
+     "sd": 0.4
+    },
+    {
+     "column": "Average",
+     "mean": 97.2,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "RandMatch",
+   "line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+   "role": "baseline",
+   "role_quote": "2) ERM-RandMatch that implements the loss from Eq.",
+   "role_doc": "main",
+   "role_page": 7,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "0",
+     "mean": 91,
+     "sd": 0.9
+    },
+    {
+     "column": "15",
+     "mean": 99.7,
+     "sd": 0.2
+    },
+    {
+     "column": "30",
+     "mean": 99.6,
+     "sd": 0.1
+    },
+    {
+     "column": "45",
+     "mean": 99.4,
+     "sd": 0.1
+    },
+    {
+     "column": "60",
+     "mean": 99.7,
+     "sd": 0.1
+    },
+    {
+     "column": "75",
+     "mean": 93.1,
+     "sd": 1.1
+    },
+    {
+     "column": "Average",
+     "mean": 97.1,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "MatchDG",
+   "line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+   "role": "method",
+   "role_quote": "The MatchDG algorithm proceeds in two phases.",
+   "role_doc": "supplement",
+   "role_page": 8,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "0",
+     "mean": 93,
+     "sd": 0.5
+    },
+    {
+     "column": "15",
+     "mean": 99.5,
+     "sd": 0.3
+    },
+    {
+     "column": "30",
+     "mean": 99.9,
+     "sd": 0.1
+    },
+    {
+     "column": "45",
+     "mean": 99.4,
+     "sd": 0.1
+    },
+    {
+     "column": "60",
+     "mean": 99.7,
+     "sd": 0.3
+    },
+    {
+     "column": "75",
+     "mean": 93.3,
+     "sd": 1.1
+    },
+    {
+     "column": "Average",
+     "mean": 97.4,
+     "sd": null
+    }
+   ]
+  },
+  {
+   "label": "PerfMatch",
+   "line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+   "role": "oracle",
+   "role_quote": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+   "role_doc": "main",
+   "role_page": 8,
+   "provenance": "this_paper",
+   "provenance_quote": null,
+   "cells": [
+    {
+     "column": "0",
+     "mean": 96.5,
+     "sd": 0.6
+    },
+    {
+     "column": "15",
+     "mean": 99.1,
+     "sd": 0.3
+    },
+    {
+     "column": "30",
+     "mean": 99.2,
+     "sd": 0.3
+    },
+    {
+     "column": "45",
+     "mean": 98.6,
+     "sd": 0.7
+    },
+    {
+     "column": "60",
+     "mean": 98.6,
+     "sd": 1
+    },
+    {
+     "column": "75",
+     "mean": 94.9,
+     "sd": 1.8
+    },
+    {
+     "column": "Average",
+     "mean": 97.8,
+     "sd": null
+    }
+   ]
+  }
+ ],
+ "relative_claims": [
+  {
+   "type": "relative",
+   "statement": "MatchDG is competitive with DIVA, the best prior approach, on test domain 0.",
+   "quote": "MatchDG is competitive to the best performing approach DIV A.",
+   "doc": "supplement",
+   "page": 11,
+   "rows": [
+    "MatchDG",
+    "DIV A"
+   ],
+   "column": "0"
+  }
+ ],
+ "notes": "Average column has no bracketed spread. Rows from Shankar et al. and DIVA carry no sd for CCSA, D-MTAE, LabelGrad, DAN and CrossGrad. The table's page is supplement page 12. The statement that RandMatch and MatchDG outperform prior work on all domains except 0 was not quoted because the line break hyphenation makes verbatim matching uncertain."
+}

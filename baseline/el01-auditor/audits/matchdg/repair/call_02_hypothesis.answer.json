@@ -1,0 +1,54 @@
+{
+ "n": 2,
+ "mode": "missing data domain",
+ "run": 2,
+ "failure": "missing data|utils/slab_data.py:75|FileNotFoundError",
+ "answer": {
+  "edits": [
+   {
+    "file": "data_gen_syn.py",
+    "old": "spur_corr_list= [0.0, 0.10, 0.20, 0.90]",
+    "new": "spur_corr_list= [0.0, 0.10, 0.20, 0.90, 1.0]"
+   }
+  ],
+  "class": "hypothesis",
+  "rationale": "Adds spur_corr 1.0 to the generated list so the test domain file requested by --test_domains 1.0 gets produced, leaving all other settings unchanged."
+ },
+ "cache": "hit",
+ "key": "b48a41435a98f7111aecd6eb18042002b93871670722279719010a5602f94f51",
+ "backend": "replay",
+ "usage": {
+  "total_cost_usd": 0.012016800000000001,
+  "num_turns": 3,
+  "models": [
+   "claude-sonnet-5-5"
+  ]
+ },
+ "outcome": "committed 8edccb6 on el01/h-F1",
+ "policy": {
+  "class": "hypothesis",
+  "llm_class": "hypothesis",
+  "rules": [
+   {
+    "rule": "data",
+    "why": "touches a data-generation script: data_gen_syn.py"
+   },
+   {
+    "rule": "number",
+    "why": "data_gen_syn.py: numeric literal(s) added or removed: 1.0"
+   },
+   {
+    "rule": "data",
+    "why": "data_gen_syn.py: changed lines name data settings: spur_corr_list"
+   },
+   {
+    "rule": "llm",
+    "why": "the agent classed the patch as a hypothesis"
+   }
+  ],
+  "basis": "touches a data-generation script: data_gen_syn.py; data_gen_syn.py: numeric literal(s) added or removed: 1.0; data_gen_syn.py: changed lines name data settings: spur_corr_list; the agent classed the patch as a hypothesis",
+  "files": [
+   "data_gen_syn.py"
+  ]
+ }
+}

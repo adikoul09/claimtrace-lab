@@ -1,0 +1,2043 @@
+{
+ "data_steps": [
+  {
+   "name": "gen_rot_mnist_lenet",
+   "argv": [
+    "python",
+    "data/data_gen_mnist.py",
+    "--dataset",
+    "rot_mnist",
+    "--model",
+    "lenet",
+    "--img_h",
+    "32",
+    "--img_w",
+    "32",
+    "--subset_size",
+    "1000"
+   ],
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16 (img 32x32, mnist_case lenet); data/data_gen_mnist.py:214 (lenet branch); README data_gen_mnist command; 1000 samples/domain from supplement C.1"
+  }
+ ],
+ "parsers": [
+  {
+   "name": "acc_single_phase",
+   "step": "train",
+   "line_regex": "Current Best Epoch:\\s+-?\\d+\\s+with Test Accuracy:\\s+([0-9.]+)",
+   "value_group": 1,
+   "sd_group": null,
+   "run_start_regex": "^Run (\\d+)",
+   "key_group": null,
+   "key_value": null,
+   "per_epoch": true,
+   "count": null,
+   "evidence": "algorithms/erm_match.py:160"
+  },
+  {
+   "name": "acc_matchdg_phase2",
+   "step": "erm_phase",
+   "line_regex": "Current Best Epoch:\\s+-?\\d+\\s+with Test Accuracy:\\s+([0-9.]+)",
+   "value_group": 1,
+   "sd_group": null,
+   "run_start_regex": "^Run (\\d+)",
+   "key_group": null,
+   "key_value": null,
+   "per_epoch": true,
+   "count": null,
+   "evidence": "algorithms/match_dg.py:386"
+  }
+ ],
+ "cells": [
+  {
+   "claim_ids": [
+    "Table 11|ERM|0"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "0.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "15",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "0"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|ERM|15"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "0.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "15"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|ERM|30"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "0.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "30"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|ERM|45"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "0.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "60",
+      "75",
+      "--test_domains",
+      "45"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|ERM|60"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "0.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "75",
+      "--test_domains",
+      "60"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|ERM|75"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "0.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "60",
+      "--test_domains",
+      "75"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|ERM|Average"
+   ],
+   "status": "derived",
+   "steps": [],
+   "parser": null,
+   "derived_from": [
+    "Table 11|ERM|0",
+    "Table 11|ERM|15",
+    "Table 11|ERM|30",
+    "Table 11|ERM|45",
+    "Table 11|ERM|60",
+    "Table 11|ERM|75"
+   ],
+   "derived_op": "mean",
+   "evidence": "supplement Table 11 Average column",
+   "reason": "Average of the six target-domain columns"
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|0"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|15"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|30"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|45"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|60"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|75"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CCSA|Average"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; the repository does not implement CCSA."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|0"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|15"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|30"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|45"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|60"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|75"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|D-MTAE|Average"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|0"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|15"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|30"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|45"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|60"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|75"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|LabelGrad|Average"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|0"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|15"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|30"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|45"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|60"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|75"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DAN|Average"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented for this table in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|0"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|15"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|30"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|45"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|60"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|75"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|CrossGrad|Average"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Shankar et al. 2018 Table 9; not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|0"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|15"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|30"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|45"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|60"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|75"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|DIV A|Average"
+   ],
+   "status": "unlinked",
+   "steps": [],
+   "parser": null,
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "supplement C.4 / Table 11 caption",
+   "reason": "Taken from Ilse et al. 2020 Table 1; DIVA is not implemented in the repository."
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|0"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "15",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "0"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|15"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "15"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|30"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "30"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|45"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "60",
+      "75",
+      "--test_domains",
+      "45"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|60"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "75",
+      "--test_domains",
+      "60"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|75"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "0.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "60",
+      "--test_domains",
+      "75"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|RandMatch|Average"
+   ],
+   "status": "derived",
+   "steps": [],
+   "parser": null,
+   "derived_from": [
+    "Table 11|RandMatch|0",
+    "Table 11|RandMatch|15",
+    "Table 11|RandMatch|30",
+    "Table 11|RandMatch|45",
+    "Table 11|RandMatch|60",
+    "Table 11|RandMatch|75"
+   ],
+   "derived_op": "mean",
+   "evidence": "supplement Table 11 Average column",
+   "reason": "Average of the six target-domain columns"
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|0"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "ctr_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_ctr",
+      "--match_case",
+      "0.0",
+      "--match_flag",
+      "1",
+      "--epochs",
+      "50",
+      "--batch_size",
+      "512",
+      "--pos_metric",
+      "cos",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--match_func_aug_case",
+      "1",
+      "--train_domains",
+      "15",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "0"
+     ]
+    },
+    {
+     "name": "erm_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_erm",
+      "--match_case",
+      "-1",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--ctr_match_case",
+      "0.0",
+      "--ctr_match_flag",
+      "1",
+      "--ctr_match_interrupt",
+      "5",
+      "--ctr_model_name",
+      "lenet",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "15",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "0"
+     ]
+    }
+   ],
+   "parser": "acc_matchdg_phase2",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|15"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "ctr_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_ctr",
+      "--match_case",
+      "0.0",
+      "--match_flag",
+      "1",
+      "--epochs",
+      "50",
+      "--batch_size",
+      "512",
+      "--pos_metric",
+      "cos",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--match_func_aug_case",
+      "1",
+      "--train_domains",
+      "0",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "15"
+     ]
+    },
+    {
+     "name": "erm_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_erm",
+      "--match_case",
+      "-1",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--ctr_match_case",
+      "0.0",
+      "--ctr_match_flag",
+      "1",
+      "--ctr_match_interrupt",
+      "5",
+      "--ctr_model_name",
+      "lenet",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "15"
+     ]
+    }
+   ],
+   "parser": "acc_matchdg_phase2",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|30"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "ctr_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_ctr",
+      "--match_case",
+      "0.0",
+      "--match_flag",
+      "1",
+      "--epochs",
+      "50",
+      "--batch_size",
+      "512",
+      "--pos_metric",
+      "cos",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--match_func_aug_case",
+      "1",
+      "--train_domains",
+      "0",
+      "15",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "30"
+     ]
+    },
+    {
+     "name": "erm_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_erm",
+      "--match_case",
+      "-1",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--ctr_match_case",
+      "0.0",
+      "--ctr_match_flag",
+      "1",
+      "--ctr_match_interrupt",
+      "5",
+      "--ctr_model_name",
+      "lenet",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "30"
+     ]
+    }
+   ],
+   "parser": "acc_matchdg_phase2",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|45"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "ctr_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_ctr",
+      "--match_case",
+      "0.0",
+      "--match_flag",
+      "1",
+      "--epochs",
+      "50",
+      "--batch_size",
+      "512",
+      "--pos_metric",
+      "cos",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--match_func_aug_case",
+      "1",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "60",
+      "75",
+      "--test_domains",
+      "45"
+     ]
+    },
+    {
+     "name": "erm_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_erm",
+      "--match_case",
+      "-1",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--ctr_match_case",
+      "0.0",
+      "--ctr_match_flag",
+      "1",
+      "--ctr_match_interrupt",
+      "5",
+      "--ctr_model_name",
+      "lenet",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "60",
+      "75",
+      "--test_domains",
+      "45"
+     ]
+    }
+   ],
+   "parser": "acc_matchdg_phase2",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|60"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "ctr_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_ctr",
+      "--match_case",
+      "0.0",
+      "--match_flag",
+      "1",
+      "--epochs",
+      "50",
+      "--batch_size",
+      "512",
+      "--pos_metric",
+      "cos",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--match_func_aug_case",
+      "1",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "75",
+      "--test_domains",
+      "60"
+     ]
+    },
+    {
+     "name": "erm_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_erm",
+      "--match_case",
+      "-1",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--ctr_match_case",
+      "0.0",
+      "--ctr_match_flag",
+      "1",
+      "--ctr_match_interrupt",
+      "5",
+      "--ctr_model_name",
+      "lenet",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "75",
+      "--test_domains",
+      "60"
+     ]
+    }
+   ],
+   "parser": "acc_matchdg_phase2",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|75"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "ctr_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_ctr",
+      "--match_case",
+      "0.0",
+      "--match_flag",
+      "1",
+      "--epochs",
+      "50",
+      "--batch_size",
+      "512",
+      "--pos_metric",
+      "cos",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--match_func_aug_case",
+      "1",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "60",
+      "--test_domains",
+      "75"
+     ]
+    },
+    {
+     "name": "erm_phase",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "matchdg_erm",
+      "--match_case",
+      "-1",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--ctr_match_case",
+      "0.0",
+      "--ctr_match_flag",
+      "1",
+      "--ctr_match_interrupt",
+      "5",
+      "--ctr_model_name",
+      "lenet",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--total_matches_per_point",
+      "100",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "60",
+      "--test_domains",
+      "75"
+     ]
+    }
+   ],
+   "parser": "acc_matchdg_phase2",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|MatchDG|Average"
+   ],
+   "status": "derived",
+   "steps": [],
+   "parser": null,
+   "derived_from": [
+    "Table 11|MatchDG|0",
+    "Table 11|MatchDG|15",
+    "Table 11|MatchDG|30",
+    "Table 11|MatchDG|45",
+    "Table 11|MatchDG|60",
+    "Table 11|MatchDG|75"
+   ],
+   "derived_op": "mean",
+   "evidence": "supplement Table 11 Average column",
+   "reason": "Average of the six target-domain columns"
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|0"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "1.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "15",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "0"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|15"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "1.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "30",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "15"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|30"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "1.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "45",
+      "60",
+      "75",
+      "--test_domains",
+      "30"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|45"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "1.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "60",
+      "75",
+      "--test_domains",
+      "45"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|60"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "1.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "75",
+      "--test_domains",
+      "60"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|75"
+   ],
+   "status": "linked",
+   "steps": [
+    {
+     "name": "train",
+     "argv": [
+      "python",
+      "train.py",
+      "--dataset",
+      "rot_mnist",
+      "--mnist_case",
+      "lenet",
+      "--method_name",
+      "erm_match",
+      "--match_case",
+      "1.0",
+      "--penalty_ws",
+      "1.0",
+      "--epochs",
+      "100",
+      "--model_name",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--train_domains",
+      "0",
+      "15",
+      "30",
+      "45",
+      "60",
+      "--test_domains",
+      "75"
+     ]
+    }
+   ],
+   "parser": "acc_single_phase",
+   "derived_from": [],
+   "derived_op": null,
+   "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+   "reason": ""
+  },
+  {
+   "claim_ids": [
+    "Table 11|PerfMatch|Average"
+   ],
+   "status": "derived",
+   "steps": [],
+   "parser": null,
+   "derived_from": [
+    "Table 11|PerfMatch|0",
+    "Table 11|PerfMatch|15",
+    "Table 11|PerfMatch|30",
+    "Table 11|PerfMatch|45",
+    "Table 11|PerfMatch|60",
+    "Table 11|PerfMatch|75"
+   ],
+   "derived_op": "mean",
+   "evidence": "supplement Table 11 Average column",
+   "reason": "Average of the six target-domain columns"
+  }
+ ],
+ "notes": "All trained rows (ERM, RandMatch, MatchDG, PerfMatch) use the commands in reproduce_scripts/reproduce_rmnist_lenet.py, with one command per target domain and the other five domains as train domains. The script's train_domains string is written as separate argv tokens here. I took the data size of 1000 samples per domain (--subset_size 1000) from the paper (supplement C.1). The README only shows the ResNet-18 data generation with subset_size 2000. I used --model lenet --img_h 32 --img_w 32 to match the script's lenet setup and data/data_gen_mnist.py:214. The data directory is rot_mnist_lenet, which matches --mnist_case lenet.\n\nThe per-run number comes from train.py's per-epoch line 'Current Best Epoch: k with Test Accuracy: v' (algorithms/erm_match.py:160 and match_dg.py:386). The last such line in each 'Run n' block is the test accuracy at the best source-validation epoch. This equals the per-run value behind train.py:314 'Final Test Accuracy (Source Validation)'. I did not use that summary line because it is printed over all runs. n_runs defaults to 3 and n_runs_matchdg_erm defaults to 1, so there are 3 runs per cell. No separate test.py evaluation is needed, because train.py computes test accuracy itself.\n\nMatchDG has two phases. Phase 1 is matchdg_ctr and Phase 2 is matchdg_erm. The number is read from the Phase 2 log (step erm_phase). Both phases run all 3 seeds in turn with the same settings.\n\nThe Average columns are derived as the mean of the six target-domain cells. CCSA, D-MTAE, LabelGrad, DAN, CrossGrad and DIVA are copied from Shankar et al. 2018 and Ilse et al. 2020, so they are unlinked."
+}

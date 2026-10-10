@@ -1,0 +1,72 @@
+{
+ "type": "object",
+ "properties": {
+  "data_steps": {
+   "type": "array",
+   "description": "commands that create the data every cell reads, in order, run once before any cell",
+   "items": {
+    "type": "object",
+    "properties": {
+     "name": {"type": "string"},
+     "argv": {"type": "array", "items": {"type": "string"}, "description": "python, the script path relative to the repository root, then its arguments"},
+     "evidence": {"type": "string", "description": "path:line where the repository gives or implies this command"}
+    },
+    "required": ["name", "argv", "evidence"],
+    "additionalProperties": false
+   }
+  },
+  "parsers": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "name": {"type": "string"},
+     "step": {"type": "string", "description": "the step name (in each cell that uses this parser) whose log holds the number"},
+     "line_regex": {"type": "string", "description": "Python regex, searched in each log line"},
+     "value_group": {"type": "integer"},
+     "sd_group": {"type": ["integer", "null"]},
+     "run_start_regex": {"type": ["string", "null"], "description": "regex of the line that starts each run (seed) block; null if the number is printed once for the whole log"},
+     "key_group": {"type": ["integer", "null"]},
+     "key_value": {"type": ["string", "null"]},
+     "per_epoch": {"type": "boolean", "description": "true if a matching line is printed once per epoch in each run block"},
+     "count": {"type": ["integer", "null"], "description": "matching lines per block when per_epoch is false"},
+     "evidence": {"type": "string", "description": "path:line of the print statement that writes the line"}
+    },
+    "required": ["name", "step", "line_regex", "value_group", "sd_group", "run_start_regex", "key_group", "key_value", "per_epoch", "count", "evidence"],
+    "additionalProperties": false
+   }
+  },
+  "cells": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "claim_ids": {"type": "array", "items": {"type": "string"}, "description": "exactly one id for linked and derived; one or more for unlinked"},
+     "status": {"type": "string", "enum": ["linked", "derived", "unlinked"]},
+     "steps": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "name": {"type": "string"},
+        "argv": {"type": "array", "items": {"type": "string"}}
+       },
+       "required": ["name", "argv"],
+       "additionalProperties": false
+      }
+     },
+     "parser": {"type": ["string", "null"]},
+     "derived_from": {"type": "array", "items": {"type": "string"}},
+     "derived_op": {"type": ["string", "null"], "enum": ["mean", null]},
+     "evidence": {"type": "string", "description": "path:line of the repository command this follows"},
+     "reason": {"type": "string", "description": "for unlinked and derived cells: why; otherwise empty"}
+    },
+    "required": ["claim_ids", "status", "steps", "parser", "derived_from", "derived_op", "evidence", "reason"],
+    "additionalProperties": false
+   }
+  },
+  "notes": {"type": "string"}
+ },
+ "required": ["data_steps", "parsers", "cells", "notes"],
+ "additionalProperties": false
+}

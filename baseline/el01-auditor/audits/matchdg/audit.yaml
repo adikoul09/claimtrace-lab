@@ -1,0 +1,60 @@
+id: matchdg
+paper:
+  title: "Domain Generalization using Causal Matching (ICML 2021)"
+  pdf: workspace/papers/matchdg/mahajan21b.pdf
+  supplement: workspace/papers/matchdg/mahajan21b-supp.pdf
+repo:
+  url: https://github.com/microsoft/robustdg
+  commit: 3eee173
+targets:
+  - table: "Table 1"        # slab, motivating experiment; PerfMatch is an oracle
+    metric: {name: accuracy, unit: "%", floor: 1.0}
+    seeds: 10
+  - table: "Suppl. Table 11" # Rotated MNIST, LeNet; the paper's method
+    metric: {name: accuracy, unit: "%", floor: 1.0}
+    seeds: 3
+budget:
+  max_parallel_jobs: auto     # cores - 2
+  max_wall_minutes: 120
+llm:
+  backend: replay             # replay | claude_cli | anthropic_api
+  model: sonnet
+import_from: inputs/spike-matchdg   # used by --mode import
+
+# Added in Phase 2 (DECISIONS.md). The environment builder scans imports from these scripts: the commands of
+# spike-matchdg/scripts/run_table1.sh and run_matchdg_lenet.sh (train.py, test.py) and the data generator.
+env:
+  entry_points: [data_gen_syn.py, train.py, test.py]
+# Run as shipped: ERM, 1 seed, the Table 1 command of spike-matchdg/scripts/run_table1.sh (COMMON + M[erm]) with
+# --n_runs 1 and the paper's target domain 1.0 (scripts/run_table1_rest.sh:12). Data generation as in run_ablation.sh.
+# Phase 4's linker produces these commands from claim cards.
+smoke:
+  data: [python, data_gen_syn.py]
+  name: train_erm
+  command: [python, train.py, --dataset, slab, --model_name, slab, --batch_size, "128", --lr, "0.1", --epochs, "100",
+            --out_classes, "2", --train_domains, "0.0", "0.10", --test_domains, "1.0", --slab_data_dim, "2",
+            --slab_noise, "0.1", --n_runs, "1", --method_name, erm_match, --match_case, "0.0", --penalty_ws, "0.0"]
+  seeds: 1
+# Added in Phase 3: the evaluation line that run_table1.sh runs after each training command (same arguments), so a
+# repair loop also exercises test.py.
+  eval_name: eval_erm
+  eval: [python, test.py, --test_metric, per_domain_acc, --acc_data_case, train,
+         --dataset, slab, --model_name, slab, --batch_size, "128", --lr, "0.1", --epochs, "100",
+         --out_classes, "2", --train_domains, "0.0", "0.10", --test_domains, "1.0", --slab_data_dim, "2",
+         --slab_noise, "0.1", --n_runs, "1", --method_name, erm_match, --match_case, "0.0", --penalty_ws, "0.0"]
+# Added in Phase 4: claim-to-command linking. Dry runs set --epochs 1 and --n_runs 1 (MASTER_PROMPT Phase 4); the
+# steps before a cell's last step try 1 then 5 epochs (MatchDG's contrastive phase saves its checkpoint only when
+# (epoch+1) % 5 == 0, algorithms/match_dg.py:250). Data steps may download (Rotated MNIST: torchvision's MNIST
+# download in data/data_gen_mnist.py); training, evaluation and dry runs never do. Builder approved (2026-10-04).
+link:
+  epochs_option: --epochs
+  runs_option: --n_runs
+  dry_run_epochs: [1, 5]
+  data_network: true
+# Added in Phase 6: diff-guided ablation. The baseline is the repair loop's run head: the three repairs plus h0, the
+# target domain 1.0 (F1), kept as it is (Builder, 2026-10-04): its stream shift of the noise-0.1 data is recorded, not
+# changed. Live agent calls of this phase stop before they would pass the cap (Builder, 2026-10-04).
+ablation:
+  baseline: el01/h-F1
+  baseline_findings: [F1]
+  llm_cap_usd: 12

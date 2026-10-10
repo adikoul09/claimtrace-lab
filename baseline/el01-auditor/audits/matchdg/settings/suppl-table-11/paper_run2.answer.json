@@ -1,0 +1,309 @@
+{
+ "experiment": "Rotated MNIST (six rotation domains 0-75 degrees, leave-one-domain-out target), LeNet as in Motiian et al. 2017, 1000 samples per domain (Suppl. Table 11)",
+ "notes": [
+  "Table 8 row for Table 11 (LeNet): Total Epochs 100 with early stopping on source validation accuracy, learning rate 0.01, batch size 16, weight decay 0.0005, match penalty 1.0 (grid [0.1, 1.0]).",
+  "MatchDG Phase 1 for Table 11 (Table 9): total epochs 50 (max budget, early stopping on Top-10 overlap), lr 0.01, batch size 512, weight decay 0.0005, tau 0.05, LeNet architecture.",
+  "Optimizer stated as SGD for all datasets; momentum, nesterov and lr schedule are not stated.",
+  "Resize, normalization and augmentation are not stated for this experiment. The augmentations listed in the paper are for PACS and Chest X-ray only.",
+  "Rotation direction is not stated.",
+  "Prior-approach rows in Table 11 (CCSA, D-MTAE, LabelGrad, DAN, CrossGrad, DIVA) are copied from other papers.",
+  "The 3 runs and std-dev statement is given generally in the main Evaluation section, not specifically for Table 11.",
+  "Validation set per domain is 20% of the training set size, i.e. 200 samples per domain."
+ ],
+ "settings": {
+  "data.source_domains": {
+   "value": "the five rotation domains other than the target, out of 0,15,30,45,60,75",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "and evaluate for each domain being the target domains with the remaining"
+    }
+   ]
+  },
+  "data.target_domains": {
+   "value": [
+    0,
+    15,
+    30,
+    45,
+    60,
+    75
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "and evaluate for each domain being the target domains with the remaining"
+    }
+   ]
+  },
+  "data.domains_data_available": {
+   "value": [
+    0,
+    15,
+    30,
+    45,
+    60,
+    75
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "which involve six domains (0◦, 15◦, 30◦, 45◦,"
+    }
+   ]
+  },
+  "data.train_samples_per_domain": {
+   "value": 1000,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "We sample 1000 data points for each domain and evaluate using the LeNet architecture (Table 11)"
+    }
+   ]
+  },
+  "data.val_samples_per_domain": {
+   "value": 200,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 8,
+     "quote": "20% percent size as of the training set for that domain."
+    }
+   ]
+  },
+  "data.generation_params": {
+   "value": {
+    "samples_per_domain": 1000,
+    "validation_fraction_of_train": 0.2
+   },
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "We sample 1000 data points for each domain and evaluate using the LeNet architecture (Table 11)"
+    },
+    {
+     "doc": "supplement",
+     "page": 8,
+     "quote": "20% percent size as of the training set for that domain."
+    }
+   ]
+  },
+  "model.architecture": {
+   "value": "LeNet",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 12,
+     "quote": "Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017)."
+    }
+   ]
+  },
+  "optim.name": {
+   "value": "sgd",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "We use SGD to optimize the loss for all the datasets"
+    }
+   ]
+  },
+  "optim.momentum": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.nesterov": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.lr": {
+   "value": 0.01,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Learning Rate 0.01 [0.01]"
+    }
+   ]
+  },
+  "optim.lr_schedule": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.weight_decay": {
+   "value": 0.0005,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Weight Decay 0.0005 [0.0005]"
+    }
+   ]
+  },
+  "train.batch_size": {
+   "value": 16,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Batch Size 16 [16]"
+    }
+   ]
+  },
+  "train.epochs": {
+   "value": 100,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Total Epochs - 100"
+    }
+   ]
+  },
+  "train.model_selection": {
+   "value": "best_val_accuracy",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "early stopping based on the validation accuracy on source domains and use the models which obtain the best validation accuracy"
+    }
+   ]
+  },
+  "loss.terms": {
+   "value": [
+    {
+     "name": "cross_entropy",
+     "weight": 1,
+     "weight_schedule": "constant"
+    },
+    {
+     "name": "match_penalty_l2",
+     "weight": 1,
+     "weight_schedule": "constant"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "we use the cross-entropy loss forLd andl2 distance for dist"
+    },
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Match Penalty 1.0 [0.1, 1.0]"
+    }
+   ]
+  },
+  "eval.n_seeds": {
+   "value": 3,
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 7,
+     "quote": "All the numbers are averaged over 3 runs with standard deviation in brackets."
+    }
+   ]
+  },
+  "eval.metric": {
+   "value": "classification accuracy (%) on the target rotation domain",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 12,
+     "quote": "Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017)."
+    }
+   ]
+  },
+  "eval.aggregation": {
+   "value": "mean_sd_over_seeds",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 7,
+     "quote": "All the numbers are averaged over 3 runs with standard deviation in brackets."
+    }
+   ]
+  },
+  "data.preprocessing.resize": {
+   "value": null,
+   "evidence": []
+  },
+  "data.preprocessing.normalization": {
+   "value": null,
+   "evidence": []
+  },
+  "data.augmentation": {
+   "value": null,
+   "evidence": []
+  },
+  "data.domain_transform": {
+   "value": [
+    {
+     "kind": "rotation",
+     "domains": [
+      0,
+      15,
+      30,
+      45,
+      60,
+      75
+     ],
+     "params": "rotation angle per domain from 0 to 75 degrees in steps of 15; each rotation angle is a domain",
+     "direction": "unknown",
+     "methods": null,
+     "note": null
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "where each rotation angle represents a domain"
+    }
+   ]
+  },
+  "train.model_selection_data": {
+   "value": [
+    {
+     "use": "checkpoint",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": "validation accuracy",
+     "methods": null,
+     "phase": null,
+     "note": "early stopping on source-domain validation accuracy"
+    },
+    {
+     "use": "hyperparameter_tuning",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": null,
+     "methods": null,
+     "phase": null,
+     "note": null
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "early stopping based on the validation accuracy on source domains and use the models which obtain the best validation accuracy"
+    },
+    {
+     "doc": "supplement",
+     "page": 8,
+     "quote": "We use the validation set from the source domains for hyper"
+    }
+   ]
+  }
+ }
+}

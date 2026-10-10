@@ -1,0 +1,1488 @@
+{
+ "rules_version": 2,
+ "practical_floor": 1.0,
+ "run_dir": "matchdg_lenet_confirm",
+ "floor_timing": "declared before these runs (pre-registered)",
+ "rules": {
+  "absolute": "Per cell: Reproduced if the 90% Welch CI of (ours - paper) lies inside +-max(paper's sd for that cell, practical floor); Not reproduced if the 95% CI excludes 0 and equivalence fails; else Inconclusive. Paper n assumed 3. verdict_paper_sd_only applies margin = paper's sd (the version 1 rule).",
+  "average": "Six-domain average per run index; paper's sd for it derived as sqrt(sum sd_d^2)/6 (domains independent).",
+  "relative": "On the average, paired by run index; direction from our 95% CI, size from the CI of (our gap - paper gap).",
+  "prior_work": "Above if our 95% CI lower bound > best prior-work number in that column; below if upper < it; else not separable."
+ },
+ "cells": {
+  "erm": {
+   "0": {
+    "delta": -2.6,
+    "ci95": [
+     -9.64,
+     4.44
+    ],
+    "ci90": [
+     -7.66,
+     2.46
+    ],
+    "margin": 1.0,
+    "margin_source": "paper sd",
+    "min_margin_for_equivalence": 7.66,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 88.2,
+     "sd": 1.0
+    },
+    "ours": {
+     "mean": 85.6,
+     "sd": 2.65,
+     "n": 3
+    },
+    "per_seed": [
+     82.1,
+     86.2,
+     88.5
+    ],
+    "selected_epochs": [
+     16,
+     16,
+     24
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_erm_0.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for ERM"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "15": {
+    "delta": -0.1,
+    "ci95": [
+     -2.23,
+     2.03
+    ],
+    "ci90": [
+     -1.69,
+     1.49
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 1.69,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 98.6,
+     "sd": 0.5
+    },
+    "ours": {
+     "mean": 98.5,
+     "sd": 0.85,
+     "n": 3
+    },
+    "per_seed": [
+     97.3,
+     99.1,
+     99.1
+    ],
+    "selected_epochs": [
+     19,
+     66,
+     40
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_erm_15.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for ERM"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "30": {
+    "delta": -0.53,
+    "ci95": [
+     -2.69,
+     1.63
+    ],
+    "ci90": [
+     -2.17,
+     1.11
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 2.17,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 97.7,
+     "sd": 0.6
+    },
+    "ours": {
+     "mean": 97.17,
+     "sd": 0.86,
+     "n": 3
+    },
+    "per_seed": [
+     98.2,
+     97.2,
+     96.1
+    ],
+    "selected_epochs": [
+     44,
+     18,
+     12
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_erm_30.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for ERM"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "45": {
+    "delta": 0.03,
+    "ci95": [
+     -0.87,
+     0.93
+    ],
+    "ci90": [
+     -0.66,
+     0.72
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.72,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 97.5,
+     "sd": 0.3
+    },
+    "ours": {
+     "mean": 97.53,
+     "sd": 0.34,
+     "n": 3
+    },
+    "per_seed": [
+     98.0,
+     97.2,
+     97.4
+    ],
+    "selected_epochs": [
+     20,
+     16,
+     27
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_erm_45.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for ERM"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "60": {
+    "delta": -0.07,
+    "ci95": [
+     -0.92,
+     0.78
+    ],
+    "ci90": [
+     -0.67,
+     0.53
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.67,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 97.0,
+     "sd": 0.1
+    },
+    "ours": {
+     "mean": 96.93,
+     "sd": 0.31,
+     "n": 3
+    },
+    "per_seed": [
+     97.2,
+     96.5,
+     97.1
+    ],
+    "selected_epochs": [
+     17,
+     13,
+     14
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_erm_60.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for ERM"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "75": {
+    "delta": -0.63,
+    "ci95": [
+     -5.93,
+     4.67
+    ],
+    "ci90": [
+     -4.66,
+     3.4
+    ],
+    "margin": 2.1,
+    "margin_source": "paper sd",
+    "min_margin_for_equivalence": 4.66,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 85.6,
+     "sd": 2.1
+    },
+    "ours": {
+     "mean": 84.97,
+     "sd": 1.55,
+     "n": 3
+    },
+    "per_seed": [
+     84.9,
+     86.9,
+     83.1
+    ],
+    "selected_epochs": [
+     61,
+     14,
+     15
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_erm_75.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for ERM"
+     ]
+    },
+    "label": "Inconclusive"
+   }
+  },
+  "rand": {
+   "0": {
+    "delta": -0.47,
+    "ci95": [
+     -3.14,
+     2.2
+    ],
+    "ci90": [
+     -2.52,
+     1.58
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 2.52,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 91.0,
+     "sd": 0.9
+    },
+    "ours": {
+     "mean": 90.53,
+     "sd": 1.01,
+     "n": 3
+    },
+    "per_seed": [
+     91.9,
+     90.2,
+     89.5
+    ],
+    "selected_epochs": [
+     25,
+     8,
+     11
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_rand_0.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for RandMatch",
+      "F4 applies, not tested for RandMatch"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "15": {
+    "delta": -0.33,
+    "ci95": [
+     -0.87,
+     0.21
+    ],
+    "ci90": [
+     -0.75,
+     0.09
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.75,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.7,
+     "sd": 0.2
+    },
+    "ours": {
+     "mean": 99.37,
+     "sd": 0.19,
+     "n": 3
+    },
+    "per_seed": [
+     99.5,
+     99.5,
+     99.1
+    ],
+    "selected_epochs": [
+     23,
+     45,
+     13
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_rand_15.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for RandMatch",
+      "F4 applies, not tested for RandMatch"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "30": {
+    "delta": -0.03,
+    "ci95": [
+     -0.69,
+     0.63
+    ],
+    "ci90": [
+     -0.51,
+     0.45
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.51,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.6,
+     "sd": 0.1
+    },
+    "ours": {
+     "mean": 99.57,
+     "sd": 0.25,
+     "n": 3
+    },
+    "per_seed": [
+     99.9,
+     99.5,
+     99.3
+    ],
+    "selected_epochs": [
+     25,
+     37,
+     24
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_rand_30.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for RandMatch",
+      "F4 applies, not tested for RandMatch"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "45": {
+    "delta": 0.2,
+    "ci95": [
+     -0.2,
+     0.6
+    ],
+    "ci90": [
+     -0.1,
+     0.5
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.5,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.4,
+     "sd": 0.1
+    },
+    "ours": {
+     "mean": 99.6,
+     "sd": 0.16,
+     "n": 3
+    },
+    "per_seed": [
+     99.8,
+     99.6,
+     99.4
+    ],
+    "selected_epochs": [
+     29,
+     37,
+     19
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_rand_45.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for RandMatch",
+      "F4 applies, not tested for RandMatch"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "60": {
+    "delta": -0.2,
+    "ci95": [
+     -0.6,
+     0.2
+    ],
+    "ci90": [
+     -0.5,
+     0.1
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.5,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.7,
+     "sd": 0.1
+    },
+    "ours": {
+     "mean": 99.5,
+     "sd": 0.16,
+     "n": 3
+    },
+    "per_seed": [
+     99.5,
+     99.7,
+     99.3
+    ],
+    "selected_epochs": [
+     27,
+     29,
+     26
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_rand_60.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for RandMatch",
+      "F4 applies, not tested for RandMatch"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "75": {
+    "delta": 0.6,
+    "ci95": [
+     -2.31,
+     3.51
+    ],
+    "ci90": [
+     -1.5,
+     2.7
+    ],
+    "margin": 1.1,
+    "margin_source": "paper sd",
+    "min_margin_for_equivalence": 2.7,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 93.1,
+     "sd": 1.1
+    },
+    "ours": {
+     "mean": 93.7,
+     "sd": 0.43,
+     "n": 3
+    },
+    "per_seed": [
+     94.1,
+     93.9,
+     93.1
+    ],
+    "selected_epochs": [
+     28,
+     59,
+     22
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_rand_75.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for RandMatch",
+      "F4 applies, not tested for RandMatch"
+     ]
+    },
+    "label": "Inconclusive"
+   }
+  },
+  "matchdg": {
+   "0": {
+    "delta": 0.2,
+    "ci95": [
+     -1.56,
+     1.96
+    ],
+    "ci90": [
+     -1.14,
+     1.54
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 1.54,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 93.0,
+     "sd": 0.5
+    },
+    "ours": {
+     "mean": 93.2,
+     "sd": 0.7,
+     "n": 3
+    },
+    "per_seed": [
+     93.1,
+     92.4,
+     94.1
+    ],
+    "selected_epochs": [
+     13,
+     69,
+     17
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_matchdg_0.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for MatchDG",
+      "F4 applies, not tested for MatchDG"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "15": {
+    "delta": -0.03,
+    "ci95": [
+     -0.91,
+     0.85
+    ],
+    "ci90": [
+     -0.7,
+     0.64
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.7,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.5,
+     "sd": 0.3
+    },
+    "ours": {
+     "mean": 99.47,
+     "sd": 0.33,
+     "n": 3
+    },
+    "per_seed": [
+     99.7,
+     99.7,
+     99.0
+    ],
+    "selected_epochs": [
+     22,
+     31,
+     11
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_matchdg_15.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for MatchDG",
+      "F4 applies, not tested for MatchDG"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "30": {
+    "delta": -0.47,
+    "ci95": [
+     -1.01,
+     0.07
+    ],
+    "ci90": [
+     -0.86,
+     -0.08
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.86,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.9,
+     "sd": 0.1
+    },
+    "ours": {
+     "mean": 99.43,
+     "sd": 0.21,
+     "n": 3
+    },
+    "per_seed": [
+     99.7,
+     99.4,
+     99.2
+    ],
+    "selected_epochs": [
+     23,
+     48,
+     23
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_matchdg_30.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for MatchDG",
+      "F4 applies, not tested for MatchDG"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "45": {
+    "delta": -0.37,
+    "ci95": [
+     -2.54,
+     1.8
+    ],
+    "ci90": [
+     -1.85,
+     1.11
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 1.85,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.4,
+     "sd": 0.1
+    },
+    "ours": {
+     "mean": 99.03,
+     "sd": 0.73,
+     "n": 3
+    },
+    "per_seed": [
+     99.6,
+     99.5,
+     98.0
+    ],
+    "selected_epochs": [
+     50,
+     36,
+     6
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_matchdg_45.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for MatchDG",
+      "F4 applies, not tested for MatchDG"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "60": {
+    "delta": -0.23,
+    "ci95": [
+     -1.02,
+     0.56
+    ],
+    "ci90": [
+     -0.83,
+     0.37
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.83,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.7,
+     "sd": 0.3
+    },
+    "ours": {
+     "mean": 99.47,
+     "sd": 0.26,
+     "n": 3
+    },
+    "per_seed": [
+     99.7,
+     99.6,
+     99.1
+    ],
+    "selected_epochs": [
+     92,
+     74,
+     18
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_matchdg_60.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for MatchDG",
+      "F4 applies, not tested for MatchDG"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "75": {
+    "delta": -1.47,
+    "ci95": [
+     -4.28,
+     1.34
+    ],
+    "ci90": [
+     -3.53,
+     0.59
+    ],
+    "margin": 1.1,
+    "margin_source": "paper sd",
+    "min_margin_for_equivalence": 3.53,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 93.3,
+     "sd": 1.1
+    },
+    "ours": {
+     "mean": 91.83,
+     "sd": 0.54,
+     "n": 3
+    },
+    "per_seed": [
+     92.6,
+     91.4,
+     91.5
+    ],
+    "selected_epochs": [
+     23,
+     11,
+     8
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_matchdg_75.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for MatchDG",
+      "F4 applies, not tested for MatchDG"
+     ]
+    },
+    "label": "Inconclusive"
+   }
+  },
+  "perf": {
+   "0": {
+    "delta": 0.0,
+    "ci95": [
+     -1.55,
+     1.55
+    ],
+    "ci90": [
+     -1.18,
+     1.18
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 1.18,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 96.5,
+     "sd": 0.6
+    },
+    "ours": {
+     "mean": 96.5,
+     "sd": 0.49,
+     "n": 3
+    },
+    "per_seed": [
+     95.9,
+     96.5,
+     97.1
+    ],
+    "selected_epochs": [
+     52,
+     62,
+     78
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_perf_0.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for PerfMatch (oracle)",
+      "F4 applies, not tested for PerfMatch (oracle)"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "15": {
+    "delta": 0.2,
+    "ci95": [
+     -0.57,
+     0.97
+    ],
+    "ci90": [
+     -0.36,
+     0.76
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 0.76,
+    "verdict": "Reproduced",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.1,
+     "sd": 0.3
+    },
+    "ours": {
+     "mean": 99.3,
+     "sd": 0.14,
+     "n": 3
+    },
+    "per_seed": [
+     99.4,
+     99.1,
+     99.4
+    ],
+    "selected_epochs": [
+     57,
+     41,
+     28
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_perf_15.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for PerfMatch (oracle)",
+      "F4 applies, not tested for PerfMatch (oracle)"
+     ]
+    },
+    "label": "Reproduced"
+   },
+   "30": {
+    "delta": -0.47,
+    "ci95": [
+     -1.62,
+     0.68
+    ],
+    "ci90": [
+     -1.34,
+     0.4
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 1.34,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 99.2,
+     "sd": 0.3
+    },
+    "ours": {
+     "mean": 98.73,
+     "sd": 0.46,
+     "n": 3
+    },
+    "per_seed": [
+     99.2,
+     98.9,
+     98.1
+    ],
+    "selected_epochs": [
+     49,
+     36,
+     19
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_perf_30.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for PerfMatch (oracle)",
+      "F4 applies, not tested for PerfMatch (oracle)"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "45": {
+    "delta": -0.3,
+    "ci95": [
+     -2.4,
+     1.8
+    ],
+    "ci90": [
+     -1.91,
+     1.31
+    ],
+    "margin": 1.0,
+    "margin_source": "practical floor",
+    "min_margin_for_equivalence": 1.91,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 98.6,
+     "sd": 0.7
+    },
+    "ours": {
+     "mean": 98.3,
+     "sd": 0.8,
+     "n": 3
+    },
+    "per_seed": [
+     97.2,
+     99.1,
+     98.6
+    ],
+    "selected_epochs": [
+     17,
+     38,
+     28
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_perf_45.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for PerfMatch (oracle)",
+      "F4 applies, not tested for PerfMatch (oracle)"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "60": {
+    "delta": 0.8,
+    "ci95": [
+     -2.07,
+     3.67
+    ],
+    "ci90": [
+     -1.19,
+     2.79
+    ],
+    "margin": 1.0,
+    "margin_source": "paper sd",
+    "min_margin_for_equivalence": 2.79,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 98.6,
+     "sd": 1.0
+    },
+    "ours": {
+     "mean": 99.4,
+     "sd": 0.22,
+     "n": 3
+    },
+    "per_seed": [
+     99.6,
+     99.1,
+     99.5
+    ],
+    "selected_epochs": [
+     69,
+     39,
+     58
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_perf_60.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for PerfMatch (oracle)",
+      "F4 applies, not tested for PerfMatch (oracle)"
+     ]
+    },
+    "label": "Inconclusive"
+   },
+   "75": {
+    "delta": -0.23,
+    "ci95": [
+     -4.75,
+     4.29
+    ],
+    "ci90": [
+     -3.66,
+     3.2
+    ],
+    "margin": 1.8,
+    "margin_source": "paper sd",
+    "min_margin_for_equivalence": 3.66,
+    "verdict": "Inconclusive",
+    "size_note": null,
+    "verdict_paper_sd_only": "Inconclusive",
+    "paper": {
+     "mean": 94.9,
+     "sd": 1.8
+    },
+    "ours": {
+     "mean": 94.67,
+     "sd": 1.26,
+     "n": 3
+    },
+    "per_seed": [
+     95.4,
+     95.7,
+     92.9
+    ],
+    "selected_epochs": [
+     25,
+     37,
+     19
+    ],
+    "log": "logs/matchdg_lenet_confirm/train_perf_75.log",
+    "setup": {
+     "differs": false,
+     "reasons": [],
+     "notes": [
+      "F3 applies, not tested for PerfMatch (oracle)",
+      "F4 applies, not tested for PerfMatch (oracle)"
+     ]
+    },
+    "label": "Inconclusive"
+   }
+  }
+ },
+ "average": {
+  "erm": {
+   "delta": -0.65,
+   "ci95": [
+    -1.74,
+    0.44
+   ],
+   "ci90": [
+    -1.49,
+    0.19
+   ],
+   "margin": 1.0,
+   "margin_source": "practical floor",
+   "min_margin_for_equivalence": 1.49,
+   "verdict": "Inconclusive",
+   "size_note": null,
+   "verdict_paper_sd_only": "Inconclusive",
+   "paper": {
+    "mean": 94.1,
+    "sd_derived": 0.41
+   },
+   "ours": {
+    "mean": 93.45,
+    "sd_pop": 0.37,
+    "n": 3
+   },
+   "per_run": [
+    92.95,
+    93.85,
+    93.55
+   ],
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for ERM"
+    ]
+   },
+   "label": "Inconclusive"
+  },
+  "rand": {
+   "delta": -0.06,
+   "ci95": [
+    -0.91,
+    0.79
+   ],
+   "ci90": [
+    -0.71,
+    0.59
+   ],
+   "margin": 1.0,
+   "margin_source": "practical floor",
+   "min_margin_for_equivalence": 0.71,
+   "verdict": "Reproduced",
+   "size_note": null,
+   "verdict_paper_sd_only": "Inconclusive",
+   "paper": {
+    "mean": 97.1,
+    "sd_derived": 0.24
+   },
+   "ours": {
+    "mean": 97.04,
+    "sd_pop": 0.34,
+    "n": 3
+   },
+   "per_run": [
+    97.45,
+    97.07,
+    96.62
+   ],
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for RandMatch",
+     "F4 applies, not tested for RandMatch"
+    ]
+   },
+   "label": "Reproduced"
+  },
+  "matchdg": {
+   "delta": -0.33,
+   "ci95": [
+    -0.97,
+    0.31
+   ],
+   "ci90": [
+    -0.82,
+    0.16
+   ],
+   "margin": 1.0,
+   "margin_source": "practical floor",
+   "min_margin_for_equivalence": 0.82,
+   "verdict": "Reproduced",
+   "size_note": null,
+   "verdict_paper_sd_only": "Inconclusive",
+   "paper": {
+    "mean": 97.4,
+    "sd_derived": 0.21
+   },
+   "ours": {
+    "mean": 97.07,
+    "sd_pop": 0.24,
+    "n": 3
+   },
+   "per_run": [
+    97.4,
+    97.0,
+    96.82
+   ],
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for MatchDG",
+     "F4 applies, not tested for MatchDG"
+    ]
+   },
+   "label": "Reproduced"
+  },
+  "perf": {
+   "delta": 0.02,
+   "ci95": [
+    -0.95,
+    0.99
+   ],
+   "ci90": [
+    -0.7,
+    0.74
+   ],
+   "margin": 1.0,
+   "margin_source": "practical floor",
+   "min_margin_for_equivalence": 0.74,
+   "verdict": "Reproduced",
+   "size_note": null,
+   "verdict_paper_sd_only": "Inconclusive",
+   "paper": {
+    "mean": 97.8,
+    "sd_derived": 0.38
+   },
+   "ours": {
+    "mean": 97.82,
+    "sd_pop": 0.19,
+    "n": 3
+   },
+   "per_run": [
+    97.78,
+    98.07,
+    97.6
+   ],
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for PerfMatch (oracle)",
+     "F4 applies, not tested for PerfMatch (oracle)"
+    ]
+   },
+   "label": "Reproduced"
+  }
+ },
+ "relative": {
+  "matchdg_vs_erm": {
+   "ours_gap": 3.62,
+   "ours_ci95": [
+    1.84,
+    5.41
+   ],
+   "paper_gap": 3.3,
+   "paper_gap_se": 0.33,
+   "ours_gap_se": 0.42,
+   "gap_difference": 0.32,
+   "gap_difference_ci95": [
+    -1.12,
+    1.77
+   ],
+   "verdict": "Reproduced",
+   "size_note": null,
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for MatchDG, ERM",
+     "F4 applies, not tested for MatchDG"
+    ]
+   },
+   "label": "Reproduced"
+  },
+  "matchdg_vs_rand": {
+   "ours_gap": 0.03,
+   "ours_ci95": [
+    -0.34,
+    0.4
+   ],
+   "paper_gap": 0.3,
+   "paper_gap_se": 0.23,
+   "ours_gap_se": 0.09,
+   "gap_difference": -0.27,
+   "gap_difference_ci95": [
+    -0.9,
+    0.36
+   ],
+   "verdict": "Inconclusive",
+   "size_note": null,
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for MatchDG, RandMatch",
+     "F4 applies, not tested for MatchDG, RandMatch"
+    ]
+   },
+   "label": "Inconclusive"
+  },
+  "perf_vs_matchdg": {
+   "ours_gap": 0.74,
+   "ours_ci95": [
+    -0.11,
+    1.6
+   ],
+   "paper_gap": 0.4,
+   "paper_gap_se": 0.31,
+   "ours_gap_se": 0.2,
+   "gap_difference": 0.34,
+   "gap_difference_ci95": [
+    -0.61,
+    1.29
+   ],
+   "verdict": "Inconclusive",
+   "size_note": null,
+   "setup": {
+    "differs": false,
+    "reasons": [],
+    "notes": [
+     "F3 applies, not tested for PerfMatch (oracle), MatchDG",
+     "F4 applies, not tested for PerfMatch (oracle), MatchDG"
+    ]
+   },
+   "label": "Inconclusive"
+  }
+ },
+ "prior_work": {
+  "rand": {
+   "0": {
+    "ours_mean": 90.53,
+    "ci95": [
+     87.47,
+     93.6
+    ],
+    "best_prior": 93.5,
+    "best_prior_name": "DIVA",
+    "result": "reported, not graded (0\u00b0: 'competitive with DIVA' has no margin)"
+   },
+   "15": {
+    "ours_mean": 99.37,
+    "ci95": [
+     98.79,
+     99.94
+    ],
+    "best_prior": 99.3,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "30": {
+    "ours_mean": 99.57,
+    "ci95": [
+     98.81,
+     100.33
+    ],
+    "best_prior": 99.1,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "45": {
+    "ours_mean": 99.6,
+    "ci95": [
+     99.1,
+     100.1
+    ],
+    "best_prior": 99.2,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "60": {
+    "ours_mean": 99.5,
+    "ci95": [
+     99.0,
+     100.0
+    ],
+    "best_prior": 99.3,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "75": {
+    "ours_mean": 93.7,
+    "ci95": [
+     92.39,
+     95.01
+    ],
+    "best_prior": 93.0,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   }
+  },
+  "matchdg": {
+   "0": {
+    "ours_mean": 93.2,
+    "ci95": [
+     91.08,
+     95.32
+    ],
+    "best_prior": 93.5,
+    "best_prior_name": "DIVA",
+    "result": "reported, not graded (0\u00b0: 'competitive with DIVA' has no margin)"
+   },
+   "15": {
+    "ours_mean": 99.47,
+    "ci95": [
+     98.46,
+     100.47
+    ],
+    "best_prior": 99.3,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "30": {
+    "ours_mean": 99.43,
+    "ci95": [
+     98.81,
+     100.06
+    ],
+    "best_prior": 99.1,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "45": {
+    "ours_mean": 99.03,
+    "ci95": [
+     96.81,
+     101.26
+    ],
+    "best_prior": 99.2,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "60": {
+    "ours_mean": 99.47,
+    "ci95": [
+     98.67,
+     100.27
+    ],
+    "best_prior": 99.3,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   },
+   "75": {
+    "ours_mean": 91.83,
+    "ci95": [
+     90.18,
+     93.49
+    ],
+    "best_prior": 93.0,
+    "best_prior_name": "DIVA",
+    "result": "not separable"
+   }
+  }
+ },
+ "missing": []
+}

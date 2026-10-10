@@ -1,0 +1,4594 @@
+{
+ "audit": "matchdg",
+ "paper": "Domain Generalization using Causal Matching (ICML 2021)",
+ "agent": "paper_extractor",
+ "model": "sonnet",
+ "pypdf": "6.19.0",
+ "docs": {
+  "main": {
+   "pdf": "workspace/papers/matchdg/mahajan21b.pdf",
+   "sha256": "c9d9f8a4fc7fabd12534630f3268a3dff52eae611eefbebd501f78718ca07c21",
+   "pages": 12
+  },
+  "supplement": {
+   "pdf": "workspace/papers/matchdg/mahajan21b-supp.pdf",
+   "sha256": "2726d78e4d55150c7c208bb37195545ccc32338edff04e9919f1325b94530e67",
+   "pages": 19
+  }
+ },
+ "tables": [
+  {
+   "target": "Table 1",
+   "table": "Table 1",
+   "doc": "main",
+   "page": 4,
+   "caption": {
+    "text": "Table 1. Slab Dataset: Source domains with noisy linear compo- nent with probability 0.0 and 0.1, target domain with noise 1.0.",
+    "found": true,
+    "problem": null
+   },
+   "header_line": "Method Source 1 Source 2 Target",
+   "row_label_header": "Method",
+   "columns": [
+    "Source 1",
+    "Source 2",
+    "Target"
+   ],
+   "metric": {
+    "name": "out-of-domain accuracy",
+    "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+    "unit": "percent",
+    "quote": {
+     "text": "The results improve substantially: out-of-domain accuracy is now 78%.",
+     "doc": "main",
+     "page": 4,
+     "found": true,
+     "problem": null,
+     "note": null
+    }
+   },
+   "aggregation": {
+    "kind": "mean",
+    "spread": "standard deviation over 10 different seed values",
+    "n_runs": 10,
+    "quote": {
+     "text": "Mean and standard deviation over 10 different seed values for each method.",
+     "doc": "main",
+     "page": 4,
+     "found": true,
+     "problem": null,
+     "note": null
+    }
+   },
+   "problems": [],
+   "rows": [
+    {
+     "label": "ERM",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "DANN",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "MMD",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "CORAL",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "RandMatch",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "CDANN",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "C-MMD",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "C-CORAL",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "PerfMatch",
+     "role": "oracle",
+     "provenance": "this_paper"
+    }
+   ],
+   "cards": [
+    {
+     "claim_id": "Table 1|ERM|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "ERM",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "ERM 100.0 (0.0 ) 96.0 (0.25) 57.6 (6.58)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 100.0,
+      "sd": 0.0,
+      "mean_text": "100.0",
+      "sd_text": "0.0",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|ERM|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "ERM",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "ERM 100.0 (0.0 ) 96.0 (0.25) 57.6 (6.58)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.0,
+      "sd": 0.25,
+      "mean_text": "96.0",
+      "sd_text": "0.25",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|ERM|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "ERM",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "ERM 100.0 (0.0 ) 96.0 (0.25) 57.6 (6.58)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 57.6,
+      "sd": 6.58,
+      "mean_text": "57.6",
+      "sd_text": "6.58",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|DANN|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "DANN",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "DANN 99.9 (0.07) 94.8 (0.25) 53.0 (1.41)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.07,
+      "mean_text": "99.9",
+      "sd_text": "0.07",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|DANN|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "DANN",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "DANN 99.9 (0.07) 94.8 (0.25) 53.0 (1.41)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.8,
+      "sd": 0.25,
+      "mean_text": "94.8",
+      "sd_text": "0.25",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|DANN|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "DANN",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "DANN 99.9 (0.07) 94.8 (0.25) 53.0 (1.41)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 53.0,
+      "sd": 1.41,
+      "mean_text": "53.0",
+      "sd_text": "1.41",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|MMD|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "MMD",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "MMD 99.9 (0.01) 95.9 (0.27) 62.9 (5.01)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.01,
+      "mean_text": "99.9",
+      "sd_text": "0.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|MMD|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "MMD",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "MMD 99.9 (0.01) 95.9 (0.27) 62.9 (5.01)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 95.9,
+      "sd": 0.27,
+      "mean_text": "95.9",
+      "sd_text": "0.27",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|MMD|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "MMD",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "MMD 99.9 (0.01) 95.9 (0.27) 62.9 (5.01)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 62.9,
+      "sd": 5.01,
+      "mean_text": "62.9",
+      "sd_text": "5.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|CORAL|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "CORAL",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "CORAL 99.9 (0.01) 96.0 (0.27) 63.1 (5.86)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.01,
+      "mean_text": "99.9",
+      "sd_text": "0.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|CORAL|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "CORAL",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "CORAL 99.9 (0.01) 96.0 (0.27) 63.1 (5.86)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.0,
+      "sd": 0.27,
+      "mean_text": "96.0",
+      "sd_text": "0.27",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|CORAL|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "CORAL",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "CORAL 99.9 (0.01) 96.0 (0.27) 63.1 (5.86)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 63.1,
+      "sd": 5.86,
+      "mean_text": "63.1",
+      "sd_text": "5.86",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|RandMatch|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq. (3) but with randomly selected matches from the same class (Motiian et al., 2017),",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "RandMatch",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "RandMatch 100.0 (0.0) 96.1 (0.22) 59.5 (3.50)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 100.0,
+      "sd": 0.0,
+      "mean_text": "100.0",
+      "sd_text": "0.0",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|RandMatch|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq. (3) but with randomly selected matches from the same class (Motiian et al., 2017),",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "RandMatch",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "RandMatch 100.0 (0.0) 96.1 (0.22) 59.5 (3.50)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.1,
+      "sd": 0.22,
+      "mean_text": "96.1",
+      "sd_text": "0.22",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|RandMatch|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq. (3) but with randomly selected matches from the same class (Motiian et al., 2017),",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "RandMatch",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "RandMatch 100.0 (0.0) 96.1 (0.22) 59.5 (3.50)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 59.5,
+      "sd": 3.5,
+      "mean_text": "59.5",
+      "sd_text": "3.50",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|CDANN|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "CDANN",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "CDANN 99.9 (0.01) 96.0 (0.27) 55.9 (2.47)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.01,
+      "mean_text": "99.9",
+      "sd_text": "0.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|CDANN|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "CDANN",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "CDANN 99.9 (0.01) 96.0 (0.27) 55.9 (2.47)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.0,
+      "sd": 0.27,
+      "mean_text": "96.0",
+      "sd_text": "0.27",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|CDANN|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "CDANN",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "CDANN 99.9 (0.01) 96.0 (0.27) 55.9 (2.47)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 55.9,
+      "sd": 2.47,
+      "mean_text": "55.9",
+      "sd_text": "2.47",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|C-MMD|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "C-MMD",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "C-MMD 99.9 (0.01) 96.0 (0.27) 58.9 (3.43)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.01,
+      "mean_text": "99.9",
+      "sd_text": "0.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|C-MMD|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "C-MMD",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "C-MMD 99.9 (0.01) 96.0 (0.27) 58.9 (3.43)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.0,
+      "sd": 0.27,
+      "mean_text": "96.0",
+      "sd_text": "0.27",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|C-MMD|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "C-MMD",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "C-MMD 99.9 (0.01) 96.0 (0.27) 58.9 (3.43)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 58.9,
+      "sd": 3.43,
+      "mean_text": "58.9",
+      "sd_text": "3.43",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|C-CORAL|Source 1",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "C-CORAL",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "C-CORAL 99.9 (0.01) 96.0 (0.27) 64.7 (4.69)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.01,
+      "mean_text": "99.9",
+      "sd_text": "0.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|C-CORAL|Source 2",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "C-CORAL",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "C-CORAL 99.9 (0.01) 96.0 (0.27) 64.7 (4.69)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.0,
+      "sd": 0.27,
+      "mean_text": "96.0",
+      "sd_text": "0.27",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|C-CORAL|Target",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "Our objective with the syn- thetic slab dataset is to compare the performance of con- ditional distribution matching (CDM) methods to that of Perfect Match.",
+      "doc": "supplement",
+      "page": 2,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "C-CORAL",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "C-CORAL 99.9 (0.01) 96.0 (0.27) 64.7 (4.69)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 64.7,
+      "sd": 4.69,
+      "mean_text": "64.7",
+      "sd_text": "4.69",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|PerfMatch|Source 1",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "The last column shows the accu- racy for an oracle method, ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "PerfMatch",
+      "column": "Source 1",
+      "column_index": 0,
+      "row_line": "PerfMatch 99.9 (0.05) 97.8 (0.28) 77.8 (6.01)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.05,
+      "mean_text": "99.9",
+      "sd_text": "0.05",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|PerfMatch|Source 2",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "The last column shows the accu- racy for an oracle method, ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "PerfMatch",
+      "column": "Source 2",
+      "column_index": 1,
+      "row_line": "PerfMatch 99.9 (0.05) 97.8 (0.28) 77.8 (6.01)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.8,
+      "sd": 0.28,
+      "mean_text": "97.8",
+      "sd_text": "0.28",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 1|PerfMatch|Target",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "The last column shows the accu- racy for an oracle method, ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "main",
+      "page": 4,
+      "table": "Table 1",
+      "row": "PerfMatch",
+      "column": "Target",
+      "column_index": 2,
+      "row_line": "PerfMatch 99.9 (0.05) 97.8 (0.28) 77.8 (6.01)",
+      "header_line": "Method Source 1 Source 2 Target"
+     },
+     "metric": {
+      "name": "out-of-domain accuracy",
+      "split": "source domains 1 and 2 (noise 0.0, 0.1) and target domain (noise 1.0)",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 77.8,
+      "sd": 6.01,
+      "mean_text": "77.8",
+      "sd_text": "6.01",
+      "aggregation": "mean",
+      "spread": "standard deviation over 10 different seed values",
+      "n_runs": 10
+     },
+     "valid": true,
+     "problems": []
+    }
+   ],
+   "relative": [
+    {
+     "claim_id": "Table 1|R1",
+     "type": "relative",
+     "statement": "PerfMatch substantially improves target out-of-domain accuracy (about 78%) over the other methods on the slab dataset.",
+     "quote": {
+      "text": "The results improve substantially: out-of-domain accuracy is now 78%.",
+      "doc": "main",
+      "page": 4,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "rows": [
+      "PerfMatch",
+      "ERM",
+      "DANN",
+      "MMD",
+      "CORAL",
+      "RandMatch",
+      "CDANN",
+      "C-MMD",
+      "C-CORAL"
+     ],
+     "column": "Target",
+     "cells": [
+      "Table 1|PerfMatch|Target",
+      "Table 1|ERM|Target",
+      "Table 1|DANN|Target",
+      "Table 1|MMD|Target",
+      "Table 1|CORAL|Target",
+      "Table 1|RandMatch|Target",
+      "Table 1|CDANN|Target",
+      "Table 1|C-MMD|Target",
+      "Table 1|C-CORAL|Target"
+     ],
+     "valid": true,
+     "problems": []
+    }
+   ],
+   "notes": "PerfMatch is labelled oracle: on the slab data it uses ground-truth slab ids as matches, and the paper calls ERM-PerfMatch an oracle with access to ground-truth perfect matches (that quote is from the Table 2 discussion). Baseline numbers for DANN, CDANN, MMD, C-MMD, CORAL and C-CORAL were computed by the authors with DomainBed implementations, so provenance is this_paper. The caption's \"(0.0 )\" in the ERM row is copied as printed. The paper has no sentence that names the metric as accuracy for Table 1 in so many words, so the metric quote is the \"out-of-domain accuracy\" sentence.",
+   "call": {
+    "key": "899be52c8f7184472e54407c6e0112a1a29cca53a9a4af496c8644f43c010f70",
+    "cache": "hit",
+    "backend": "replay",
+    "recorded_backend": "claude_cli",
+    "cli_version": "2.1.288",
+    "total_cost_usd": 0.293232,
+    "num_turns": 2,
+    "models": [
+     "claude-sonnet-5-5"
+    ],
+    "prompt": "claims/table-1.prompt.md",
+    "answer": "claims/table-1.answer.json"
+   }
+  },
+  {
+   "target": "Suppl. Table 11",
+   "table": "Table 11",
+   "doc": "supplement",
+   "page": 12,
+   "caption": {
+    "text": "Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017).",
+    "found": true,
+    "problem": null
+   },
+   "header_line": "Algorithm 0 15 30 45 60 75 Average",
+   "row_label_header": "Algorithm",
+   "columns": [
+    "0",
+    "15",
+    "30",
+    "45",
+    "60",
+    "75",
+    "Average"
+   ],
+   "metric": {
+    "name": "Accuracy",
+    "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+    "unit": "percent",
+    "quote": {
+     "text": "For each test domain, the remaining ﬁve domains are used as source training do- mains.",
+     "doc": "supplement",
+     "page": 11,
+     "found": true,
+     "problem": null,
+     "note": null
+    }
+   },
+   "aggregation": {
+    "kind": "mean",
+    "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+    "n_runs": 3,
+    "quote": {
+     "text": "All the numbers are averaged over 3 runs with standard deviation in brackets.",
+     "doc": "main",
+     "page": 7,
+     "found": true,
+     "problem": null,
+     "note": null
+    }
+   },
+   "problems": [],
+   "rows": [
+    {
+     "label": "ERM",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "CCSA",
+     "role": "baseline",
+     "provenance": "cited"
+    },
+    {
+     "label": "D-MTAE",
+     "role": "baseline",
+     "provenance": "cited"
+    },
+    {
+     "label": "LabelGrad",
+     "role": "baseline",
+     "provenance": "cited"
+    },
+    {
+     "label": "DAN",
+     "role": "baseline",
+     "provenance": "cited"
+    },
+    {
+     "label": "CrossGrad",
+     "role": "baseline",
+     "provenance": "cited"
+    },
+    {
+     "label": "DIV A",
+     "role": "baseline",
+     "provenance": "cited"
+    },
+    {
+     "label": "RandMatch",
+     "role": "baseline",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "MatchDG",
+     "role": "method",
+     "provenance": "this_paper"
+    },
+    {
+     "label": "PerfMatch",
+     "role": "oracle",
+     "provenance": "this_paper"
+    }
+   ],
+   "cards": [
+    {
+     "claim_id": "Table 11|ERM|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 88.2,
+      "sd": 1.0,
+      "mean_text": "88.2",
+      "sd_text": "1.0",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|ERM|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.6,
+      "sd": 0.5,
+      "mean_text": "98.6",
+      "sd_text": "0.5",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|ERM|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.7,
+      "sd": 0.6,
+      "mean_text": "97.7",
+      "sd_text": "0.6",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|ERM|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.5,
+      "sd": 0.3,
+      "mean_text": "97.5",
+      "sd_text": "0.3",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|ERM|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.0,
+      "sd": 0.1,
+      "mean_text": "97.0",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|ERM|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 85.6,
+      "sd": 2.1,
+      "mean_text": "85.6",
+      "sd_text": "2.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|ERM|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "We com- pare to 1) ERM: Standard empirical risk minimization,",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "ERM",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "ERM 88.2 (1.0) 98.6 (0.5) 97.7 (0.6) 97.5 (0.3) 97.0 (0.1) 85.6 (2.1) 94.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.1,
+      "sd": null,
+      "mean_text": "94.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 84.6,
+      "sd": null,
+      "mean_text": "84.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 95.6,
+      "sd": null,
+      "mean_text": "95.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.6,
+      "sd": null,
+      "mean_text": "94.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 82.9,
+      "sd": null,
+      "mean_text": "82.9",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.8,
+      "sd": null,
+      "mean_text": "94.8",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 82.1,
+      "sd": null,
+      "mean_text": "82.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CCSA|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CCSA",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "CCSA 84.6 95.6 94.6 82.9 94.8 82.1 89.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 89.1,
+      "sd": null,
+      "mean_text": "89.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 82.5,
+      "sd": null,
+      "mean_text": "82.5",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.3,
+      "sd": null,
+      "mean_text": "96.3",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 93.4,
+      "sd": null,
+      "mean_text": "93.4",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 78.6,
+      "sd": null,
+      "mean_text": "78.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.2,
+      "sd": null,
+      "mean_text": "94.2",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 80.5,
+      "sd": null,
+      "mean_text": "80.5",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|D-MTAE|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "D-MTAE",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "D-MTAE 82.5 96.3 93.4 78.6 94.2 80.5 87.6",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 87.6,
+      "sd": null,
+      "mean_text": "87.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 89.7,
+      "sd": null,
+      "mean_text": "89.7",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.8,
+      "sd": null,
+      "mean_text": "97.8",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.0,
+      "sd": null,
+      "mean_text": "98.0",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.1,
+      "sd": null,
+      "mean_text": "97.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.6,
+      "sd": null,
+      "mean_text": "96.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 92.1,
+      "sd": null,
+      "mean_text": "92.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|LabelGrad|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "LabelGrad",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "LabelGrad 89.7 97.8 98.0 97.1 96.6 92.1 95.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 95.2,
+      "sd": null,
+      "mean_text": "95.2",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 86.7,
+      "sd": null,
+      "mean_text": "86.7",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.0,
+      "sd": null,
+      "mean_text": "98.0",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.8,
+      "sd": null,
+      "mean_text": "97.8",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.4,
+      "sd": null,
+      "mean_text": "97.4",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.9,
+      "sd": null,
+      "mean_text": "96.9",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 89.1,
+      "sd": null,
+      "mean_text": "89.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DAN|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DAN",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "DAN 86.7 98.0 97.8 97.4 96.9 89.1 94.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.3,
+      "sd": null,
+      "mean_text": "94.3",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 88.3,
+      "sd": null,
+      "mean_text": "88.3",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.6,
+      "sd": null,
+      "mean_text": "98.6",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.0,
+      "sd": null,
+      "mean_text": "98.0",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.7,
+      "sd": null,
+      "mean_text": "97.7",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.7,
+      "sd": null,
+      "mean_text": "97.7",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 91.4,
+      "sd": null,
+      "mean_text": "91.4",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|CrossGrad|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for the prior approaches CCSA (Motiian et al., 2017), D-MTAE (Ghifary et al., 2015), LabelGrad (Goodfellow et al., 2014), DAN (Ganin et al., 2016), and CrossGrad (Shankar et al., 2018) are taken from Table 9 in (Shankar et al., 2018).",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "CrossGrad",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "CrossGrad 88.3 98.6 98.0 97.7 97.7 91.4 95.3",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 95.3,
+      "sd": null,
+      "mean_text": "95.3",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 93.5,
+      "sd": 0.3,
+      "mean_text": "93.5",
+      "sd_text": "0.3",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.3,
+      "sd": 0.1,
+      "mean_text": "99.3",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.1,
+      "sd": 0.1,
+      "mean_text": "99.1",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.2,
+      "sd": 0.1,
+      "mean_text": "99.2",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.3,
+      "sd": 0.1,
+      "mean_text": "99.3",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 93.0,
+      "sd": 0.4,
+      "mean_text": "93.0",
+      "sd_text": "0.4",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|DIV A|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "cited",
+     "provenance_quote": {
+      "text": "The results for DIV A (Ilse et al., 2020) are taken from the Table 1 in their paper.",
+      "doc": "supplement",
+      "page": 12,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited None p.None; code found the quote on supplement p.12"
+     },
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "DIV A",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "DIV A 93.5 (0.3) 99.3 (0.1) 99.1 (0.1) 99.2 (0.1) 99.3 (0.1) 93.0 (0.4) 97.2",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.2,
+      "sd": null,
+      "mean_text": "97.2",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|0",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 91.0,
+      "sd": 0.9,
+      "mean_text": "91.0",
+      "sd_text": "0.9",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|15",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.7,
+      "sd": 0.2,
+      "mean_text": "99.7",
+      "sd_text": "0.2",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|30",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.6,
+      "sd": 0.1,
+      "mean_text": "99.6",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|45",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.4,
+      "sd": 0.1,
+      "mean_text": "99.4",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|60",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.7,
+      "sd": 0.1,
+      "mean_text": "99.7",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|75",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 93.1,
+      "sd": 1.1,
+      "mean_text": "93.1",
+      "sd_text": "1.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|RandMatch|Average",
+     "type": "absolute",
+     "role": "baseline",
+     "role_quote": {
+      "text": "2) ERM-RandMatch that implements the loss from Eq.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "RandMatch",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "RandMatch 91.0 (0.9) 99.7 (0.2) 99.6 (0.1) 99.4 (0.1) 99.7 (0.1) 93.1 (1.1) 97.1",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.1,
+      "sd": null,
+      "mean_text": "97.1",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|0",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 93.0,
+      "sd": 0.5,
+      "mean_text": "93.0",
+      "sd_text": "0.5",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|15",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.5,
+      "sd": 0.3,
+      "mean_text": "99.5",
+      "sd_text": "0.3",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|30",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.9,
+      "sd": 0.1,
+      "mean_text": "99.9",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|45",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.4,
+      "sd": 0.1,
+      "mean_text": "99.4",
+      "sd_text": "0.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|60",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.7,
+      "sd": 0.3,
+      "mean_text": "99.7",
+      "sd_text": "0.3",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|75",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 93.3,
+      "sd": 1.1,
+      "mean_text": "93.3",
+      "sd_text": "1.1",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|MatchDG|Average",
+     "type": "absolute",
+     "role": "method",
+     "role_quote": {
+      "text": "The MatchDG algorithm proceeds in two phases.",
+      "doc": "supplement",
+      "page": 8,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "MatchDG",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "MatchDG 93.0 (0.5) 99.5 (0.3) 99.9 (0.1) 99.4 (0.1) 99.7 (0.3) 93.3 (1.1) 97.4",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.4,
+      "sd": null,
+      "mean_text": "97.4",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|0",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "0",
+      "column_index": 0,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 96.5,
+      "sd": 0.6,
+      "mean_text": "96.5",
+      "sd_text": "0.6",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|15",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "15",
+      "column_index": 1,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.1,
+      "sd": 0.3,
+      "mean_text": "99.1",
+      "sd_text": "0.3",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|30",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "30",
+      "column_index": 2,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 99.2,
+      "sd": 0.3,
+      "mean_text": "99.2",
+      "sd_text": "0.3",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|45",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "45",
+      "column_index": 3,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.6,
+      "sd": 0.7,
+      "mean_text": "98.6",
+      "sd_text": "0.7",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|60",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "60",
+      "column_index": 4,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 98.6,
+      "sd": 1.0,
+      "mean_text": "98.6",
+      "sd_text": "1.0",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|75",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "75",
+      "column_index": 5,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 94.9,
+      "sd": 1.8,
+      "mean_text": "94.9",
+      "sd_text": "1.8",
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    },
+    {
+     "claim_id": "Table 11|PerfMatch|Average",
+     "type": "absolute",
+     "role": "oracle",
+     "role_quote": {
+      "text": "ERM-PerfMatch that has access to ground-truth perfect matches across domains.",
+      "doc": "main",
+      "page": 7,
+      "found": true,
+      "problem": null,
+      "note": "the agent cited main p.8; code found the quote on main p.7"
+     },
+     "provenance": "this_paper",
+     "provenance_quote": null,
+     "source": {
+      "doc": "supplement",
+      "page": 12,
+      "table": "Table 11",
+      "row": "PerfMatch",
+      "column": "Average",
+      "column_index": 6,
+      "row_line": "PerfMatch 96.5 (0.6) 99.1 (0.3) 99.2 (0.3) 98.6 (0.7) 98.6 (1.0) 94.9 (1.8) 97.8",
+      "header_line": "Algorithm 0 15 30 45 60 75 Average"
+     },
+     "metric": {
+      "name": "Accuracy",
+      "split": "each column is the target (test) domain rotation angle, with the remaining five domains as source training domains",
+      "unit": "percent"
+     },
+     "reported": {
+      "mean": 97.8,
+      "sd": null,
+      "mean_text": "97.8",
+      "sd_text": null,
+      "aggregation": "mean",
+      "spread": "standard deviation in brackets over 3 runs (Average column has no spread)",
+      "n_runs": 3
+     },
+     "valid": true,
+     "problems": []
+    }
+   ],
+   "relative": [
+    {
+     "claim_id": "Table 11|R1",
+     "type": "relative",
+     "statement": "MatchDG is competitive with DIVA, the best prior approach, on test domain 0.",
+     "quote": {
+      "text": "MatchDG is competitive to the best performing approach DIV A.",
+      "doc": "supplement",
+      "page": 11,
+      "found": true,
+      "problem": null,
+      "note": null
+     },
+     "rows": [
+      "MatchDG",
+      "DIV A"
+     ],
+     "column": "0",
+     "cells": [
+      "Table 11|MatchDG|0",
+      "Table 11|DIV A|0"
+     ],
+     "valid": true,
+     "problems": []
+    }
+   ],
+   "notes": "Average column has no bracketed spread. Rows from Shankar et al. and DIVA carry no sd for CCSA, D-MTAE, LabelGrad, DAN and CrossGrad. The table's page is supplement page 12. The statement that RandMatch and MatchDG outperform prior work on all domains except 0 was not quoted because the line break hyphenation makes verbatim matching uncertain.",
+   "call": {
+    "key": "e5cb5dda7eaa2f3ef1d5da1f0507d114dc6bbad3a179918e842a32c340f2fb9c",
+    "cache": "hit",
+    "backend": "replay",
+    "recorded_backend": "claude_cli",
+    "cli_version": "2.1.288",
+    "total_cost_usd": 0.3026794,
+    "num_turns": 2,
+    "models": [
+     "claude-sonnet-5-5"
+    ],
+    "prompt": "claims/suppl-table-11.prompt.md",
+    "answer": "claims/suppl-table-11.answer.json"
+   }
+  }
+ ],
+ "counts": {
+  "tables": 2,
+  "cells": 97,
+  "cells_valid": 97,
+  "relative": 2,
+  "agent_calls": 2,
+  "cache_hits": 2,
+  "cost_usd_recorded": 0.5959
+ }
+}

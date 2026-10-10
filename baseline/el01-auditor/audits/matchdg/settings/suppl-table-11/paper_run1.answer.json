@@ -1,0 +1,319 @@
+{
+ "experiment": "Rotated MNIST (six domains 0-75 degrees, leave-one-domain-out) with LeNet as in Motiian et al. 2017, 1000 samples per domain",
+ "notes": [
+  "Table 11 setup: each of six domains (0,15,30,45,60,75) is the target in turn, remaining five are sources.",
+  "Table 8 gives MatchDG-related hyperparameters: Match Penalty 1.0 (range [0.1, 1.0]) for Table 11.",
+  "MatchDG Phase 1 (Table 9) for Table 11: total epochs 50, lr 0.01, batch size 512, weight decay 0.0005, tau 0.05, LeNet; early stopping on Top-10 overlap on source validation set.",
+  "Paper states for Table 2 (ResNet-18, CSD setup) averages over 3 runs with std in brackets; main text says 'All the numbers are averaged over 3 runs with standard deviation in brackets'. Not stated specifically for Table 11.",
+  "Momentum, nesterov, optimizer lr schedule, resize, normalization, augmentation not stated for this experiment. Optimizer SGD is stated generally for all datasets.",
+  "Early stopping on validation accuracy over source domains picks the checkpoint; total epochs is 100 max budget.",
+  "Same digits are used across source and target domains in this setup (Motiian et al.).",
+  "Rotation direction not stated.",
+  "Loss: cross-entropy plus match penalty (l2 distance between matched representations); weight 1.0 for this table. Applies to RandMatch/MatchDG/PerfMatch; ERM has no penalty."
+ ],
+ "settings": {
+  "data.source_domains": {
+   "value": [
+    "the remaining five of 0, 15, 30, 45, 60, 75 for each target"
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "which involve six domains (0◦, 15◦, 30◦, 45◦, 60◦, 75◦), and evaluate for each domain being the target domains with the remaining ﬁve used as source domains."
+    }
+   ]
+  },
+  "data.target_domains": {
+   "value": [
+    0,
+    15,
+    30,
+    45,
+    60,
+    75
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "which involve six domains (0◦, 15◦, 30◦, 45◦, 60◦, 75◦), and evaluate for each domain being the target domains with the remaining ﬁve used as source domains."
+    }
+   ]
+  },
+  "data.domains_data_available": {
+   "value": [
+    0,
+    15,
+    30,
+    45,
+    60,
+    75
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "which involve six domains (0◦, 15◦, 30◦, 45◦, 60◦, 75◦), and evaluate for each domain being the target domains with the remaining ﬁve used as source domains."
+    }
+   ]
+  },
+  "data.train_samples_per_domain": {
+   "value": 1000,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "We sample 1000 data points for each domain and evaluate using the LeNet architecture (Table 11) as per the setup proposed by (Motiian et al., 2017)."
+    }
+   ]
+  },
+  "data.val_samples_per_domain": {
+   "value": 200,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "Finally, for all the different setups proposed above, we create an additional validation set for each domain with"
+    },
+    {
+     "doc": "supplement",
+     "page": 8,
+     "quote": "20% percent size as of the training set for that domain."
+    }
+   ]
+  },
+  "data.generation_params": {
+   "value": {
+    "angles": [
+     0,
+     15,
+     30,
+     45,
+     60,
+     75
+    ],
+    "samples_per_domain": 1000,
+    "val_fraction": 0.2
+   },
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "We sample 1000 data points for each domain and evaluate using the LeNet architecture (Table 11) as per the setup proposed by (Motiian et al., 2017)."
+    }
+   ]
+  },
+  "model.architecture": {
+   "value": "LeNet (2-layer, as in Motiian et al., 2017)",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 7,
+     "quote": "We also evaluate on a simpler 2-layer LeNet (Motiian et al.,"
+    },
+    {
+     "doc": "supplement",
+     "page": 10,
+     "quote": "Architecture ResNet-18 (Table 2), LeNet (Table 11), Custom CNN (Table 12)"
+    }
+   ]
+  },
+  "optim.name": {
+   "value": "sgd",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "We use SGD to optimize the loss for all the datasets, with details about learning rate, epochs, batch size, weight decay"
+    }
+   ]
+  },
+  "optim.momentum": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.nesterov": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.lr": {
+   "value": 0.01,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Learning Rate 0.01 [0.01]"
+    }
+   ]
+  },
+  "optim.lr_schedule": {
+   "value": null,
+   "evidence": []
+  },
+  "optim.weight_decay": {
+   "value": 0.0005,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Weight Decay 0.0005 [0.0005]"
+    }
+   ]
+  },
+  "train.batch_size": {
+   "value": 16,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Batch Size 16 [16]"
+    }
+   ]
+  },
+  "train.epochs": {
+   "value": 100,
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Total Epochs - 100"
+    }
+   ]
+  },
+  "train.model_selection": {
+   "value": "best_val_accuracy",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 10,
+     "quote": "Further, we do early stopping based on the validation accuracy on source domains and use the models which obtain the best validation accuracy."
+    }
+   ]
+  },
+  "loss.terms": {
+   "value": [
+    {
+     "name": "cross_entropy",
+     "weight": 1,
+     "weight_schedule": "constant"
+    },
+    {
+     "name": "match_penalty_l2",
+     "weight": 1,
+     "weight_schedule": "constant"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 9,
+     "quote": "Match Penalty 1.0 [0.1, 1.0]"
+    },
+    {
+     "doc": "main",
+     "page": 7,
+     "quote": "For all matching-based methods, we use the cross-entropy loss for Ld and 𝓁2 distance for dist in Eq.(3)."
+    }
+   ]
+  },
+  "eval.n_seeds": {
+   "value": null,
+   "evidence": []
+  },
+  "eval.metric": {
+   "value": "classification accuracy (%) on each target rotation domain, plus average",
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 12,
+     "quote": "Table 11. Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017)."
+    }
+   ]
+  },
+  "eval.aggregation": {
+   "value": "mean_sd_over_seeds",
+   "evidence": [
+    {
+     "doc": "main",
+     "page": 7,
+     "quote": "All the numbers are averaged over 3 runs with standard deviation in brackets."
+    }
+   ]
+  },
+  "data.preprocessing.resize": {
+   "value": null,
+   "evidence": []
+  },
+  "data.preprocessing.normalization": {
+   "value": null,
+   "evidence": []
+  },
+  "data.augmentation": {
+   "value": null,
+   "evidence": []
+  },
+  "data.domain_transform": {
+   "value": [
+    {
+     "kind": "rotation",
+     "domains": [
+      0,
+      15,
+      30,
+      45,
+      60,
+      75
+     ],
+     "params": "MNIST digits rotated by the domain angle in degrees",
+     "direction": "unknown",
+     "methods": null,
+     "note": "Same digits across source and target domains"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 7,
+     "quote": "which involve six domains (0◦, 15◦, 30◦, 45◦, 60◦, 75◦), and evaluate for each domain being the target domains with the remaining ﬁve used as source domains."
+    }
+   ]
+  },
+  "train.model_selection_data": {
+   "value": [
+    {
+     "use": "checkpoint",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": "validation accuracy",
+     "methods": null,
+     "phase": null,
+     "note": "Early stopping on source-domain validation accuracy"
+    },
+    {
+     "use": "hyperparameter_tuning",
+     "split": "val",
+     "domains": "source",
+     "version": "plain",
+     "metric": null,
+     "methods": null,
+     "phase": null,
+     "note": "Validation set from source domains used for hyper parameter tuning"
+    }
+   ],
+   "evidence": [
+    {
+     "doc": "supplement",
+     "page": 10,
+     "quote": "Further, we do early stopping based on the validation accuracy on source domains and use the models which obtain the best validation accuracy."
+    },
+    {
+     "doc": "supplement",
+     "page": 8,
+     "quote": "use the validation set from the source domains for hyper"
+    }
+   ]
+  }
+ }
+}

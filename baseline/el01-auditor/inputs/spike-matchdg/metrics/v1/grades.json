@@ -1,0 +1,743 @@
+{
+ "rules": {
+  "absolute": "Reproduced if the 90% Welch CI of (ours - paper) lies inside +-margin (TOST, alpha 0.05); Not reproduced if the 95% CI excludes 0 and equivalence fails; else Inconclusive. Margin = paper's reported sd, fixed before the runs.",
+  "relative": "Direction from our paired 95% CI; size from the 95% CI of (our gap - paper gap) including the paper's own uncertainty.",
+  "effects": "Paired by seed, 95% CI; Holm correction over all exploratory effects; confirmation on fresh seeds is a separate pre-specified test."
+ },
+ "absolute": {
+  "erm": {
+   "method": "ERM",
+   "paper": {
+    "mean": 57.6,
+    "sd": 6.58,
+    "n": 10
+   },
+   "ours": {
+    "mean": 53.8,
+    "sd": 4.09,
+    "n": 10
+   },
+   "source": {
+    "source_1": 100.0,
+    "source_2": 95.77
+   },
+   "delta": -3.8,
+   "ci95": [
+    -9.3,
+    1.7
+   ],
+   "ci90": [
+    -8.33,
+    0.73
+   ],
+   "margin": 6.58,
+   "min_margin_for_equivalence": 8.33,
+   "verdict": "Inconclusive"
+  },
+  "rand": {
+   "method": "RandMatch",
+   "paper": {
+    "mean": 59.5,
+    "sd": 3.5,
+    "n": 10
+   },
+   "ours": {
+    "mean": 54.67,
+    "sd": 3.96,
+    "n": 10
+   },
+   "source": {
+    "source_1": 100.0,
+    "source_2": 95.88
+   },
+   "delta": -4.83,
+   "ci95": [
+    -8.54,
+    -1.12
+   ],
+   "ci90": [
+    -7.89,
+    -1.77
+   ],
+   "margin": 3.5,
+   "min_margin_for_equivalence": 7.89,
+   "verdict": "Not reproduced"
+  },
+  "perf": {
+   "method": "PerfMatch",
+   "paper": {
+    "mean": 77.8,
+    "sd": 6.01,
+    "n": 10
+   },
+   "ours": {
+    "mean": 80.44,
+    "sd": 7.49,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.77,
+    "source_2": 98.21
+   },
+   "delta": 2.64,
+   "ci95": [
+    -4.11,
+    9.39
+   ],
+   "ci90": [
+    -2.92,
+    8.2
+   ],
+   "margin": 6.01,
+   "min_margin_for_equivalence": 8.2,
+   "verdict": "Inconclusive"
+  },
+  "mmd": {
+   "method": "MMD",
+   "paper": {
+    "mean": 62.9,
+    "sd": 5.01,
+    "n": 10
+   },
+   "ours": {
+    "mean": 60.71,
+    "sd": 5.47,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.94,
+    "source_2": 96.42
+   },
+   "delta": -2.19,
+   "ci95": [
+    -7.39,
+    3.01
+   ],
+   "ci90": [
+    -6.48,
+    2.1
+   ],
+   "margin": 5.01,
+   "min_margin_for_equivalence": 6.48,
+   "verdict": "Inconclusive"
+  },
+  "coral": {
+   "method": "CORAL",
+   "paper": {
+    "mean": 63.1,
+    "sd": 5.86,
+    "n": 10
+   },
+   "ours": {
+    "mean": 59.47,
+    "sd": 4.65,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.97,
+    "source_2": 96.37
+   },
+   "delta": -3.63,
+   "ci95": [
+    -8.89,
+    1.63
+   ],
+   "ci90": [
+    -7.97,
+    0.71
+   ],
+   "margin": 5.86,
+   "min_margin_for_equivalence": 7.97,
+   "verdict": "Inconclusive"
+  },
+  "dann": {
+   "method": "DANN",
+   "paper": {
+    "mean": 53.0,
+    "sd": 1.41,
+    "n": 10
+   },
+   "ours": {
+    "mean": 50.19,
+    "sd": 1.39,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.88,
+    "source_2": 95.01
+   },
+   "delta": -2.81,
+   "ci95": [
+    -4.2,
+    -1.42
+   ],
+   "ci90": [
+    -3.95,
+    -1.67
+   ],
+   "margin": 1.41,
+   "min_margin_for_equivalence": 3.95,
+   "verdict": "Not reproduced"
+  },
+  "c-mmd": {
+   "method": "C-MMD",
+   "paper": {
+    "mean": 58.9,
+    "sd": 3.43,
+    "n": 10
+   },
+   "ours": {
+    "mean": 58.81,
+    "sd": 5.51,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.94,
+    "source_2": 96.22
+   },
+   "delta": -0.09,
+   "ci95": [
+    -4.7,
+    4.52
+   ],
+   "ci90": [
+    -3.88,
+    3.7
+   ],
+   "margin": 3.43,
+   "min_margin_for_equivalence": 3.88,
+   "verdict": "Inconclusive"
+  },
+  "c-coral": {
+   "method": "C-CORAL",
+   "paper": {
+    "mean": 64.7,
+    "sd": 4.69,
+    "n": 10
+   },
+   "ours": {
+    "mean": 59.59,
+    "sd": 4.28,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.98,
+    "source_2": 96.39
+   },
+   "delta": -5.11,
+   "ci95": [
+    -9.56,
+    -0.66
+   ],
+   "ci90": [
+    -8.78,
+    -1.44
+   ],
+   "margin": 4.69,
+   "min_margin_for_equivalence": 8.78,
+   "verdict": "Not reproduced"
+  },
+  "c-dann": {
+   "method": "CDANN",
+   "paper": {
+    "mean": 55.9,
+    "sd": 2.47,
+    "n": 10
+   },
+   "ours": {
+    "mean": 50.11,
+    "sd": 1.58,
+    "n": 10
+   },
+   "source": {
+    "source_1": 99.95,
+    "source_2": 95.14
+   },
+   "delta": -5.79,
+   "ci95": [
+    -7.87,
+    -3.71
+   ],
+   "ci90": [
+    -7.5,
+    -4.08
+   ],
+   "margin": 2.47,
+   "min_margin_for_equivalence": 7.5,
+   "verdict": "Not reproduced"
+  }
+ },
+ "relative": {
+  "perf_vs_erm": {
+   "ours_gap": 26.64,
+   "ours_ci95": [
+    20.98,
+    32.3
+   ],
+   "paper_gap": 20.2,
+   "paper_gap_se": 2.97,
+   "ours_gap_se": 2.5,
+   "gap_difference": 6.44,
+   "gap_difference_ci95": [
+    -1.54,
+    14.42
+   ],
+   "verdict": "Reproduced, setup differs"
+  },
+  "perf_vs_rand": {
+   "ours_gap": 25.77,
+   "ours_ci95": [
+    19.86,
+    31.68
+   ],
+   "paper_gap": 18.3,
+   "paper_gap_se": 2.32,
+   "ours_gap_se": 2.61,
+   "gap_difference": 7.47,
+   "gap_difference_ci95": [
+    0.2,
+    14.74
+   ],
+   "verdict": "Reproduced, setup differs (gap larger than reported)"
+  }
+ },
+ "effects": {
+  "h_select_valloss": {
+   "label": "h1: select by validation cross-entropy (one reading of the paper)",
+   "erm": {
+    "branch_mean": 58.55,
+    "effect": 4.75,
+    "ci": [
+     2.89,
+     6.61
+    ],
+    "p": 0.000269,
+    "selected_epoch_median": 99.0,
+    "source_val_acc": 98.42,
+    "last_epoch_target": 59.07,
+    "last_epoch_source_val": 98.4,
+    "p_holm": 0.00431,
+    "survives_holm": true,
+    "detectable": true
+   },
+   "rand": {
+    "branch_mean": 50.9,
+    "effect": -3.77,
+    "ci": [
+     -6.84,
+     -0.7
+    ],
+    "p": 0.0215,
+    "selected_epoch_median": 1.0,
+    "source_val_acc": 98.12,
+    "last_epoch_target": 60.88,
+    "last_epoch_source_val": 98.52,
+    "p_holm": 0.215,
+    "survives_holm": false,
+    "detectable": true
+   },
+   "perf": {
+    "branch_mean": 54.62,
+    "effect": -25.82,
+    "ci": [
+     -34.4,
+     -17.24
+    ],
+    "p": 7.86e-05,
+    "selected_epoch_median": 1.0,
+    "source_val_acc": 98.24,
+    "last_epoch_target": 86.41,
+    "last_epoch_source_val": 97.26,
+    "p_holm": 0.00141,
+    "survives_holm": true,
+    "detectable": true
+   }
+  },
+  "h_select_valloss_total": {
+   "label": "h1b: select by full validation objective (the other reading)",
+   "rand": {
+    "branch_mean": 60.17,
+    "effect": 5.5,
+    "ci": [
+     2.82,
+     8.18
+    ],
+    "p": 0.00122,
+    "selected_epoch_median": 85.5,
+    "source_val_acc": 98.54,
+    "last_epoch_target": 60.88,
+    "last_epoch_source_val": 98.52,
+    "p_holm": 0.017,
+    "survives_holm": true,
+    "detectable": true
+   },
+   "perf": {
+    "branch_mean": 85.16,
+    "effect": 4.72,
+    "ci": [
+     -2.5,
+     11.94
+    ],
+    "p": 0.174,
+    "selected_epoch_median": 88.0,
+    "source_val_acc": 98.96,
+    "last_epoch_target": 86.41,
+    "last_epoch_source_val": 97.26,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   }
+  },
+  "h_omission_plain_sgd": {
+   "label": "h2: plain SGD, as the paper states",
+   "erm": {
+    "branch_mean": 50.04,
+    "effect": -3.76,
+    "ci": [
+     -6.43,
+     -1.09
+    ],
+    "p": 0.011,
+    "selected_epoch_median": 2.5,
+    "source_val_acc": 98.48,
+    "last_epoch_target": 51.34,
+    "last_epoch_source_val": 98.16,
+    "p_holm": 0.132,
+    "survives_holm": false,
+    "detectable": true
+   },
+   "rand": {
+    "branch_mean": 50.56,
+    "effect": -4.11,
+    "ci": [
+     -6.88,
+     -1.34
+    ],
+    "p": 0.00837,
+    "selected_epoch_median": 9.5,
+    "source_val_acc": 98.56,
+    "last_epoch_target": 53.07,
+    "last_epoch_source_val": 98.38,
+    "p_holm": 0.109,
+    "survives_holm": false,
+    "detectable": true
+   },
+   "perf": {
+    "branch_mean": 51.72,
+    "effect": -28.72,
+    "ci": [
+     -34.68,
+     -22.76
+    ],
+    "p": 1.74e-06,
+    "selected_epoch_median": 27.5,
+    "source_val_acc": 98.64,
+    "last_epoch_target": 54.94,
+    "last_epoch_source_val": 98.3,
+    "p_holm": 3.3e-05,
+    "survives_holm": true,
+    "detectable": true
+   }
+  },
+  "h_plain_sgd_1000ep": {
+   "label": "h2 diagnostic: plain SGD for 1000 epochs",
+   "erm": {
+    "branch_mean": 53.26,
+    "effect": -0.54,
+    "ci": [
+     -1.79,
+     0.71
+    ],
+    "p": 0.354,
+    "selected_epoch_median": 232.0,
+    "source_val_acc": 98.7,
+    "last_epoch_target": 58.03,
+    "last_epoch_source_val": 98.46,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   },
+   "rand": {
+    "branch_mean": 59.63,
+    "effect": 4.96,
+    "ci": [
+     -0.75,
+     10.67
+    ],
+    "p": 0.0811,
+    "selected_epoch_median": 398.0,
+    "source_val_acc": 99.0,
+    "last_epoch_target": 65.91,
+    "last_epoch_source_val": 98.7,
+    "p_holm": 0.73,
+    "survives_holm": false,
+    "detectable": false
+   },
+   "perf": {
+    "branch_mean": 80.74,
+    "effect": 0.3,
+    "ci": [
+     -5.23,
+     5.83
+    ],
+    "p": 0.905,
+    "selected_epoch_median": 531.5,
+    "source_val_acc": 99.52,
+    "last_epoch_target": 88.28,
+    "last_epoch_source_val": 98.1,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   }
+  },
+  "h_combined": {
+   "label": "h1 + h2 together",
+   "erm": {
+    "branch_mean": 51.31,
+    "effect": -2.49,
+    "ci": [
+     -5.89,
+     0.91
+    ],
+    "p": 0.132,
+    "selected_epoch_median": 99.0,
+    "source_val_acc": 98.16,
+    "last_epoch_target": 51.34,
+    "last_epoch_source_val": 98.16,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   },
+   "perf": {
+    "branch_mean": 51.26,
+    "effect": -29.18,
+    "ci": [
+     -35.05,
+     -23.31
+    ],
+    "p": 1.34e-06,
+    "selected_epoch_median": 4.0,
+    "source_val_acc": 98.32,
+    "last_epoch_target": 54.94,
+    "last_epoch_source_val": 98.3,
+    "p_holm": 2.68e-05,
+    "survives_holm": true,
+    "detectable": true
+   }
+  },
+  "naive_target_0.9_3m": {
+   "label": "h3: evaluate on p = 0.9, the domain the code generates",
+   "erm": {
+    "branch_mean": 58.71,
+    "effect": 4.91,
+    "ci": [
+     3.08,
+     6.74
+    ],
+    "p": 0.000188,
+    "selected_epoch_median": 18.0,
+    "source_val_acc": 98.5,
+    "last_epoch_target": 63.32,
+    "last_epoch_source_val": 98.4,
+    "p_holm": 0.0032,
+    "survives_holm": true,
+    "detectable": true
+   },
+   "rand": {
+    "branch_mean": 59.42,
+    "effect": 4.75,
+    "ci": [
+     2.8,
+     6.7
+    ],
+    "p": 0.000381,
+    "selected_epoch_median": 28.0,
+    "source_val_acc": 98.76,
+    "last_epoch_target": 65.04,
+    "last_epoch_source_val": 98.52,
+    "p_holm": 0.00572,
+    "survives_holm": true,
+    "detectable": true
+   },
+   "perf": {
+    "branch_mean": 82.54,
+    "effect": 2.1,
+    "ci": [
+     0.59,
+     3.61
+    ],
+    "p": 0.0118,
+    "selected_epoch_median": 73.5,
+    "source_val_acc": 99.46,
+    "last_epoch_target": 87.26,
+    "last_epoch_source_val": 97.26,
+    "p_holm": 0.132,
+    "survives_holm": false,
+    "detectable": true
+   }
+  },
+  "h_omission_constant_penalty": {
+   "label": "h4: constant matching weight (code ramps it from 0)",
+   "rand": {
+    "branch_mean": 57.83,
+    "effect": 3.16,
+    "ci": [
+     -1.26,
+     7.58
+    ],
+    "p": 0.14,
+    "selected_epoch_median": 53.0,
+    "source_val_acc": 98.82,
+    "last_epoch_target": 62.0,
+    "last_epoch_source_val": 98.62,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   },
+   "perf": {
+    "branch_mean": 78.01,
+    "effect": -2.43,
+    "ci": [
+     -10.53,
+     5.67
+    ],
+    "p": 0.514,
+    "selected_epoch_median": 55.5,
+    "source_val_acc": 99.4,
+    "last_epoch_target": 86.77,
+    "last_epoch_source_val": 96.76,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   }
+  },
+  "h_dann_lr": {
+   "label": "h6: DANN and CDANN at lr 0.1, as the paper states (code hard-codes 0.01)",
+   "dann": {
+    "branch_mean": 50.28,
+    "effect": 0.09,
+    "ci": [
+     -0.79,
+     0.97
+    ],
+    "p": 0.822,
+    "selected_epoch_median": 9.0,
+    "source_val_acc": 98.44,
+    "last_epoch_target": 50.86,
+    "last_epoch_source_val": 98.2,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   },
+   "c-dann": {
+    "branch_mean": 49.65,
+    "effect": -0.46,
+    "ci": [
+     -2.9,
+     1.98
+    ],
+    "p": 0.68,
+    "selected_epoch_median": 2.0,
+    "source_val_acc": 77.38,
+    "last_epoch_target": 50.42,
+    "last_epoch_source_val": 50.78,
+    "p_holm": 1.0,
+    "survives_holm": false,
+    "detectable": false
+   }
+  }
+ },
+ "confirmation": {
+  "erm": {
+   "branch_mean": 60.41,
+   "base_mean": 56.13,
+   "effect": 4.28,
+   "ci": [
+    2.87,
+    5.69
+   ],
+   "p": 7.28e-05,
+   "selected_epoch_median": 99.0
+  },
+  "perf": {
+   "branch_mean": 52.42,
+   "base_mean": 77.83,
+   "effect": -25.41,
+   "ci": [
+    -30.75,
+    -20.07
+   ],
+   "p": 1.93e-06,
+   "selected_epoch_median": 1.0
+  }
+ },
+ "selection": {
+  "erm": {
+   "selected_epoch_median": 18.0,
+   "selected_target": 53.8,
+   "last_epoch_target": 59.07
+  },
+  "rand": {
+   "selected_epoch_median": 28.0,
+   "selected_target": 54.67,
+   "last_epoch_target": 60.88
+  },
+  "perf": {
+   "selected_epoch_median": 73.5,
+   "selected_target": 80.44,
+   "last_epoch_target": 86.41
+  }
+ },
+ "tuning_h5": {
+  "perf": {
+   "grid": {
+    "1.0": {
+     "source_val_acc_10": 99.46,
+     "target_10": 80.44,
+     "source_val_acc_first3": 99.67,
+     "target_first3": 85.67
+    },
+    "0.1": {
+     "source_val_acc_10": 99.06,
+     "target_10": 67.36,
+     "source_val_acc_first3": 99.0,
+     "target_first3": 72.3
+    },
+    "10.0": {
+     "source_val_acc_10": 99.18,
+     "target_10": 73.33,
+     "source_val_acc_first3": 99.2,
+     "target_first3": 83.0
+    }
+   },
+   "chosen_by_source_val_3_seeds": "1.0",
+   "chosen_by_target_3_seeds": "1.0",
+   "published_choice": "1.0"
+  },
+  "rand": {
+   "grid": {
+    "1.0": {
+     "source_val_acc_10": 98.76,
+     "target_10": 54.67,
+     "source_val_acc_first3": 98.73,
+     "target_first3": 58.0
+    },
+    "0.1": {
+     "source_val_acc_10": 98.84,
+     "target_10": 59.38,
+     "source_val_acc_first3": 98.73,
+     "target_first3": 62.3
+    },
+    "10.0": {
+     "source_val_acc_10": 98.68,
+     "target_10": 56.58,
+     "source_val_acc_first3": 98.6,
+     "target_first3": 60.27
+    }
+   },
+   "chosen_by_source_val_3_seeds": "1.0",
+   "chosen_by_target_3_seeds": "0.1",
+   "published_choice": "1.0"
+  }
+ }
+}

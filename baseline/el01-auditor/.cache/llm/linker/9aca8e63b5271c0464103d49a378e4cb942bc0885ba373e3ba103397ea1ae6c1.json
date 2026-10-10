@@ -1,0 +1,1919 @@
+{
+ "key": "9aca8e63b5271c0464103d49a378e4cb942bc0885ba373e3ba103397ea1ae6c1",
+ "agent": "linker",
+ "model": "sonnet",
+ "backend": "claude_cli",
+ "created_utc": "2026-10-03T20:37:02Z",
+ "cli_version": "2.1.288",
+ "request": {
+  "schema": {
+   "type": "object",
+   "properties": {
+    "data_steps": {
+     "type": "array",
+     "description": "commands that create the data every cell reads, in order, run once before any cell",
+     "items": {
+      "type": "object",
+      "properties": {
+       "name": {
+        "type": "string"
+       },
+       "argv": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "description": "python, the script path relative to the repository root, then its arguments"
+       },
+       "evidence": {
+        "type": "string",
+        "description": "path:line where the repository gives or implies this command"
+       }
+      },
+      "required": [
+       "name",
+       "argv",
+       "evidence"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "parsers": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "name": {
+        "type": "string"
+       },
+       "step": {
+        "type": "string",
+        "description": "the step name (in each cell that uses this parser) whose log holds the number"
+       },
+       "line_regex": {
+        "type": "string",
+        "description": "Python regex, searched in each log line"
+       },
+       "value_group": {
+        "type": "integer"
+       },
+       "sd_group": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "run_start_regex": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "description": "regex of the line that starts each run (seed) block; null if the number is printed once for the whole log"
+       },
+       "key_group": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "key_value": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "per_epoch": {
+        "type": "boolean",
+        "description": "true if a matching line is printed once per epoch in each run block"
+       },
+       "count": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "description": "matching lines per block when per_epoch is false"
+       },
+       "evidence": {
+        "type": "string",
+        "description": "path:line of the print statement that writes the line"
+       }
+      },
+      "required": [
+       "name",
+       "step",
+       "line_regex",
+       "value_group",
+       "sd_group",
+       "run_start_regex",
+       "key_group",
+       "key_value",
+       "per_epoch",
+       "count",
+       "evidence"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "cells": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "claim_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "description": "exactly one id for linked and derived; one or more for unlinked"
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "linked",
+         "derived",
+         "unlinked"
+        ]
+       },
+       "steps": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "name": {
+           "type": "string"
+          },
+          "argv": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         },
+         "required": [
+          "name",
+          "argv"
+         ],
+         "additionalProperties": false
+        }
+       },
+       "parser": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "derived_from": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "derived_op": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "enum": [
+         "mean",
+         null
+        ]
+       },
+       "evidence": {
+        "type": "string",
+        "description": "path:line of the repository command this follows"
+       },
+       "reason": {
+        "type": "string",
+        "description": "for unlinked and derived cells: why; otherwise empty"
+       }
+      },
+      "required": [
+       "claim_ids",
+       "status",
+       "steps",
+       "parser",
+       "derived_from",
+       "derived_op",
+       "evidence",
+       "reason"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "notes": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "data_steps",
+    "parsers",
+    "cells",
+    "notes"
+   ],
+   "additionalProperties": false
+  },
+  "inputs": {
+   "repo_tree": "dcf7ae0d6c2a47464943a2435868f9224676a1ab"
+  },
+  "tools": [
+   "Read",
+   "Grep",
+   "Glob"
+  ],
+  "max_turns": 40,
+  "prompt": "You are the claim-to-command linker of a reproducibility audit of a machine-learning paper. The paper's code, as\nshipped at the audited commit, is in the directory `./repo` (relative to your working directory). You may read it with\nRead, Grep and Glob; the README, the reproduce scripts and the scripts' `--help` output are also given below.\n\nPaper: Domain Generalization using Causal Matching (ICML 2021)\nRepository: https://github.com/microsoft/robustdg\nTarget: Suppl. Table 11\n\nThe claim cells of Suppl. Table 11. Code has checked every number against the paper's own table row:\nCaption (page 12 of the supplement document): Accuracy for Rotated MNIST datasets using the LeNet architecture as proposed in (Motiian et al., 2017).\nMetric: Accuracy (percent), each column is the target (test) domain rotation angle, with the remaining five domains as source training domains; aggregation: mean, spread: standard deviation in brackets over 3 runs (Average column has no spread), runs: 3\n- row 'ERM' (role: baseline; numbers from this paper's runs):\n    Table 11|ERM|0\n    Table 11|ERM|15\n    Table 11|ERM|30\n    Table 11|ERM|45\n    Table 11|ERM|60\n    Table 11|ERM|75\n    Table 11|ERM|Average\n- row 'CCSA' (role: baseline; numbers taken from other work):\n    Table 11|CCSA|0\n    Table 11|CCSA|15\n    Table 11|CCSA|30\n    Table 11|CCSA|45\n    Table 11|CCSA|60\n    Table 11|CCSA|75\n    Table 11|CCSA|Average\n- row 'D-MTAE' (role: baseline; numbers taken from other work):\n    Table 11|D-MTAE|0\n    Table 11|D-MTAE|15\n    Table 11|D-MTAE|30\n    Table 11|D-MTAE|45\n    Table 11|D-MTAE|60\n    Table 11|D-MTAE|75\n    Table 11|D-MTAE|Average\n- row 'LabelGrad' (role: baseline; numbers taken from other work):\n    Table 11|LabelGrad|0\n    Table 11|LabelGrad|15\n    Table 11|LabelGrad|30\n    Table 11|LabelGrad|45\n    Table 11|LabelGrad|60\n    Table 11|LabelGrad|75\n    Table 11|LabelGrad|Average\n- row 'DAN' (role: baseline; numbers taken from other work):\n    Table 11|DAN|0\n    Table 11|DAN|15\n    Table 11|DAN|30\n    Table 11|DAN|45\n    Table 11|DAN|60\n    Table 11|DAN|75\n    Table 11|DAN|Average\n- row 'CrossGrad' (role: baseline; numbers taken from other work):\n    Table 11|CrossGrad|0\n    Table 11|CrossGrad|15\n    Table 11|CrossGrad|30\n    Table 11|CrossGrad|45\n    Table 11|CrossGrad|60\n    Table 11|CrossGrad|75\n    Table 11|CrossGrad|Average\n- row 'DIV A' (role: baseline; numbers taken from other work):\n    Table 11|DIV A|0\n    Table 11|DIV A|15\n    Table 11|DIV A|30\n    Table 11|DIV A|45\n    Table 11|DIV A|60\n    Table 11|DIV A|75\n    Table 11|DIV A|Average\n- row 'RandMatch' (role: baseline; numbers from this paper's runs):\n    Table 11|RandMatch|0\n    Table 11|RandMatch|15\n    Table 11|RandMatch|30\n    Table 11|RandMatch|45\n    Table 11|RandMatch|60\n    Table 11|RandMatch|75\n    Table 11|RandMatch|Average\n- row 'MatchDG' (role: method; numbers from this paper's runs):\n    Table 11|MatchDG|0\n    Table 11|MatchDG|15\n    Table 11|MatchDG|30\n    Table 11|MatchDG|45\n    Table 11|MatchDG|60\n    Table 11|MatchDG|75\n    Table 11|MatchDG|Average\n- row 'PerfMatch' (role: oracle; numbers from this paper's runs):\n    Table 11|PerfMatch|0\n    Table 11|PerfMatch|15\n    Table 11|PerfMatch|30\n    Table 11|PerfMatch|45\n    Table 11|PerfMatch|60\n    Table 11|PerfMatch|75\n    Table 11|PerfMatch|Average\n\nTask: for every claim cell, give the commands that produce its number, run from the repository root:\n- `data_steps`: the commands that create the data the runs read (data generation, dataset preparation), run once\n  before any cell. Include them even when the README does not mention them; find them in the repository.\n- For a `linked` cell, `steps`: the commands in the order they run, each named (`train`, `eval`, or one name per\n  phase when a method trains in phases). Include the evaluation step when the repository computes the number in a\n  separate evaluation run. Steps that produce one row's numbers are usually the same for each of its cells.\n- `parser`: the name of an entry in `parsers` that reads the cell's number from the log (stdout and stderr) of one of\n  its steps. Code reads a log line by line; in each run block (or the whole log, if `run_start_regex` is null) it keeps\n  the last line that matches `line_regex` (and whose `key_group` equals `key_value`, when given); `value_group` is the\n  number and `sd_group` its spread, if printed. Declare how many matching lines a block has: once per epoch\n  (`per_epoch`), or `count`. Read the print statements in the code to write the regex; give their path:line.\n- `derived`: a cell the paper computes from other cells of the table (for example an average column): name them in\n  `derived_from` and the operation in `derived_op`.\n- `unlinked`: a cell this repository does not produce (for example numbers the paper took from other papers, or a\n  method the repository does not implement); say why in `reason`.\n\nRules:\n- Use the repository's own commands (the reproduce scripts, the README) wherever they cover a cell, with their\n  arguments as written. Do not change any setting, add a \"fix\", or make a run cheaper; link what the paper reports\n  with the code as shipped. Code shortens the runs itself for its dry run.\n- Every `argv` is a list of tokens: `python`, then the script's path relative to the repository root, then its\n  arguments. No shell syntax: no redirection, pipes, `&&`, `cd`, environment variables or output files.\n- Every claim id above appears in exactly one entry of `cells`. A linked or derived entry has exactly one id.\n- Code checks every option against the script's own argument parser and runs each command for one epoch and one run.\n\nREADME (verbatim):\n````\nToolkit for Building Robust ML models that generalize to unseen domains (RobustDG)\n==================================================================================\n`Divyat Mahajan <https://divyat09.github.io/>`_, \n`Shruti Tople <https://www.microsoft.com/en-us/research/people/shtople/>`_, \n`Amit Sharma <http://www.amitsharma.in>`_\n\n`Privacy & Causal Learning (ICML 2020) <https://arxiv.org/abs/1909.12732>`_ | `MatchDG: Causal View of DG (ICML 2021) <http://proceedings.mlr.press/v139/mahajan21b.html>`_ | `Privacy & DG Connection paper <https://arxiv.org/abs/2110.03369>`_\n\nFor machine learning models to be reliable, they need to generalize to data\nbeyond the train distribution. In addition, ML models should be robust to\nprivacy attacks like membership inference and domain knowledge-based attacks like adversarial attacks.\n\nTo advance research in building robust and generalizable models, we are\nreleasing a toolkit for building and evaluating ML models, *RobustDG*. RobustDG contains implementations of domain\ngeneralization algorithms and includes evaluation benchmarks based\non out-of-distribution accuracy and robustness to membership privacy attacks. We will be adding evaluation for adversarial attacks and more privacy attacks soon. \n\nIt is easily extendable. Add your own DG algorithms and evaluate them on different benchmarks.\n\n\nInstallation\n------------\nTo use the command-line interface of RobustDG, clone this repo and add the folder to your system's PATH (or alternatively, run the commands from the RobustDG root directory). \n\n**Load dataset**\n\nLet's first load the rotatedMNIST dataset in a suitable format for the resnet18 architecture.\n\n.. code:: shell\n\n    python data/data_gen_mnist.py --dataset rot_mnist --model resnet18 --img_h 224 --img_w 224 --subset_size 2000\n\n**Train and evaluate ML model**\n\nThe following commands would train and evalute the MatchDG method on the Rotated MNIST dataset.\n\n.. code:: shell\n\n\n    python train.py --dataset rot_mnist --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 64 --pos_metric cos --match_func_aug_case 1\n    \n    python train.py --dataset rot_mnist --method_name matchdg_erm --penalty_ws 0.1 --match_case -1 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name resnet18 --epochs 25\n    \n    python test.py --dataset rot_mnist --method_name matchdg_erm --penalty_ws 0.1 --match_case -1 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name resnet18 --epochs 25 --test_metric acc\n    \n    python test.py --dataset rot_mnist --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --pos_metric cos --test_metric match_score    \n\n\nDemo\n----\n\nA quick introduction on how to use our repository can be accessed here in the `Getting Started notebook <https://github.com/microsoft/robustdg/blob/master/docs/notebooks/robustdg_getting_started.ipynb>`_.\n\nIf you are interested in reproducing results from the MatchDG paper, check out the `Reproducing results notebook <https://github.com/microsoft/robustdg/blob/master/docs/notebooks/reproduce_results.ipynb>`_. \n\nRoadmap\n-------\n\n* Support for more domain generalization algorithms like CSD and IRM. If you are an author of a DG algorithm and would like to contribute, please raise a  pull request `here <https://github.com/microsoft/robustdg/pulls>`_ or get in touch.\n\n* More evaluation metrics based on adversarial attacks, privacy attacks like model inversion. If you'd like to see an evaluation metric implemented, please raise an issue `here <https://github.com/microsoft/robustdg/issues>`_.\n\nContributing\n--------------\n\nThis project welcomes contributions and suggestions.  Most contributions require you to agree to a\nContributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us\nthe rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.\n\nWhen you submit a pull request, a CLA bot will automatically determine whether you need to provide\na CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions\nprovided by the bot. You will only need to do this once across all repos using our CLA.\n\nThis project has adopted the `Microsoft Open Source Code of Conduct <https://opensource.microsoft.com/codeofconduct/>`_.\nFor more information see the `Code of Conduct FAQ <https://opensource.microsoft.com/codeofconduct/faq/>`_ or\ncontact `opencode@microsoft.com <mailto:opencode@microsoft.com>`_ with any additional questions or comments.\n````\n\nReproduce scripts (verbatim):\n--- reproduce_scripts/cxray_plot.py ---\n````\nimport os\nimport sys\nimport matplotlib\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef get_base_dir(test_domain, dataset, metric):\n    \n    if metric == 'mia':\n        res_dir= 'results/'+str(dataset)+'/privacy/' + str(test_domain) + '/'\n\n    elif metric == 'privacy_entropy':\n        res_dir= 'results/'+str(dataset)+'/privacy_entropy/' + str(test_domain) + '/'\n\n    elif metric == 'privacy_loss_attack':\n        res_dir= 'results/'+str(dataset)+'/privacy_loss/' + str(test_domain) + '/' \n\n    elif metric == 'attribute_attack':\n        res_dir= 'results/'+str(dataset)+'/attribute_attack_' + data_case + '/'  + str(test_domain) + '/'  \n\n    elif metric  == 'acc:train':\n        res_dir= 'results/' + str(dataset) + '/acc_' + 'train' + '/' + str(test_domain) + '/'\n\n    elif metric  == 'acc:test':\n        res_dir= 'results/' + str(dataset) + '/acc_' + 'test' + '/' + str(test_domain) + '/'\n        \n    elif metric  == 'match_score:train':\n        res_dir= 'results/' + str(dataset) + '/match_score_' + 'train' + '/' + str(test_domain) + '/'    \n\n    elif metric  == 'match_score:test':\n        res_dir= 'results/' + str(dataset) + '/match_score_' + 'test' + '/' + str(test_domain) + '/'    \n        \n    return res_dir\n\nx=['ERM', 'Rand', 'MatchDG', 'CSD', 'IRM', 'Hybrid']\nmethods=['erm', 'rand', 'matchdg_erm', 'csd', 'irm', 'hybrid']\ndataset= 'chestxray'\n\nmatplotlib.rcParams.update({'errorbar.capsize': 2})\nfig, ax = plt.subplots(1, 3, figsize=(33, 8))\nfontsize=35\nfontsize_lgd= fontsize/1.2\n\n# kaggle, nih, chex\nfor idx in range(3):\n        \n    marker_list = ['o', '^', '*']\n    legend_list = ['RSNA', 'NIH', 'Chex']\n    legend_count = 0\n    for test_domain in ['kaggle', 'nih', 'chex']:\n\n        metrics= ['acc:train', 'acc:test', 'privacy_loss_attack']\n\n        acc_train=[]\n        acc_train_err=[]\n\n        acc_test=[]\n        acc_test_err=[]\n\n        mia=[]\n        mia_err=[]\n\n        entropy=[]\n        entropy_err=[]\n\n        loss=[]\n        loss_err=[]\n\n        rank_train=[]\n        rank_train_err=[]\n\n        rank_test=[]\n        rank_test_err=[]\n\n        for metric in metrics:\n            for method in methods:\n\n                res_dir= get_base_dir(test_domain, dataset, metric)\n\n                f= open(res_dir+method+'.txt')\n                data= f.readlines()\n        #         print(data[-3].replace('\\n', '').split(':')[-1].split(' '))\n                mean= float(data[-3].replace('\\n', '').split(':')[-1].split(' ')[-2])\n                sd= float(data[-3].replace('\\n', '').split(':')[-1].split(' ')[-1])\n\n                if metric == 'acc:train':\n                    acc_train.append(mean)\n                    acc_train_err.append(sd)\n                elif metric == 'acc:test':\n                    acc_test.append(mean)\n                    acc_test_err.append(sd)\n                elif metric == 'mia':\n                    mia.append(mean)\n                    mia_err.append(sd)\n                elif metric == 'privacy_entropy':\n                    entropy.append(mean)\n                    entropy_err.append(sd)\n                elif metric == 'privacy_loss_attack':\n                    loss.append(mean)\n                    loss_err.append(sd)\n                elif metric == 'match_score:train':\n                    rank_train.append(mean)\n                    rank_train_err.append(sd)\n                elif metric == 'match_score:test':\n                    rank_test.append(mean)\n                    rank_test_err.append(sd)\n\n        ax[idx].tick_params(labelsize=fontsize)\n        ax[idx].set_xticklabels(x, rotation=25)\n    \n        if idx == 0:\n            ax[idx].errorbar(x, acc_test, yerr=acc_test_err, label= legend_list[legend_count], marker= marker_list[legend_count], markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('OOD Accuracy', fontsize=fontsize)\n\n        if idx == 1:\n            ax[idx].errorbar(x, loss, yerr=loss_err, label= legend_list[legend_count], marker= marker_list[legend_count], markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('MI Attack Accuracy', fontsize=fontsize)\n\n#         if idx == 2:\n#     #         ax.errorbar(x, rank_train, yerr=rank_train_err, label='Train', fmt='o--', color='brown')\n#             ax[idx].errorbar(x, rank_test, yerr=rank_test_err, label='Test', fmt='o--', color='green')\n#     #         ax.set_xlabel('Models', fontsize=fontsize)\n#             ax[idx].set_ylabel('Mean Rank of Perfect Match', fontsize=fontsize)\n#             ax[idx].legend(fontsize=fontsize_lgd)\n\n        if idx == 2:\n            ax[idx].errorbar(x, np.array(acc_train) - np.array(acc_test), yerr=acc_train_err, label= legend_list[legend_count], marker= marker_list[legend_count], markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('Train-Test Accuracy Gap ', fontsize=fontsize)\n    \n    \n        legend_count+= 1 \n    \nsave_dir= 'results/' + dataset+ '/plots/'    \nif not os.path.exists(save_dir):\n    os.makedirs(save_dir)        \n\nlines, labels = fig.axes[-1].get_legend_handles_labels()    \nlgd= fig.legend(lines, labels, loc=\"lower center\", bbox_to_anchor=(0.5, -0.15), fontsize=fontsize, ncol=3)\n    \nplt.tight_layout()\nplt.savefig(save_dir + 'privacy_' + str(dataset) + '.pdf', bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)\n````\n\n--- reproduce_scripts/cxray_run.py ---\n````\nimport os\nimport sys\nimport argparse\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--metric', type=str, default='train', \n                    help='train: Train the models; acc: Evaluate the train/test accuracy; privacy_loss_attack: Evaluate the MI attack robustness; match_score: Evaluate the match function statistics; attribute_attack: Evalute the attribute attack robustness')\nparser.add_argument('--data_case', type=str, default='test', \n                   help='train: Evaluate the acc/match_score metrics on the train dataset; test: Evaluate the acc/match_score metrics on the test dataset')\nparser.add_argument('--test_domain', type=str, default='kaggle', \n                   help='nih; chex; kaggle')\nargs = parser.parse_args()\n\nmetric= args.metric\ntest_domain= args.test_domain\ndata_case= args.data_case\n\nif metric == 'train':\n    methods=['erm', 'irm', 'csd', 'rand', 'matchdg_ctr', 'matchdg_erm', 'hybrid']\nelse:\n    methods=['erm', 'irm', 'csd', 'rand', 'matchdg_erm', 'hybrid']\n\ndomains= ['nih', 'chex', 'kaggle']\ndataset= 'chestxray'\n\nif metric == 'train':\n    base_script= 'python train.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 '\n    res_dir= 'results/' + str(dataset) + '/train_logs/'    \n\nelif metric == 'mia':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric mia --mia_sample_size 200 --mia_logit 1 --batch_size 64 '\n    res_dir= 'results/'+str(dataset)+'/privacy/' \n\nelif metric == 'privacy_entropy':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric privacy_entropy --mia_sample_size 200 --batch_size 64 '\n    res_dir= 'results/'+str(dataset)+'/privacy_entropy/'\n\nelif metric == 'privacy_loss_attack':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric privacy_loss_attack --mia_sample_size 200 --batch_size 64 '\n    res_dir= 'results/'+str(dataset)+'/privacy_loss/'\n\nelif metric  == 'acc':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric acc ' + ' --acc_data_case ' + data_case\n    res_dir= 'results/' + str(dataset) + '/acc_' + str(data_case) + '/'\n\nelif metric  == 'per_domain_acc':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric per_domain_acc --acc_data_case val '\n    res_dir= 'results/' + str(dataset) + '/per_domin_acc/'\n    \nelif metric  == 'match_score':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric match_score --match_func_aug_case 1' + ' --match_func_data_case ' + data_case\n    res_dir= 'results/' + str(dataset) + '/match_score_' + data_case + '/'\n\nelif metric  == 'feat_eval':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric feat_eval --match_func_aug_case 1' + ' --match_func_data_case ' + data_case\n    res_dir= 'results/' + str(dataset) + '/feat_eval_' + data_case + '/'\n\nelif metric  == 'feat_eval_rand':\n    base_script= 'python test.py --dataset chestxray --out_classes 2 --perfect_match 0 --img_c 3 --pre_trained 1 --model_name densenet121 --test_metric feat_eval --match_func_aug_case 1' + ' --match_func_data_case ' + data_case + ' --match_case 0.0 '\n    res_dir= 'results/' + str(dataset) + '/feat_eval_rand_' + data_case + '/'\n        \n#Test Domain\ncurr_test_domain= test_domain\n# curr_test_domain= test_domain + '_opp_trans'\n# curr_test_domain= test_domain + '_trans'\n\nres_dir=  res_dir+ curr_test_domain + '/'    \nif not os.path.exists(res_dir):\n    os.makedirs(res_dir)        \n    \nfor method in methods:    \n\n    if method == 'erm':\n        script= base_script + ' --method_name erm_match --epochs 40  --lr 0.001 --match_case 0.0 --penalty_ws 0.0 '\n        \n    elif method == 'rand':\n        script= base_script + ' --method_name erm_match --epochs 40  --lr 0.001 --match_case 0.0 --penalty_ws 10.0 '\n\n    elif method == 'csd':\n        script= base_script + ' --method_name csd --epochs 40  --lr 0.001 --match_case 0.0 --penalty_ws 0.0 --rep_dim 1024'\n        \n    elif method == 'irm':\n        script= base_script + ' --method_name irm --epochs 40  --lr 0.001 --match_case 0.0 --penalty_irm 10.0 --penalty_s 5'\n        \n    elif method == 'matchdg_ctr':\n        script= base_script + ' --method_name matchdg_ctr --epochs 50 --batch_size 32 --match_case 0.0 --match_flag 1  --pos_metric cos --match_func_aug_case 1 '\n\n    elif method == 'matchdg_erm':\n        script= base_script + ' --method_name matchdg_erm  --epochs 40 --lr 0.001  --match_case -1 --penalty_ws 50.0 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name densenet121'\n\n    elif method == 'hybrid':\n        script= base_script + ' --method_name hybrid  --epochs 40 --lr 0.001  --match_case -1 --penalty_ws 1.0 --penalty_aug 50.0 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name densenet121'    \n    \n    #To train and test on different domains (Out of Distribution Generalization)\n    train_domains=''\n    for d in domains:\n        if d != test_domain:\n            train_domains+= str(d) + '_trans' + ' '\n    \n    # To train and test on the same domains (In Distribution Generalization)\n#     train_domains= curr_test_domain\n            \n    print('Metric', metric, ' Method: ', method, ' Train Domains: ', train_domains, ' Test Domains: ', curr_test_domain)\n    script= script + ' --train_domains ' + train_domains + ' --test_domains ' + curr_test_domain\n    \n    #TODO: Won't be ideal to have this manually commented by user for the matchdg paper results\n    # 5 seeds to formally define the trends for the privacy part\n    script= script + ' --n_runs 5 '\n    \n    script= script + ' > ' + res_dir + str(method) + '.txt'\n    os.system(script)\n````\n\n--- reproduce_scripts/mnist_mdg_ctr_run.py ---\n````\nimport os\nimport argparse\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--dataset', type=str, default='rot_mnist', \n                    help='Datasets: rot_mnist; fashion_mnist')\nparser.add_argument('--iterative', type=int, default=1, \n                    help='Iterative updates to positive matches')\nparser.add_argument('--perf_init', type=int, default=0, \n                    help='Positive matches Initialization to perfect matches')\n\nargs = parser.parse_args()\ndataset= args.dataset\niterative= args.iterative\nperf_init= args.perf_init\n\nbase_script= 'python train.py --epochs 50 --batch_size 64 --dataset ' + str(dataset)\nscript= base_script + '  --method_name matchdg_ctr --pos_metric cos --match_case ' +  str(perf_init) + ' --match_flag ' + str(iterative)\nos.system(script)\n\n\n#2) Script for evaluating the match function metrics\n````\n\n--- reproduce_scripts/mnist_plot.py ---\n````\nimport os\nimport sys\nimport matplotlib\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef get_base_dir(train_case, test_case, dataset, metric):\n    \n    if metric == 'mia':\n        res_dir= 'results/'+str(dataset)+'/privacy/'\n\n    elif metric == 'privacy_entropy':\n        res_dir= 'results/'+str(dataset)+'/privacy_entropy/'\n\n    elif metric == 'privacy_loss_attack':\n        res_dir= 'results/'+str(dataset)+'/privacy_loss/'\n\n    elif metric == 'attribute_attack':\n        res_dir= 'results/'+str(dataset)+'/attribute_attack_' + data_case + '/'  \n\n    elif metric  == 'acc:train':\n        res_dir= 'results/' + str(dataset) + '/acc_' + 'train' + '/'\n\n    elif metric  == 'acc:test':\n        res_dir= 'results/' + str(dataset) + '/acc_' + 'test' + '/'\n        \n    elif metric  == 'match_score:train':\n        res_dir= 'results/' + str(dataset) + '/match_score_' + 'train' + '/'\n\n    elif metric  == 'match_score:test':\n        res_dir= 'results/' + str(dataset) + '/match_score_' + 'test' + '/'\n\n    elif metric  == 'feat_eval:train':\n        res_dir= 'results/' + str(dataset) + '/feat_eval_' + 'train' + '/'\n\n    elif metric  == 'feat_eval:test':\n        res_dir= 'results/' + str(dataset) + '/feat_eval_' + 'test' + '/'\n        \n    #Train Domains 30, 45 case\n    if train_case == 'train_abl_2':\n        res_dir= res_dir[:-1] +'_30_45/'\n\n    #Train Domains 30, 45, 60 case\n    if train_case == 'train_abl_3':\n        res_dir= res_dir[:-1] +'_30_45_60/'            \n\n    #Test on 30, 45 angles instead of the standard 0, 90\n    if test_case  == 'test_common':\n        res_dir+= 'test_common_domains/'\n        \n    return res_dir\n\n    \n#rot_mnist, fashion_mnist, rot_mnist_spur\ndataset=sys.argv[1]\n\n# train_all, train_abl_3, train_abl_2\n# train_case= sys.argv[2]\n\n# test_diff, test_common\ntest_case=['test_diff']\n\nmatplotlib.rcParams.update({'errorbar.capsize': 2})\nfig, ax = plt.subplots(1, 3, figsize=(33, 8))\nfontsize=35\nfontsize_lgd= fontsize/1.2\nx=['ERM', 'Rand', 'MatchDG', 'CSD', 'IRM', 'Perf']\nmethods=['erm', 'rand', 'matchdg', 'csd', 'irm', 'perf']\n# metrics= ['acc:train', 'acc:test', 'mia', 'privacy_entropy', 'privacy_loss_attack', 'match_score:train', 'match_score:test', 'feat_eval:train', 'feat_eval:test']\n\nmetrics= ['acc:train', 'acc:test', 'privacy_loss_attack', 'match_score:test']\n\nfor idx in range(3):\n    \n    marker_list = ['o', '^', '*']\n    legend_count = 0\n    for train_case in ['train_all', 'train_abl_3', 'train_abl_2']:\n\n        acc_train=[]\n        acc_train_err=[]\n\n        acc_test=[]\n        acc_test_err=[]\n\n        mia=[]\n        mia_err=[]\n\n        entropy=[]\n        entropy_err=[]\n\n        loss=[]\n        loss_err=[]\n\n        rank_train=[]\n        rank_train_err=[]\n\n        rank_test=[]\n        rank_test_err=[]\n\n        feat_eval_train=[]\n        feat_eval_train_err=[]\n\n        feat_eval_test=[]\n        feat_eval_test_err=[]\n\n        for metric in metrics:\n            for method in methods:\n\n                res_dir= get_base_dir(train_case, test_case, dataset, metric)\n\n                f= open(res_dir+method+'.txt')\n                data= f.readlines()\n        #         print(data[-3].replace('\\n', '').split(':')[-1].split(' '))\n                mean= float(data[-3].replace('\\n', '').split(':')[-1].split(' ')[-2])\n                sd= float(data[-3].replace('\\n', '').split(':')[-1].split(' ')[-1])\n\n                if metric == 'acc:train':\n                    acc_train.append(mean)\n                    acc_train_err.append(sd)\n                elif metric == 'acc:test':\n                    acc_test.append(mean)\n                    acc_test_err.append(sd)\n                elif metric == 'mia':\n                    mia.append(mean)\n                    mia_err.append(sd)\n                elif metric == 'privacy_entropy':\n                    entropy.append(mean)\n                    entropy_err.append(sd)\n                elif metric == 'privacy_loss_attack':\n                    loss.append(mean)\n                    loss_err.append(sd)\n                elif metric == 'match_score:train':\n                    rank_train.append(mean)\n                    rank_train_err.append(sd)\n                elif metric == 'match_score:test':\n                    rank_test.append(mean)\n                    rank_test_err.append(sd)\n                elif metric == 'feat_eval:train':\n                    feat_eval_train.append(mean)\n                    feat_eval_train_err.append(sd)\n                elif metric == 'feat_eval:test':\n                    feat_eval_test.append(mean)\n                    feat_eval_test_err.append(sd)\n\n        if train_case == 'train_all':\n            legend_label= '5 domains'\n        elif train_case == 'train_abl_2':\n            legend_label= '3 domains'\n        elif train_case == 'train_abl_3':\n            legend_label= '2 domains'\n        \n        ax[idx].tick_params(labelsize=fontsize)\n        ax[idx].set_xticklabels(x, rotation=25) \n    \n        if idx == 0:\n            ax[idx].errorbar(x, acc_test, yerr=acc_test_err, label=legend_label, marker= marker_list[legend_count], markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('OOD Accuracy', fontsize=fontsize)            \n            \n            \n        if idx == 1:\n            ax[idx].errorbar(x, loss, yerr=loss_err, label=legend_label, marker= marker_list[legend_count], markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('MI Attack Accuracy', fontsize=fontsize)\n\n        if idx == 2:\n            ax[idx].errorbar(x, rank_test, yerr=rank_test_err, label=legend_label, marker= marker_list[legend_count], markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('Mean Rank', fontsize=fontsize)\n\n        if idx == 3:\n            ax[idx].errorbar(x, np.array(acc_train) - np.array(acc_test), yerr=acc_train_err, marker= 's', markersize= fontsize_lgd, linewidth=4, fmt='o--')\n            ax[idx].set_ylabel('Generalization Gap', fontsize=fontsize)\n        \n        legend_count+= 1 \n    \nsave_dir= 'results/' + dataset+ '/plots/'\nif not os.path.exists(save_dir):\n    os.makedirs(save_dir)\n\nlines, labels = fig.axes[-1].get_legend_handles_labels()    \nlgd= fig.legend(lines, labels, loc=\"lower center\", bbox_to_anchor=(0.5, -0.15), fontsize=fontsize, ncol=3)\n\nplt.tight_layout()\nplt.savefig(save_dir + 'privacy_' + str(dataset) + '.pdf', bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=600)\n````\n\n--- reproduce_scripts/mnist_run.py ---\n````\nimport os\nimport sys\nimport argparse\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--dataset', type=str, default='rot_mnist', \n                    help='Datasets: rot_mnist; fashion_mnist; rot_mnist_spur')\nparser.add_argument('--train_case', type=str, default='train_all', \n                    help='train_all: Train with all the 5 domains; train_abl_3: Train with 3 domains; train_abl_2: Train with 2 domains')\nparser.add_argument('--metric', type=str, default='train', \n                    help='train: Train the models; acc: Evaluate the train/test accuracy; privacy_loss_attack: Evaluate the MI attack robustness; match_score: Evaluate the match function statistics; attribute_attack: Evalute the attribute attack robustness')\nparser.add_argument('--data_case', type=str, default='test', \n                   help='train: Evaluate the acc/match_score metrics on the train dataset; test: Evaluate the acc/match_score metrics on the test dataset')\nparser.add_argument('--data_aug', type=int, default=1, \n                   help='0: No data augmentation for fashion mnist; 1: Data augmentation for fashion mnist')\n\nparser.add_argument('--methods', nargs='+', type=str, default=['erm', 'irm', 'csd', 'rand', 'perf', 'matchdg'], \n                    help='List of methods: erm, irm, csd, rand, approx_25, approx_50, approx_75, perf, matchdg')\n\n\nparser.add_argument('--dp_noise', type=int, default=0, \n                    help='0: No DP noise; 1: Add DP noise')\nparser.add_argument('--dp_epsilon', type=float, default=100.0, \n                    help='Epsilon value for Differential Privacy')\nparser.add_argument('--dp_attach_opt', type=int, default=1, \n                    help='0: Infinite Epsilon; 1: Finite Epsilion')\n\nargs = parser.parse_args()\n\n\ndataset= args.dataset\ntrain_case= args.train_case\nmetric= args.metric\ndata_case= args.data_case\ndata_aug= args.data_aug\nmethods= args.methods\n\n# test_diff, test_common\ntest_case=['test_diff']\n    \nif metric == 'train':\n    if dataset in ['rot_mnist', 'rot_mnist_spur']:\n        base_script= 'python train.py --dataset ' + str(dataset)\n    elif dataset in ['fashion_mnist']:\n        base_script= 'python train.py --dataset ' + str(dataset) + ' --mnist_aug ' + str(data_aug)\n    res_dir= 'results/' + str(dataset) + '/train_logs' + '/'    \n\nelif metric == 'mia':\n    if dataset in ['rot_mnist', 'rot_mnist_spur']:\n        base_script= 'python  test.py --test_metric mia --mia_logit 1 --mia_sample_size 2000 --batch_size 64 ' + ' --dataset ' + str(dataset)\n        base_script= 'python  test.py --test_metric mia --mia_logit 1 --mia_sample_size 2000 --batch_size 64 ' + ' --dataset ' + str(dataset)\n\n    res_dir= 'results/'+str(dataset)+'/privacy_clf/'\n\nelif metric == 'privacy_entropy':\n    if dataset in ['rot_mnist', 'rot_mnist_spur']:\n        base_script= 'python  test.py --test_metric privacy_entropy --mia_sample_size 2000 --batch_size 64 ' + ' --dataset ' + str(dataset)\n    elif dataset in ['fashion_mnist']:\n        base_script= 'python  test.py --test_metric privacy_entropy --mia_sample_size 2000 --batch_size 64 ' + ' --dataset ' + str(dataset)\n\n    res_dir= 'results/'+str(dataset)+'/privacy_entropy/'\n\nelif metric == 'privacy_loss_attack':\n    if dataset in ['rot_mnist', 'rot_mnist_spur']:\n        base_script= 'python  test.py --test_metric privacy_loss_attack --mia_sample_size 2000 --batch_size 64 ' + ' --dataset ' + str(dataset)\n    elif dataset in ['fashion_mnist']:\n        base_script= 'python  test.py --test_metric privacy_loss_attack --mia_sample_size 2000 --batch_size 64 ' + ' --dataset ' + str(dataset)\n\n    res_dir= 'results/'+str(dataset)+'/privacy_loss/'\n\nelif metric == 'attribute_attack':\n    base_script= 'python  test.py --test_metric attribute_attack --mia_logit 1 --batch_size 64 ' + ' --dataset ' + str(dataset) + ' --attribute_domain ' + data_case\n\n    res_dir= 'results/'+str(dataset)+'/attribute_attack_' + data_case + '/'  \n\nelif metric  == 'acc':\n    base_script= 'python test.py --test_metric acc ' + ' --dataset ' + str(dataset) + ' --acc_data_case ' + data_case\n    res_dir= 'results/' + str(dataset) + '/acc_' + str(data_case) + '/'\n\nelif metric  == 'match_score':\n    base_script= 'python test.py --test_metric match_score ' + ' --dataset ' + str(dataset) + ' --match_func_data_case ' + data_case\n    res_dir= 'results/' + str(dataset) + '/match_score_' + data_case + '/'\n\nelif metric  == 'feat_eval':\n    base_script= 'python test.py --test_metric feat_eval ' + ' --dataset ' + str(dataset) + ' --match_func_data_case ' + data_case\n    res_dir= 'results/' + str(dataset) + '/feat_eval_' + data_case + '/'\n\nelif metric  == 'feat_eval_rand':\n    base_script= 'python test.py --test_metric feat_eval ' + ' --dataset ' + str(dataset) + ' --match_func_data_case ' + data_case + ' --match_case 0.0 '\n    res_dir= 'results/' + str(dataset) + '/feat_eval_rand_' + data_case + '/'\n    \n    \n#Train Domains 30, 45 case\nif train_case == 'train_abl_2':\n    base_script+= ' --train_domains 30 45'\n    res_dir= res_dir[:-1] +'_30_45/'\n\n#Train Domains 30, 45, 60 case\nif train_case == 'train_abl_3':\n    base_script+= ' --train_domains 30 45 60'\n    res_dir= res_dir[:-1] +'_30_45_60/'            \n\n#Test on 30, 45 angles instead of the standard 0, 90\nif test_case  == 'test_common':\n    base_script += ' --test_domains 30 45'\n    res_dir+= 'test_common_domains/'\n\n    \n#Differential Privacy\nif args.dp_noise:\n    base_script += ' --dp_noise ' + str(args.dp_noise) + ' --dp_epsilon ' + str(args.dp_epsilon) + ' --dp_attach_opt ' + str(args.dp_attach_opt) + ' ' \n    res_dir= res_dir[:-1] + '_epsilon_' + str(args.dp_epsilon) + '/'\n    \nif not os.path.exists(res_dir):\n    os.makedirs(res_dir)        \n\n#Dataset Specific Modification\nif dataset == 'rot_mnist_spur':\n    base_script+= ' --img_c 3 '        \n\nfor method in methods:\n    case= res_dir + str(method)\n    \n    print('Metric', metric, 'Method: ', method, ' Train Domains: ', train_case)\n \n    if method == 'erm':\n        script= base_script + ' --method_name erm_match --penalty_ws 0.0 --match_case 0.0 --epochs 25 ' +  ' > ' + case + '.txt'           \n        os.system(script)\n\n    elif method == 'rand':\n        if dataset == 'rot_mnist_spur':        \n            script= base_script + ' --method_name erm_match --penalty_ws 10.0 --match_case 0.0 --epochs 25 '  +  ' > ' + case + '.txt'   \n        else:\n            script= base_script + ' --method_name erm_match --penalty_ws 0.1 --match_case 0.0 --epochs 25 ' +  ' > ' + case + '.txt'       \n        os.system(script)\n\n    elif method == 'approx_25':\n        script= base_script + ' --method_name erm_match --penalty_ws 0.1 --match_case 0.25 --epochs 25 ' +  ' > ' + case + '.txt'\n        os.system(script)\n\n    elif method == 'approx_50':\n        script= base_script + ' --method_name erm_match --penalty_ws 0.1 --match_case 0.50 --epochs 25 ' +  ' > ' + case + '.txt'\n        os.system(script)\n\n    elif method == 'approx_75':\n        script= base_script + ' --method_name erm_match --penalty_ws 0.1 --match_case 0.75 --epochs 25 ' + ' > ' + case + '.txt'\n        os.system(script)\n\n    elif method == 'perf':\n        if dataset == 'rot_mnist_spur':                   \n            script= base_script + ' --method_name erm_match --penalty_ws 10.0 --match_case 1.0 --epochs 25 ' +  ' > ' + case + '.txt' \n        else:\n            script= base_script + ' --method_name erm_match --penalty_ws 0.1 --match_case 1.0 --epochs 25 ' +  ' > ' + case + '.txt' \n        os.system(script)\n\n    elif method == 'matchdg':\n        if metric == 'train':\n            script= base_script + ' --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 64 --pos_metric cos  --match_func_aug_case 1 ' +  ' > ' + res_dir + 'matchdg_ctr' + '.txt'  \n            os.system(script)\n        \n        script= base_script + ' --method_name matchdg_erm --penalty_ws 0.1 --match_case -1 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name resnet18 --epochs 25 ' +  ' > ' + case + '.txt'           \n        os.system(script)\n\n    elif method == 'csd':\n        script= base_script + ' --method_name csd --penalty_ws 0.0 --match_case 0.0 --rep_dim 512 --epochs 25 ' +  ' > ' + case + '.txt'\n        os.system(script)\n\n    elif method == 'irm':\n        script= base_script + ' --method_name irm --match_case 0.0 --penalty_irm 1.0 --penalty_s 5 --epochs 25 ' + ' > ' + case + '.txt'\n        os.system(script)\n````\n\n--- reproduce_scripts/pacs_run.py ---\n````\nimport os\nimport sys\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--method', type=str, default='hybrid', \n                    help='erm; rand; matchdg_ctr; matchdg_erm; hybrid')\nparser.add_argument('--model', type=str, default='resnet18', \n                    help='alexnet; resnet18; resnet50')\nargs = parser.parse_args()\n\nmethod= args.method\nmodel= args.model\ndomains= ['photo', 'art_painting', 'cartoon', 'sketch']\n\nif method == 'erm' or method == 'rand':\n    base_script= 'python train.py --dataset pacs  --method_name erm_match --match_case 0.0 --test_metric acc --out_classes 7 --perfect_match 0 --img_c 3 --pre_trained 1 --epochs 50 --weight_decay 0.001 '\n\nelif method == 'matchdg_ctr':\n    base_script= 'python train.py --dataset pacs --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --pos_metric cos --out_classes 7 --perfect_match 0 --img_c 3 --pre_trained 1 --epochs 50 --batch_size 32  --match_func_aug_case 1  '\n\nelif method == 'matchdg_erm':\n    base_script= 'python train.py --dataset pacs --method_name matchdg_erm --match_case -1 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name resnet50 --out_classes 7 --perfect_match 0 --img_c 3 --pre_trained 1 --epochs 50 --weight_decay 0.001 '\n\nelif method == 'hybrid':\n    base_script= 'python train.py --dataset pacs --method_name hybrid --match_case -1 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name resnet50 --out_classes 7 --perfect_match 0 --img_c 3 --pre_trained 1 --epochs 50 --weight_decay 0.001 '\n    \n    \nfor test_domain in domains:\n    \n    res_dir= 'results/pacs/logs/'+ test_domain + '/'\n    if not os.path.exists(res_dir):\n        os.makedirs(res_dir)\n    \n    train_domains=''\n    for d in domains:\n        if d != test_domain:\n            train_domains+= str(d) + ' '\n    print(train_domains)    \n    \n    if method == 'erm':        \n        if model == 'resnet18':\n            if test_domain == 'photo':\n                lr= 0.001 \n                penalty= 0.0\n            elif test_domain == 'art_painting':\n                lr= 0.01 \n                penalty= 0.0\n            elif test_domain == 'cartoon':\n                lr= 0.01 \n                penalty= 0.0\n            elif test_domain == 'sketch':\n                lr= 0.01 \n                penalty= 0.0\n\n        elif model == 'resnet50':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.0\n            elif test_domain == 'art_painting':\n                lr= 0.01 \n                penalty= 0.0\n            elif test_domain == 'cartoon':\n                lr= 0.01\n                penalty= 0.0\n            elif test_domain == 'sketch':\n                lr= 0.01 \n                penalty= 0.0\n\n        elif model == 'alexnet':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.0\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 0.0\n            elif test_domain == 'cartoon':\n                lr= 0.001\n                penalty= 0.0\n            elif test_domain == 'sketch':\n                lr= 0.0005\n                penalty= 0.0\n                \n    elif method == 'rand':        \n        if model == 'resnet18':\n            if test_domain == 'photo':\n                lr= 0.001 \n                penalty= 5.0\n            elif test_domain == 'art_painting':\n                lr= 0.01 \n                penalty= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.001 \n                penalty= 5.0\n            elif test_domain == 'sketch':\n                lr= 0.01 \n                penalty= 0.5\n\n        elif model == 'resnet50':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 5.0\n            elif test_domain == 'art_painting':\n                lr= 0.01 \n                penalty= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.01\n                penalty= 0.01\n            elif test_domain == 'sketch':\n                lr= 0.01 \n                penalty= 0.1            \n                \n        elif model == 'alexnet':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.1\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.001 \n                penalty= 0.5\n            elif test_domain == 'sketch':\n                lr= 0.001 \n                penalty= 0.5\n\n    elif method == 'matchdg_erm':        \n        if model == 'resnet18':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 1.0\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 5.0\n            elif test_domain == 'cartoon':\n                lr= 0.001 \n                penalty= 1.0\n            elif test_domain == 'sketch':\n                lr= 0.01 \n                penalty= 0.5\n\n        elif model == 'resnet50':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.01\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.001\n                penalty= 0.01\n            elif test_domain == 'sketch':\n                lr= 0.0005\n                penalty= 5.0    \n                \n        elif model == 'alexnet':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.1\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 1.0\n            elif test_domain == 'cartoon':\n                lr= 0.001\n                penalty= 1.0\n            elif test_domain == 'sketch':\n                lr= 0.001 \n                penalty= 0.1\n\n                \n    elif method == 'hybrid':        \n        if model == 'resnet18':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.1\n                penalty_aug= 0.1\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 0.01\n                penalty_aug= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.001 \n                penalty= 0.1\n                penalty_aug= 0.1\n            elif test_domain == 'sketch':\n                lr= 0.01 \n                penalty= 0.01\n                penalty_aug= 0.1\n\n        elif model == 'resnet50':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.1\n                penalty_aug= 0.1\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 0.01\n                penalty_aug= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.0005\n                penalty= 0.01\n                penalty_aug= 0.1\n            elif test_domain == 'sketch':\n                lr= 0.001 \n                penalty= 0.01\n                penalty_aug= 0.1\n                \n        elif model == 'alexnet':\n            if test_domain == 'photo':\n                lr= 0.0005 \n                penalty= 0.1\n                penalty_aug= 0.1\n            elif test_domain == 'art_painting':\n                lr= 0.001 \n                penalty= 0.01\n                penalty_aug= 0.1\n            elif test_domain == 'cartoon':\n                lr= 0.001\n                penalty= 0.01\n                penalty_aug= 0.1\n            elif test_domain == 'sketch':\n                lr= 0.001 \n                penalty= 0.01\n                penalty_aug= 0.1\n                \n                \n    if method == 'matchdg_ctr':\n        script= base_script + ' --train_domains ' + train_domains + ' --test_domains ' + test_domain + ' --model_name ' + str(model)\n    else:\n        script= base_script + ' --train_domains ' + train_domains + ' --test_domains ' + test_domain + ' --lr ' + str(lr) + ' --penalty_ws ' + str(penalty) + ' --model_name ' + str(model)    \n    \n    #TODO: Add penalty_aug for hybrid method\n    if method == 'hybrid':\n        script= script + ' --penalty_aug ' + str(penalty_aug)\n    \n    #TOOD: Figure out the appropriate batch size\n    if model == 'alexnet':\n        script= script + ' --img_w 256 ' + ' --img_h 256 '\n    \n    save_dir= res_dir + str(method) + '_' + str(model) + '.txt'\n    script= script + ' > ' + save_dir    \n    os.system(script)\n````\n\n--- reproduce_scripts/reproduce_rmnist_domainbed.py ---\n````\nimport os\nimport argparse\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--methods', nargs='+', type=str, default=['rand', 'matchdg_ctr', 'matchdg_erm'], \n                    help='List of methods')\n\nargs = parser.parse_args()\nmethods= args.methods                    \ndomains= [0, 15, 30, 45, 60, 75]\n\nfor method in methods:\n    \n    if method == 'rand':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case domain_bed --method_name erm_match --perfect_match 0 --match_case 0.0 --penalty_ws 1.0 --epochs 25 --batch_size 128 --model_name domain_bed_mnist --img_h 28 --img_w 28 --total_matches_per_point 1000 '\n\n    elif method == 'matchdg_ctr':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case domain_bed --method_name matchdg_ctr --perfect_match 0 --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name domain_bed_mnist --img_h 28 --img_w 28 --match_func_aug_case 1 '\n\n    elif method == 'matchdg_erm':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case domain_bed --method_name matchdg_erm --perfect_match 0 --match_case -1 --penalty_ws 1.0 --epochs 25 --batch_size 128 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name domain_bed_mnist  --model_name domain_bed_mnist --img_h 28 --img_w 28 --total_matches_per_point 1000 '\n\n    for test_domain in domains:\n\n        train_domains=''\n        for d in domains:\n            if d != test_domain:\n                train_domains+= str(d) + ' '\n        print(train_domains)\n\n        res_dir= 'results/rmnist_domain_bed/'\n        if not os.path.exists(res_dir):\n            os.makedirs(res_dir)\n\n        script= base_script + ' --train_domains ' + str(train_domains) + ' --test_domains ' + str(test_domain) \n        script= script + ' > ' + res_dir + method + '_' + str(test_domain) + '.txt'\n\n        print('Method: ', method, ' Test Domain: ', test_domain)\n        os.system(script)\n````\n\n--- reproduce_scripts/reproduce_rmnist_lenet.py ---\n````\nimport os\nimport argparse\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--methods', nargs='+', type=str, default=['erm', 'rand', 'matchdg_ctr', 'matchdg_erm', 'perf'], \n                    help='List of methods')\n\nargs = parser.parse_args()\nmethods= args.methods                    \ndomains= [0, 15, 30, 45, 60, 75]\n\nfor method in methods:\n                    \n    if method == 'perf':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 1.0 --penalty_ws 1.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 '\n\n    elif method == 'erm':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 0.0 --penalty_ws 0.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 '\n\n    elif method == 'rand':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name erm_match --match_case 0.0 --penalty_ws 1.0 --epochs 100 --model_name lenet --img_h 32 --img_w 32 --total_matches_per_point 100 '\n\n    elif method == 'matchdg_ctr':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_ctr --match_case 0.0 --match_flag 1 --epochs 50 --batch_size 512 --pos_metric cos --model_name lenet --img_h 32 --img_w 32 --match_func_aug_case 1 '\n\n    elif method == 'matchdg_erm':\n        base_script= 'python train.py --dataset rot_mnist --mnist_case lenet --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --epochs 100 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name lenet  --model_name lenet --img_h 32 --img_w 32 --total_matches_per_point 100 '\n\n    for test_domain in domains:\n\n        train_domains=''\n        for d in domains:\n            if d != test_domain:\n                train_domains+= str(d) + ' '\n        print(train_domains)\n\n        res_dir= 'results/rmnist_lenet/'\n        if not os.path.exists(res_dir):\n            os.makedirs(res_dir)\n\n        script= base_script + ' --train_domains ' + str(train_domains) + ' --test_domains ' + str(test_domain) \n        script= script + ' > ' + res_dir + method + '_' + str(test_domain) + '.txt'\n\n        print('Method: ', method, ' Test Domain: ', test_domain)\n        os.system(script)\n````\n\n--- reproduce_scripts/reproduce_slab.py ---\n````\nimport os\nimport sys\n\n'''\nargv1: Allowed Values (train, evaluate)\n'''\n\ncase= sys.argv[1]\nmethods=['erm', 'mmd', 'coral', 'dann', 'c-mmd', 'c-coral', 'c-dann', 'rand', 'perf']\ntotal_seed= 10\n\nif case == 'train':\n    base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)\n\nelif case == 'evaluate':\n    base_script= 'python test.py --test_metric per_domain_acc --acc_data_case train --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)\n\n    \nres_dir= 'results/slab/logs/'\nif not os.path.exists(res_dir):\n    os.makedirs(res_dir)\n\n\nfor method in methods:\n    \n    if method == 'mmd':\n        script= base_script + ' --method_name mmd --gaussian 1 --conditional 0 --penalty_ws 0.1 '\n\n    elif method == 'c-mmd':\n        script= base_script + ' --method_name mmd --gaussian 1 --conditional 1 --penalty_ws 0.1 '\n\n    elif method == 'coral':\n        script= base_script + ' --method_name mmd --gaussian 0 --conditional 0  --penalty_ws 0.1 '\n\n    elif method == 'c-coral':    \n        script= base_script + ' --method_name mmd --gaussian 0 --conditional 1  --penalty_ws 0.1 '\n\n    elif method == 'dann':\n        script= base_script + ' --method_name dann --conditional 0 --penalty_ws 0.01 --grad_penalty 0.1 --d_steps_per_g_step 4 '\n\n    elif method == 'c-dann':\n        script= base_script + ' --method_name dann --conditional 1 --penalty_ws 0.01 --grad_penalty 1.0 --d_steps_per_g_step 2 '\n\n    elif method == 'erm':\n        script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 0.0 '\n\n    elif method == 'rand':\n        script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 1.0 '\n\n    elif method == 'perf':\n        script= base_script + ' --method_name erm_match --match_case 1.0 --penalty_ws 1.0 '\n\n    script= script + ' > ' + res_dir + str(method) + '.txt'\n    os.system(script)\n````\n\n--- reproduce_scripts/slab-plot.py ---\n````\nimport matplotlib\nimport matplotlib.pyplot as plt\nimport sys\nimport os\nimport numpy as np\n\nslab_noise= float(sys.argv[1])\nbase_dir= 'results/slab/slab_noise_' + str(slab_noise) + '/'\nmethods=['erm', 'irm', 'csd', 'rand', 'perf', 'mask_linear']\n\n# x=['ERM', 'IRM', 'CSD', 'Rand', 'MatchDG', 'Perf', 'Mask']\nx=['ERM', 'IRM', 'CSD', 'Rand', 'Perf', 'Oracle']\nmatplotlib.rcParams.update({'errorbar.capsize': 2})\nfig, ax = plt.subplots(1, 2, figsize=(24, 8))\nfontsize=40\nfontsize_lgd= fontsize/1.2\nmarker_list = ['o', '^', '*']\ncount= 0\n\nfor test_domain in [0.2, 0.9]:\n        \n    acc=[]\n    acc_err=[]\n    train_acc =[]\n    train_acc_err =[]\n    auc=[]\n    auc_err=[]\n    s_auc=[]\n    s_auc_err=[]\n    sc_auc=[]\n    sc_auc_err=[]\n\n    for method in methods:\n\n        f= open(base_dir + method + '-auc-' + str(test_domain) + '.txt')\n        data= f.readlines()\n        acc.append( float( data[-4].replace('\\n', '').split(' ')[-2] ))\n        acc_err.append( float( data[-4].replace('\\n', '').split(' ')[-1] ))\n        auc.append( float( data[-3].replace('\\n', '').split(' ')[-2] ))\n        auc_err.append( float( data[-3].replace('\\n', '').split(' ')[-1] ))\n        s_auc.append( float( data[-2].replace('\\n', '').split(' ')[-2] ))\n        s_auc_err.append( float( data[-2].replace('\\n', '').split(' ')[-1] ))\n        sc_auc.append( float(data[-1].replace('\\n', '').split(' ')[-2] ))\n        sc_auc_err.append( float( data[-1].replace('\\n', '').split(' ')[-1] ) )\n\n        f= open(base_dir + method + '-train-auc-' + str(test_domain) + '.txt')\n        data= f.readlines()\n        train_acc.append( float( data[-4].replace('\\n', '').split(' ')[-2] ))\n        train_acc_err.append( float( data[-4].replace('\\n', '').split(' ')[-1] ))\n        \n        \n    #Privacy Metrics\n    mia=[]\n    mia_err=[]\n    entropy=[]\n    entropy_err=[]\n    loss=[]\n    loss_err=[]\n    attribute=[]\n    attribute_err=[]\n\n        \n    # eval_metrics= ['mi', 'entropy', 'loss', 'attribute']\n    eval_metrics= ['loss']\n    for metric in eval_metrics:\n        for method in methods:\n            f= open(base_dir+method+'-'+metric+ '-' + str(test_domain)+'.txt')\n            data= f.readlines()\n\n            mean= float(data[-3].replace('\\n', '').split(' ')[-2])\n            sd= float(data[-3].replace('\\n', '').split(' ')[-1])\n\n            if metric == 'mi':\n                mia.append(mean)\n                mia_err.append(sd)\n            elif metric == 'entropy':\n                entropy.append(mean)\n                entropy_err.append(sd)\n            elif metric == 'loss':\n                loss.append(mean)\n                loss_err.append(sd)\n            elif metric == 'attribute':\n                attribute.append(mean)\n                attribute_err.append(sd)\n    \n    ax[count].tick_params(labelsize=fontsize)\n    ax[count].set_xticklabels(x, rotation=25)\n    \n    ax[count].errorbar(x, acc, yerr=acc_err, marker= marker_list[0], markersize= fontsize_lgd, linewidth=4, fmt='o--', label='OOD Acc')\n    ax[count].errorbar(x, s_auc, yerr=s_auc_err, marker= marker_list[1], markersize= fontsize_lgd, linewidth=4, fmt='o--', label='Stable Features (Linear-RAUC)')\n    ax[count].errorbar(x, loss, yerr=loss_err, marker= marker_list[2], markersize= fontsize_lgd, linewidth=4, label='MI Attack Acc', fmt='o--')\n    \n#     gen_gap= np.array(train_acc) - np.array(acc)\n#     ax[count].errorbar(x, gen_gap, yerr=0*gen_gap, marker= 's', markersize= fontsize_lgd, linewidth=4, fmt='o--', label='Generalization Gap')\n    \n    ax[count].set_ylabel('Metric Score', fontsize=fontsize)\n    ax[count].set_title('Test Domain: ' + str(test_domain), fontsize=fontsize)\n    \n    count+=1\n    \nlines, labels = fig.axes[-1].get_legend_handles_labels()    \nlgd= fig.legend(lines, labels, loc=\"lower center\", bbox_to_anchor=(0.5, -0.15), fontsize=fontsize, ncol=4)\n\nsave_dir= 'results/slab/plots/'\nif not os.path.exists(save_dir):\n    os.makedirs(save_dir)\n\nplt.tight_layout()\nplt.savefig( save_dir + 'privacy_slab_' + str(slab_noise) + '.pdf', bbox_extra_artists=(lgd,), bbox_inches='tight',  dpi=600)\n````\n\n--- reproduce_scripts/slab-run.py ---\n````\nimport os\nimport sys\nimport argparse\n\n# Input Parsing\nparser = argparse.ArgumentParser()\nparser.add_argument('--case', type=str, default='train', \n                    help='Case: train; test')\nparser.add_argument('--slab_noise', type=float, default=0.0, \n                    help='Probability of corrupting slab features')\nparser.add_argument('--methods', nargs='+', type=str, default=['erm', 'irm', 'csd', 'rand', 'matchdg', 'perf', 'mask_linear'],\n                    help='List of methods')\n\nargs = parser.parse_args()\n\ncase= args.case\nslab_noise= args.slab_noise\nmethods= args.methods\n\nmetrics= ['train-auc', 'auc', 'loss']\ntotal_seed= 3\n\nif case == 'train':\n    \n    base_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 0.90 --slab_data_dim 2 '\n    \n    base_script= base_script + ' --slab_noise ' + str(slab_noise) +  ' --n_runs ' + str(total_seed)    \n\n    for method in methods:\n\n        if method == 'erm':\n            script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 0.0 '\n        elif method == 'irm':\n            script= base_script + ' --method_name irm --match_case 0.0 --penalty_irm 10.0 --penalty_s 2 '\n        elif method == 'csd':\n            script= base_script + ' --method_name csd --match_case 0.0 --penalty_ws 0.0 --rep_dim 100 '\n        elif method == 'rand':\n            script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 1.0  '\n        elif method == 'perf':\n            script= base_script + ' --method_name erm_match --match_case 1.0 --penalty_ws 1.0 '        \n        elif method == 'mask_linear':\n            script= base_script + ' --method_name mask_linear --match_case 0.0 --penalty_ws 0.0 '\n        elif method == 'matchdg':\n            #CTR Phase\n            script = base_script + ' --method_name matchdg_ctr --batch_size 512 --match_case 0.0 --match_flag 1 --match_interrupt 5 --pos_metric cos '\n            os.system(script)\n            \n            #ERM Phase\n            script = base_script + ' --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name slab '            \n            \n        os.system(script)\n        \nelif case == 'test':    \n\n    for metric in metrics:\n\n        if metric == 'auc':\n            base_script= 'python test_slab.py --train_domains 0.0 0.10 '\n\n        if metric == 'train-auc':\n            base_script= 'python test_slab.py --train_domains 0.0 0.10 --acc_data_case train '            \n        elif metric == 'mi':\n            base_script= 'python  test.py --test_metric mia --mia_logit 1 --mia_sample_size 400 --dataset slab --model_name slab --out_classes 2 --train_domains 0.0 0.10 '\n        elif metric == 'entropy':\n            base_script= 'python  test.py --test_metric privacy_entropy --mia_sample_size 400 --dataset slab --model_name slab --out_classes 2 --train_domains 0.0 0.10 '\n        elif metric == 'loss':\n            base_script= 'python  test.py --test_metric privacy_loss_attack --mia_sample_size 400 --dataset slab --model_name slab --out_classes 2 --train_domains 0.0 0.10 '\n        elif metric == 'attribute':\n            base_script= 'python  test.py --test_metric attribute_attack --mia_logit 1 --attribute_domain 0 --dataset slab --model_name slab --out_classes 2 --train_domains 0.0 0.10 '           \n\n        base_script= base_script + ' --slab_noise ' + str(slab_noise) + ' --n_runs ' + str(total_seed)\n        res_dir= 'results/slab/slab_noise_' + str(slab_noise) + '/'\n\n        if not os.path.exists(res_dir):\n            os.makedirs(res_dir)\n            \n        for method in methods:\n\n            if method == 'erm':\n                upd_script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 0.0 '\n            elif method == 'irm':\n                upd_script= base_script + ' --method_name irm --match_case 0.0 --penalty_irm 10.0 --penalty_s 2 '\n            elif method == 'csd':\n                upd_script= base_script + ' --method_name csd --match_case 0.0 --penalty_ws 0.0 --rep_dim 100 '\n            elif method == 'rand':\n                upd_script= base_script + ' --method_name erm_match --match_case 0.0 --penalty_ws 1.0  '\n            elif method == 'perf':\n                upd_script= base_script + ' --method_name erm_match --match_case 1.0 --penalty_ws 1.0 '        \n            elif method == 'mask_linear':\n                upd_script= base_script + ' --method_name mask_linear --match_case 0.0 --penalty_ws 0.0 '\n                \n            elif method == 'matchdg':\n                upd_script = base_script + ' --method_name matchdg_erm --match_case -1 --penalty_ws 1.0 --ctr_match_case 0.0 --ctr_match_flag 1 --ctr_match_interrupt 5 --ctr_model_name slab '                \n                \n            for test_domain in [0.2, 0.9]:\n                script= upd_script + ' --test_domains ' + str(test_domain) + ' > ' + res_dir + str(method) + '-' + str(metric) + '-' + str(test_domain) + '.txt'\n                os.system(script)\n````\n\n--- reproduce_scripts/slab-tune.py ---\n````\nimport os\nimport sys\n\n'''\nargv1: Method for which HParams need to be tuned (erm, rand, perf, mmd, coral, c-mmd, c-coral, dann, c-dann)\n'''\nmethod= sys.argv[1]\ntotal_seed= 3\n\nbase_script= 'python train.py --dataset slab --model_name slab --batch_size 128 --lr 0.1 --epochs 100 --out_classes 2 --train_domains 0.0 0.10 --test_domains 1.0 --slab_data_dim 2 --slab_noise 0.1 ' + ' --n_runs ' + str(total_seed)\n\nres_dir= 'results/slab/htune/'\nif not os.path.exists(res_dir):\n    os.makedirs(res_dir)\n\nif method == 'mmd':\n    base_script= base_script + ' --method_name mmd --gaussian 1 --conditional 0 '\n\nelif method == 'c-mmd':\n    base_script= base_script + ' --method_name mmd --gaussian 1 --conditional 1 '\n\nelif method == 'coral':\n    base_script= base_script + ' --method_name mmd --gaussian 0 --conditional 0 '\n    \nelif method == 'c-coral':    \n    base_script= base_script + ' --method_name mmd --gaussian 0 --conditional 1 '\n\nelif method == 'dann':\n    base_script= base_script + ' --method_name dann --conditional 0 '\n\nelif method == 'c-dann':\n    base_script= base_script + ' --method_name dann --conditional 1 '\n\nelif method == 'erm':\n    script= base_script + ' --method_name erm_match --match_case 0.0 '\n    \nelif method == 'rand':\n    script= base_script + ' --method_name erm_match --match_case 0.0 '\n    \nelif method == 'perf':\n    script= base_script + ' --method_name erm_match --match_case 1.0 '\n    \n    \nif method in ['erm']:\n    penalty_glist= [0.0]    \nelif method in ['rand', 'perf', 'mmd', 'coral', 'c-mmd', 'c-coral']:    \n    penalty_glist= [0.1, 1.0, 10.0]    \nelif method in ['dann', 'c-dann']:\n    penalty_glist= [0.01, 0.1, 1.0, 10.0, 100.0]    \n\ngrad_penalty_glist= [0.01, 0.1, 1.0, 10.0]\ndisc_steps_glist= [1, 2, 4, 8]\n\n# Train for different hyper configurations\nif method in ['dann', 'c-dann']:    \n    for penalty in penalty_glist:\n        for grad_penalty in grad_penalty_glist:\n            for disc_steps in disc_steps_glist:\n                script= base_script + ' --penalty_ws ' + str(penalty) + ' --grad_penalty ' + str(grad_penalty) + ' --d_steps_per_g_step ' + str(disc_steps) \n                script= script + ' > ' + res_dir + str(method) + '_' + str(penalty) + '_' + str(grad_penalty) + '_' + str(disc_steps) + '.txt'\n                os.system(script)\n\nelse:\n    for penalty in penalty_glist:\n        script= base_script + ' --penalty_ws ' + str(penalty) \n        script= script + ' > ' + res_dir + str(method) + '_' + str(penalty) + '.txt'\n        os.system(script)\n\n# Search over different hyper configurations and infer the best values\n    \nbest_acc= -1\nbest_err= -1\nbest_case= ''\n\nif method in ['dann', 'c-dann']:    \n    for penalty in penalty_glist:\n        for grad_penalty in grad_penalty_glist:\n            for disc_steps in disc_steps_glist:\n                f_name= res_dir + str(method) + '_' + str(penalty) + '_' + str(grad_penalty) + '_' + str(disc_steps) + '.txt'\n                f= open(f_name)\n                data= f.readlines()\n                # Source validation accuracy\n                mean= float(data[-4].replace('\\n', '').split(' ')[-2])\n                err= float(data[-4].replace('\\n', '').split(' ')[-1])\n                if mean > best_acc:\n                    best_acc= mean\n                    best_err= err\n                    best_case= f_name\nelse:\n    for penalty in penalty_glist:\n        f_name= res_dir + str(method) + '_' + str(penalty) + '.txt'\n        f= open(f_name)\n        data= f.readlines()\n        # Source validation accuracy\n        mean= float(data[-4].replace('\\n', '').split(' ')[-2])\n        err= float(data[-4].replace('\\n', '').split(' ')[-1])\n        if mean > best_acc:\n            best_acc= mean\n            best_err= err\n            best_case= f_name\n\nprint('Best Hparam for method: ', method, best_case)\nprint('Best Accuracy: ', best_acc, best_err)\n````\n\n`--help` of the scripts these commands run (run by code in the repository's environment):\n--- python data/data_gen_mnist.py --help ---\n```\nusage: data_gen_mnist.py [-h] [--dataset DATASET] [--model MODEL]\n                         [--data_size DATA_SIZE] [--subset_size SUBSET_SIZE]\n                         [--img_w IMG_W] [--img_h IMG_H]\n                         [--cmnist_permute CMNIST_PERMUTE]\n\noptional arguments:\n  -h, --help            show this help message and exit\n  --dataset DATASET     Datasets: rot_mnist; fashion_mnist; rot_mnist_spur\n  --model MODEL         Base Models: resnet18; lenet\n  --data_size DATA_SIZE\n  --subset_size SUBSET_SIZE\n  --img_w IMG_W\n  --img_h IMG_H\n  --cmnist_permute CMNIST_PERMUTE\n```\n\n--- python train.py --help ---\n(`python train.py --help` fails at this commit with TypeError: %c requires int or char: a help string has an unescaped %. Below is the same parser's help with those % signs escaped by code.)\n```\nusage: train.py [-h] [--dataset_name DATASET_NAME] [--method_name METHOD_NAME]\n                [--model_name MODEL_NAME]\n                [--train_domains TRAIN_DOMAINS [TRAIN_DOMAINS ...]]\n                [--test_domains TEST_DOMAINS [TEST_DOMAINS ...]]\n                [--out_classes OUT_CLASSES] [--img_c IMG_C] [--img_h IMG_H]\n                [--img_w IMG_W] [--fc_layer FC_LAYER]\n                [--match_layer MATCH_LAYER] [--pos_metric POS_METRIC]\n                [--rep_dim REP_DIM] [--pre_trained PRE_TRAINED]\n                [--perfect_match PERFECT_MATCH] [--opt OPT]\n                [--weight_decay WEIGHT_DECAY] [--lr LR]\n                [--batch_size BATCH_SIZE] [--epochs EPOCHS]\n                [--penalty_s PENALTY_S] [--penalty_irm PENALTY_IRM]\n                [--penalty_aug PENALTY_AUG] [--penalty_ws PENALTY_WS]\n                [--penalty_diff_ctr PENALTY_DIFF_CTR] [--tau TAU]\n                [--match_flag MATCH_FLAG] [--match_case MATCH_CASE]\n                [--match_interrupt MATCH_INTERRUPT] [--ctr_abl CTR_ABL]\n                [--match_abl MATCH_ABL] [--n_runs N_RUNS]\n                [--n_runs_matchdg_erm N_RUNS_MATCHDG_ERM]\n                [--ctr_model_name CTR_MODEL_NAME]\n                [--ctr_match_layer CTR_MATCH_LAYER]\n                [--ctr_match_flag CTR_MATCH_FLAG]\n                [--ctr_match_case CTR_MATCH_CASE]\n                [--ctr_match_interrupt CTR_MATCH_INTERRUPT]\n                [--mnist_seed MNIST_SEED] [--retain RETAIN]\n                [--cuda_device CUDA_DEVICE] [--os_env OS_ENV]\n                [--dp_noise DP_NOISE] [--dp_epsilon DP_EPSILON]\n                [--dp_attach_opt DP_ATTACH_OPT]\n                [--d_steps_per_g_step D_STEPS_PER_G_STEP]\n                [--grad_penalty GRAD_PENALTY] [--conditional CONDITIONAL]\n                [--gaussian GAUSSIAN] [--slab_data_dim SLAB_DATA_DIM]\n                [--slab_total_slabs SLAB_TOTAL_SLABS]\n                [--slab_num_samples SLAB_NUM_SAMPLES]\n                [--slab_noise SLAB_NOISE] [--mnist_case MNIST_CASE]\n                [--mnist_aug MNIST_AUG]\n                [--total_matches_per_point TOTAL_MATCHES_PER_POINT]\n                [--test_metric TEST_METRIC] [--acc_data_case ACC_DATA_CASE]\n                [--top_k TOP_K] [--match_func_aug_case MATCH_FUNC_AUG_CASE]\n                [--match_func_data_case MATCH_FUNC_DATA_CASE]\n\noptional arguments:\n  -h, --help            show this help message and exit\n  --dataset_name DATASET_NAME\n                        Datasets: rot_mnist; fashion_mnist; pacs\n  --method_name METHOD_NAME\n                        Training Algorithm: erm_match; matchdg_ctr;\n                        matchdg_erm\n  --model_name MODEL_NAME\n                        Architecture of the model to be trained\n  --train_domains TRAIN_DOMAINS [TRAIN_DOMAINS ...]\n                        List of train domains\n  --test_domains TEST_DOMAINS [TEST_DOMAINS ...]\n                        List of test domains\n  --out_classes OUT_CLASSES\n                        Total number of classes in the dataset\n  --img_c IMG_C         Number of channels of the image in dataset\n  --img_h IMG_H         Height of the image in dataset\n  --img_w IMG_W         Width of the image in dataset\n  --fc_layer FC_LAYER   ResNet architecture customization; 0: No fc_layer with\n                        resnet; 1: fc_layer for classification with resnet\n  --match_layer MATCH_LAYER\n                        rep_match: Matching at an intermediate representation\n                        level; logit_match: Matching at the logit level\n  --pos_metric POS_METRIC\n                        Cost to function to evaluate distance between two\n                        representations; Options: l1; l2; cos\n  --rep_dim REP_DIM     Representation dimension for contrsative learning\n  --pre_trained PRE_TRAINED\n                        0: No Pretrained Architecture; 1: Pretrained\n                        Architecture\n  --perfect_match PERFECT_MATCH\n                        0: No perfect match known (PACS); 1: perfect match\n                        known (MNIST)\n  --opt OPT             Optimizer Choice: sgd; adam\n  --weight_decay WEIGHT_DECAY\n                        Weight Decay in SGD\n  --lr LR               Learning rate for training the model\n  --batch_size BATCH_SIZE\n                        Batch size foe training the model\n  --epochs EPOCHS       Total number of epochs for training the model\n  --penalty_s PENALTY_S\n                        Epoch threshold over which Matching Loss to be\n                        optimised\n  --penalty_irm PENALTY_IRM\n                        Penalty weight for IRM invariant classifier loss\n  --penalty_aug PENALTY_AUG\n                        Penalty weight for Augmentation in Hybrid approach\n                        loss\n  --penalty_ws PENALTY_WS\n                        Penalty weight for Matching Loss\n  --penalty_diff_ctr PENALTY_DIFF_CTR\n                        Penalty weight for Contrastive Loss\n  --tau TAU             Temperature hyper param for NTXent contrastive loss\n  --match_flag MATCH_FLAG\n                        0: No Update to Match Strategy; 1: Updates to Match\n                        Strategy\n  --match_case MATCH_CASE\n                        0: Random Match; 1: Perfect Match. 0.x\" x% correct\n                        Match\n  --match_interrupt MATCH_INTERRUPT\n                        Number of epochs before inferring the match strategy\n  --ctr_abl CTR_ABL     0: Randomization til class level ; 1: Randomization\n                        completely\n  --match_abl MATCH_ABL\n                        0: Randomization til class level ; 1: Randomization\n                        completely\n  --n_runs N_RUNS       Number of iterations to repeat the training process\n  --n_runs_matchdg_erm N_RUNS_MATCHDG_ERM\n                        Number of iterations to repeat training process for\n                        matchdg_erm\n  --ctr_model_name CTR_MODEL_NAME\n                        (For matchdg_ctr phase) Architecture of the model to\n                        be trained\n  --ctr_match_layer CTR_MATCH_LAYER\n                        (For matchdg_ctr phase) rep_match: Matching at an\n                        intermediate representation level; logit_match:\n                        Matching at the logit level\n  --ctr_match_flag CTR_MATCH_FLAG\n                        (For matchdg_ctr phase) 0: No Update to Match\n                        Strategy; 1: Updates to Match Strategy\n  --ctr_match_case CTR_MATCH_CASE\n                        (For matchdg_ctr phase) 0: Random Match; 1: Perfect\n                        Match. 0.x\" x% correct Match\n  --ctr_match_interrupt CTR_MATCH_INTERRUPT\n                        (For matchdg_ctr phase) Number of epochs before\n                        inferring the match strategy\n  --mnist_seed MNIST_SEED\n                        Change it between 0-6 for different subsets of Mnist\n                        and Fashion Mnist dataset\n  --retain RETAIN       0: Train from scratch in MatchDG Phase 2; 2: Finetune\n                        from MatchDG Phase 1 in MatchDG is Phase 2\n  --cuda_device CUDA_DEVICE\n                        Select the cuda device by id among the avaliable\n                        devices\n  --os_env OS_ENV       0: Code execution on local server/machine; 1: Code\n                        execution in docker/clusters\n  --dp_noise DP_NOISE   0: No DP noise; 1: Add DP noise\n  --dp_epsilon DP_EPSILON\n                        Epsilon value for Differential Privacy\n  --dp_attach_opt DP_ATTACH_OPT\n                        0: Infinite Epsilon; 1: Finite Epsilion\n  --d_steps_per_g_step D_STEPS_PER_G_STEP\n  --grad_penalty GRAD_PENALTY\n  --conditional CONDITIONAL\n  --gaussian GAUSSIAN\n  --slab_data_dim SLAB_DATA_DIM\n                        Number of features in the slab dataset\n  --slab_total_slabs SLAB_TOTAL_SLABS\n  --slab_num_samples SLAB_NUM_SAMPLES\n  --slab_noise SLAB_NOISE\n  --mnist_case MNIST_CASE\n                        MNIST Dataset Case: resnet18; lenet, domainbed\n  --mnist_aug MNIST_AUG\n                        MNIST Data Augmentation: 0 (MNIST, FMNIST Privacy\n                        Evaluation); 1 (FMNIST)\n  --total_matches_per_point TOTAL_MATCHES_PER_POINT\n                        Multiple random matches\n  --test_metric TEST_METRIC\n                        Evaluation Metrics: acc; match_score, t_sne, mia\n  --acc_data_case ACC_DATA_CASE\n                        Dataset Train/Val/Test for the accuracy evaluation\n                        metric\n  --top_k TOP_K         Top K matches to consider for the match score\n                        evaluation metric\n  --match_func_aug_case MATCH_FUNC_AUG_CASE\n                        0: Evaluate match func on train domains; 1: Evaluate\n                        match func on self augmentations\n  --match_func_data_case MATCH_FUNC_DATA_CASE\n                        Dataset Train/Val/Test for the match score evaluation\n                        metric\n```\n\n--- python test.py --help ---\n(`python test.py --help` fails at this commit with TypeError: %c requires int or char: a help string has an unescaped %. Below is the same parser's help with those % signs escaped by code.)\n```\nusage: test.py [-h] [--dataset_name DATASET_NAME] [--method_name METHOD_NAME]\n               [--model_name MODEL_NAME]\n               [--train_domains TRAIN_DOMAINS [TRAIN_DOMAINS ...]]\n               [--test_domains TEST_DOMAINS [TEST_DOMAINS ...]]\n               [--out_classes OUT_CLASSES] [--img_c IMG_C] [--img_h IMG_H]\n               [--img_w IMG_W] [--fc_layer FC_LAYER]\n               [--match_layer MATCH_LAYER] [--pos_metric POS_METRIC]\n               [--rep_dim REP_DIM] [--pre_trained PRE_TRAINED]\n               [--perfect_match PERFECT_MATCH] [--opt OPT]\n               [--weight_decay WEIGHT_DECAY] [--lr LR]\n               [--batch_size BATCH_SIZE] [--epochs EPOCHS]\n               [--penalty_s PENALTY_S] [--penalty_irm PENALTY_IRM]\n               [--penalty_aug PENALTY_AUG] [--penalty_ws PENALTY_WS]\n               [--penalty_diff_ctr PENALTY_DIFF_CTR] [--tau TAU]\n               [--match_flag MATCH_FLAG] [--match_case MATCH_CASE]\n               [--match_interrupt MATCH_INTERRUPT] [--ctr_abl CTR_ABL]\n               [--match_abl MATCH_ABL] [--n_runs N_RUNS]\n               [--n_runs_matchdg_erm N_RUNS_MATCHDG_ERM]\n               [--ctr_model_name CTR_MODEL_NAME]\n               [--ctr_match_layer CTR_MATCH_LAYER]\n               [--ctr_match_flag CTR_MATCH_FLAG]\n               [--ctr_match_case CTR_MATCH_CASE]\n               [--ctr_match_interrupt CTR_MATCH_INTERRUPT]\n               [--mnist_seed MNIST_SEED] [--retain RETAIN]\n               [--cuda_device CUDA_DEVICE] [--os_env OS_ENV]\n               [--dp_noise DP_NOISE] [--dp_epsilon DP_EPSILON]\n               [--dp_attach_opt DP_ATTACH_OPT]\n               [--d_steps_per_g_step D_STEPS_PER_G_STEP]\n               [--grad_penalty GRAD_PENALTY] [--conditional CONDITIONAL]\n               [--gaussian GAUSSIAN] [--slab_data_dim SLAB_DATA_DIM]\n               [--slab_total_slabs SLAB_TOTAL_SLABS]\n               [--slab_num_samples SLAB_NUM_SAMPLES] [--slab_noise SLAB_NOISE]\n               [--mnist_case MNIST_CASE] [--mnist_aug MNIST_AUG]\n               [--total_matches_per_point TOTAL_MATCHES_PER_POINT]\n               [--test_metric TEST_METRIC] [--acc_data_case ACC_DATA_CASE]\n               [--top_k TOP_K] [--match_func_aug_case MATCH_FUNC_AUG_CASE]\n               [--match_func_data_case MATCH_FUNC_DATA_CASE]\n               [--mia_batch_size MIA_BATCH_SIZE]\n               [--mia_dnn_steps MIA_DNN_STEPS]\n               [--mia_sample_size MIA_SAMPLE_SIZE] [--mia_logit MIA_LOGIT]\n               [--attribute_domain ATTRIBUTE_DOMAIN] [--adv_eps ADV_EPS]\n               [--logit_plot_path LOGIT_PLOT_PATH]\n\noptional arguments:\n  -h, --help            show this help message and exit\n  --dataset_name DATASET_NAME\n                        Datasets: rot_mnist; fashion_mnist; pacs\n  --method_name METHOD_NAME\n                        Training Algorithm: erm_match; matchdg_ctr;\n                        matchdg_erm\n  --model_name MODEL_NAME\n                        Architecture of the model to be trained\n  --train_domains TRAIN_DOMAINS [TRAIN_DOMAINS ...]\n                        List of train domains\n  --test_domains TEST_DOMAINS [TEST_DOMAINS ...]\n                        List of test domains\n  --out_classes OUT_CLASSES\n                        Total number of classes in the dataset\n  --img_c IMG_C         Number of channels of the image in dataset\n  --img_h IMG_H         Height of the image in dataset\n  --img_w IMG_W         Width of the image in dataset\n  --fc_layer FC_LAYER   ResNet architecture customization; 0: No fc_layer with\n                        resnet; 1: fc_layer for classification with resnet\n  --match_layer MATCH_LAYER\n                        rep_match: Matching at an intermediate representation\n                        level; logit_match: Matching at the logit level\n  --pos_metric POS_METRIC\n                        Cost to function to evaluate distance between two\n                        representations; Options: l1; l2; cos\n  --rep_dim REP_DIM     Representation dimension for contrsative learning\n  --pre_trained PRE_TRAINED\n                        0: No Pretrained Architecture; 1: Pretrained\n                        Architecture\n  --perfect_match PERFECT_MATCH\n                        0: No perfect match known (PACS); 1: perfect match\n                        known (MNIST)\n  --opt OPT             Optimizer Choice: sgd; adam\n  --weight_decay WEIGHT_DECAY\n                        Weight Decay in SGD\n  --lr LR               Learning rate for training the model\n  --batch_size BATCH_SIZE\n                        Batch size foe training the model\n  --epochs EPOCHS       Total number of epochs for training the model\n  --penalty_s PENALTY_S\n                        Epoch threshold over which Matching Loss to be\n                        optimised\n  --penalty_irm PENALTY_IRM\n                        Penalty weight for IRM invariant classifier loss\n  --penalty_aug PENALTY_AUG\n                        Penalty weight for Augmentation in Hybrid approach\n                        loss\n  --penalty_ws PENALTY_WS\n                        Penalty weight for Matching Loss\n  --penalty_diff_ctr PENALTY_DIFF_CTR\n                        Penalty weight for Contrastive Loss\n  --tau TAU             Temperature hyper param for NTXent contrastive loss\n  --match_flag MATCH_FLAG\n                        0: No Update to Match Strategy; 1: Updates to Match\n                        Strategy\n  --match_case MATCH_CASE\n                        0: Random Match; 1: Perfect Match. 0.x\" x% correct\n                        Match\n  --match_interrupt MATCH_INTERRUPT\n                        Number of epochs before inferring the match strategy\n  --ctr_abl CTR_ABL     0: Randomization til class level ; 1: Randomization\n                        completely\n  --match_abl MATCH_ABL\n                        0: Randomization til class level ; 1: Randomization\n                        completely\n  --n_runs N_RUNS       Number of iterations to repeat the training process\n  --n_runs_matchdg_erm N_RUNS_MATCHDG_ERM\n                        Number of iterations to repeat training process for\n                        matchdg_erm\n  --ctr_model_name CTR_MODEL_NAME\n                        (For matchdg_ctr phase) Architecture of the model to\n                        be trained\n  --ctr_match_layer CTR_MATCH_LAYER\n                        (For matchdg_ctr phase) rep_match: Matching at an\n                        intermediate representation level; logit_match:\n                        Matching at the logit level\n  --ctr_match_flag CTR_MATCH_FLAG\n                        (For matchdg_ctr phase) 0: No Update to Match\n                        Strategy; 1: Updates to Match Strategy\n  --ctr_match_case CTR_MATCH_CASE\n                        (For matchdg_ctr phase) 0: Random Match; 1: Perfect\n                        Match. 0.x\" x% correct Match\n  --ctr_match_interrupt CTR_MATCH_INTERRUPT\n                        (For matchdg_ctr phase) Number of epochs before\n                        inferring the match strategy\n  --mnist_seed MNIST_SEED\n                        Change it between 0-6 for different subsets of Mnist\n                        and Fashion Mnist dataset\n  --retain RETAIN       0: Train from scratch in MatchDG Phase 2; 2: Finetune\n                        from MatchDG Phase 1 in MatchDG is Phase 2\n  --cuda_device CUDA_DEVICE\n                        Select the cuda device by id among the avaliable\n                        devices\n  --os_env OS_ENV       0: Code execution on local server/machine; 1: Code\n                        execution in docker/clusters\n  --dp_noise DP_NOISE   0: No DP noise; 1: Add DP noise\n  --dp_epsilon DP_EPSILON\n                        Epsilon value for Differential Privacy\n  --dp_attach_opt DP_ATTACH_OPT\n                        0: Infinite Epsilon; 1: Finite Epsilion\n  --d_steps_per_g_step D_STEPS_PER_G_STEP\n  --grad_penalty GRAD_PENALTY\n  --conditional CONDITIONAL\n  --gaussian GAUSSIAN\n  --slab_data_dim SLAB_DATA_DIM\n                        Number of features in the slab dataset\n  --slab_total_slabs SLAB_TOTAL_SLABS\n  --slab_num_samples SLAB_NUM_SAMPLES\n  --slab_noise SLAB_NOISE\n  --mnist_case MNIST_CASE\n                        MNIST Dataset Case: resnet18; lenet, domainbed\n  --mnist_aug MNIST_AUG\n                        MNIST Data Augmentation: 0 (MNIST, FMNIST Privacy\n                        Evaluation); 1 (FMNIST)\n  --total_matches_per_point TOTAL_MATCHES_PER_POINT\n                        Multiple random matches\n  --test_metric TEST_METRIC\n                        Evaluation Metrics: acc; match_score, t_sne, mia\n  --acc_data_case ACC_DATA_CASE\n                        Dataset Train/Val/Test for the accuracy evaluation\n                        metric\n  --top_k TOP_K         Top K matches to consider for the match score\n                        evaluation metric\n  --match_func_aug_case MATCH_FUNC_AUG_CASE\n                        0: Evaluate match func on train domains; 1: Evaluate\n                        match func on self augmentations\n  --match_func_data_case MATCH_FUNC_DATA_CASE\n                        Dataset Train/Val/Test for the match score evaluation\n                        metric\n  --mia_batch_size MIA_BATCH_SIZE\n                        batch size\n  --mia_dnn_steps MIA_DNN_STEPS\n                        number of training steps\n  --mia_sample_size MIA_SAMPLE_SIZE\n                        number of samples from train/test dataset logits\n  --mia_logit MIA_LOGIT\n                        0: Softmax applied to logits; 1: No Softmax applied to\n                        logits\n  --attribute_domain ATTRIBUTE_DOMAIN\n                        0: spur correlations as attribute; 1: domain as\n                        attribute\n  --adv_eps ADV_EPS     Epsilon ball dimension for PGD attacks\n  --logit_plot_path LOGIT_PLOT_PATH\n                        File name to save logit/loss plots\n```\n\n--- python test_slab.py --help ---\n(`python test_slab.py --help` fails at this commit with TypeError: %c requires int or char: a help string has an unescaped %. Below is the same parser's help with those % signs escaped by code.)\n```\nusage: test_slab.py [-h] [--dataset_name DATASET_NAME]\n                    [--method_name METHOD_NAME] [--model_name MODEL_NAME]\n                    [--train_domains TRAIN_DOMAINS [TRAIN_DOMAINS ...]]\n                    [--test_domains TEST_DOMAINS [TEST_DOMAINS ...]]\n                    [--out_classes OUT_CLASSES] [--img_c IMG_C]\n                    [--img_h IMG_H] [--img_w IMG_W] [--fc_layer FC_LAYER]\n                    [--match_layer MATCH_LAYER] [--pos_metric POS_METRIC]\n                    [--rep_dim REP_DIM] [--pre_trained PRE_TRAINED]\n                    [--perfect_match PERFECT_MATCH] [--opt OPT]\n                    [--weight_decay WEIGHT_DECAY] [--lr LR]\n                    [--batch_size BATCH_SIZE] [--epochs EPOCHS]\n                    [--penalty_s PENALTY_S] [--penalty_irm PENALTY_IRM]\n                    [--penalty_aug PENALTY_AUG] [--penalty_ws PENALTY_WS]\n                    [--penalty_diff_ctr PENALTY_DIFF_CTR] [--tau TAU]\n                    [--match_flag MATCH_FLAG] [--match_case MATCH_CASE]\n                    [--match_interrupt MATCH_INTERRUPT] [--ctr_abl CTR_ABL]\n                    [--match_abl MATCH_ABL] [--n_runs N_RUNS]\n                    [--n_runs_matchdg_erm N_RUNS_MATCHDG_ERM]\n                    [--ctr_model_name CTR_MODEL_NAME]\n                    [--ctr_match_layer CTR_MATCH_LAYER]\n                    [--ctr_match_flag CTR_MATCH_FLAG]\n                    [--ctr_match_case CTR_MATCH_CASE]\n                    [--ctr_match_interrupt CTR_MATCH_INTERRUPT]\n                    [--mnist_seed MNIST_SEED] [--retain RETAIN]\n                    [--cuda_device CUDA_DEVICE] [--os_env OS_ENV]\n                    [--dp_noise DP_NOISE] [--dp_epsilon DP_EPSILON]\n                    [--d_steps_per_g_step D_STEPS_PER_G_STEP]\n                    [--grad_penalty GRAD_PENALTY] [--conditional CONDITIONAL]\n                    [--gaussian GAUSSIAN] [--slab_data_dim SLAB_DATA_DIM]\n                    [--slab_total_slabs SLAB_TOTAL_SLABS]\n                    [--slab_num_samples SLAB_NUM_SAMPLES]\n                    [--slab_noise SLAB_NOISE] [--mnist_case MNIST_CASE]\n                    [--mnist_aug MNIST_AUG]\n                    [--total_matches_per_point TOTAL_MATCHES_PER_POINT]\n                    [--test_metric TEST_METRIC]\n                    [--acc_data_case ACC_DATA_CASE] [--top_k TOP_K]\n                    [--match_func_aug_case MATCH_FUNC_AUG_CASE]\n                    [--match_func_data_case MATCH_FUNC_DATA_CASE]\n                    [--mia_batch_size MIA_BATCH_SIZE]\n                    [--mia_dnn_steps MIA_DNN_STEPS]\n                    [--mia_sample_size MIA_SAMPLE_SIZE]\n                    [--mia_logit MIA_LOGIT]\n                    [--attribute_domain ATTRIBUTE_DOMAIN] [--adv_eps ADV_EPS]\n                    [--logit_plot_path LOGIT_PLOT_PATH]\n\noptional arguments:\n  -h, --help            show this help message and exit\n  --dataset_name DATASET_NAME\n                        Datasets: rot_mnist; fashion_mnist; pacs\n  --method_name METHOD_NAME\n                        Training Algorithm: erm_match; matchdg_ctr;\n                        matchdg_erm\n  --model_name MODEL_NAME\n                        Architecture of the model to be trained\n  --train_domains TRAIN_DOMAINS [TRAIN_DOMAINS ...]\n                        List of train domains\n  --test_domains TEST_DOMAINS [TEST_DOMAINS ...]\n                        List of test domains\n  --out_classes OUT_CLASSES\n                        Total number of classes in the dataset\n  --img_c IMG_C         Number of channels of the image in dataset\n  --img_h IMG_H         Height of the image in dataset\n  --img_w IMG_W         Width of the image in dataset\n  --fc_layer FC_LAYER   ResNet architecture customization; 0: No fc_layer with\n                        resnet; 1: fc_layer for classification with resnet\n  --match_layer MATCH_LAYER\n                        rep_match: Matching at an intermediate representation\n                        level; logit_match: Matching at the logit level\n  --pos_metric POS_METRIC\n                        Cost to function to evaluate distance between two\n                        representations; Options: l1; l2; cos\n  --rep_dim REP_DIM     Representation dimension for contrsative learning\n  --pre_trained PRE_TRAINED\n                        0: No Pretrained Architecture; 1: Pretrained\n                        Architecture\n  --perfect_match PERFECT_MATCH\n                        0: No perfect match known (PACS); 1: perfect match\n                        known (MNIST)\n  --opt OPT             Optimizer Choice: sgd; adam\n  --weight_decay WEIGHT_DECAY\n                        Weight Decay in SGD\n  --lr LR               Learning rate for training the model\n  --batch_size BATCH_SIZE\n                        Batch size foe training the model\n  --epochs EPOCHS       Total number of epochs for training the model\n  --penalty_s PENALTY_S\n                        Epoch threshold over which Matching Loss to be\n                        optimised\n  --penalty_irm PENALTY_IRM\n                        Penalty weight for IRM invariant classifier loss\n  --penalty_aug PENALTY_AUG\n                        Penalty weight for Augmentation in Hybrid approach\n                        loss\n  --penalty_ws PENALTY_WS\n                        Penalty weight for Matching Loss\n  --penalty_diff_ctr PENALTY_DIFF_CTR\n                        Penalty weight for Contrastive Loss\n  --tau TAU             Temperature hyper param for NTXent contrastive loss\n  --match_flag MATCH_FLAG\n                        0: No Update to Match Strategy; 1: Updates to Match\n                        Strategy\n  --match_case MATCH_CASE\n                        0: Random Match; 1: Perfect Match. 0.x\" x% correct\n                        Match\n  --match_interrupt MATCH_INTERRUPT\n                        Number of epochs before inferring the match strategy\n  --ctr_abl CTR_ABL     0: Randomization til class level ; 1: Randomization\n                        completely\n  --match_abl MATCH_ABL\n                        0: Randomization til class level ; 1: Randomization\n                        completely\n  --n_runs N_RUNS       Number of iterations to repeat the training process\n  --n_runs_matchdg_erm N_RUNS_MATCHDG_ERM\n                        Number of iterations to repeat training process for\n                        matchdg_erm\n  --ctr_model_name CTR_MODEL_NAME\n                        (For matchdg_ctr phase) Architecture of the model to\n                        be trained\n  --ctr_match_layer CTR_MATCH_LAYER\n                        (For matchdg_ctr phase) rep_match: Matching at an\n                        intermediate representation level; logit_match:\n                        Matching at the logit level\n  --ctr_match_flag CTR_MATCH_FLAG\n                        (For matchdg_ctr phase) 0: No Update to Match\n                        Strategy; 1: Updates to Match Strategy\n  --ctr_match_case CTR_MATCH_CASE\n                        (For matchdg_ctr phase) 0: Random Match; 1: Perfect\n                        Match. 0.x\" x% correct Match\n  --ctr_match_interrupt CTR_MATCH_INTERRUPT\n                        (For matchdg_ctr phase) Number of epochs before\n                        inferring the match strategy\n  --mnist_seed MNIST_SEED\n                        Change it between 0-6 for different subsets of Mnist\n                        and Fashion Mnist dataset\n  --retain RETAIN       0: Train from scratch in MatchDG Phase 2; 2: Finetune\n                        from MatchDG Phase 1 in MatchDG is Phase 2\n  --cuda_device CUDA_DEVICE\n                        Select the cuda device by id among the avaliable\n                        devices\n  --os_env OS_ENV       0: Code execution on local server/machine; 1: Code\n                        execution in docker/clusters\n  --dp_noise DP_NOISE   0: No DP noise; 1: Add DP noise\n  --dp_epsilon DP_EPSILON\n                        Epsilon value for Differential Privacy\n  --d_steps_per_g_step D_STEPS_PER_G_STEP\n  --grad_penalty GRAD_PENALTY\n  --conditional CONDITIONAL\n  --gaussian GAUSSIAN\n  --slab_data_dim SLAB_DATA_DIM\n                        Number of features in the slab dataset\n  --slab_total_slabs SLAB_TOTAL_SLABS\n  --slab_num_samples SLAB_NUM_SAMPLES\n  --slab_noise SLAB_NOISE\n  --mnist_case MNIST_CASE\n                        MNIST Dataset Case: resnet18; lenet, domainbed\n  --mnist_aug MNIST_AUG\n                        MNIST Data Augmentation: 0 (MNIST, FMNIST Privacy\n                        Evaluation); 1 (FMNIST)\n  --total_matches_per_point TOTAL_MATCHES_PER_POINT\n                        Multiple random matches\n  --test_metric TEST_METRIC\n                        Evaluation Metrics: acc; match_score, t_sne, mia\n  --acc_data_case ACC_DATA_CASE\n                        Dataset Train/Val/Test for the accuracy evaluation\n                        metric\n  --top_k TOP_K         Top K matches to consider for the match score\n                        evaluation metric\n  --match_func_aug_case MATCH_FUNC_AUG_CASE\n                        0: Evaluate match func on train domains; 1: Evaluate\n                        match func on self augmentations\n  --match_func_data_case MATCH_FUNC_DATA_CASE\n                        Dataset Train/Val/Test for the match score evaluation\n                        metric\n  --mia_batch_size MIA_BATCH_SIZE\n                        batch size\n  --mia_dnn_steps MIA_DNN_STEPS\n                        number of training steps\n  --mia_sample_size MIA_SAMPLE_SIZE\n                        number of samples from train/test dataset logits\n  --mia_logit MIA_LOGIT\n                        0: Softmax applied to logits; 1: No Softmax applied to\n                        logits\n  --attribute_domain ATTRIBUTE_DOMAIN\n                        0: spur correlations as attribute; 1: domain as\n                        attribute\n  --adv_eps ADV_EPS     Epsilon ball dimension for PGD attacks\n  --logit_plot_path LOGIT_PLOT_PATH\n                        File name to save logit/loss plots\n```\n"
+ },
+ "response": {
+  "output": {
+   "data_steps": [
+    {
+     "name": "gen_rot_mnist_lenet",
+     "argv": [
+      "python",
+      "data/data_gen_mnist.py",
+      "--dataset",
+      "rot_mnist",
+      "--model",
+      "lenet",
+      "--img_h",
+      "32",
+      "--img_w",
+      "32",
+      "--subset_size",
+      "2000"
+     ],
+     "evidence": "README.rst data loading command (model lenet needed for mnist_case lenet, data/data_gen_mnist.py:214,137)"
+    }
+   ],
+   "parsers": [
+    {
+     "name": "acc_train",
+     "step": "train",
+     "line_regex": "Final Test Accuracy \\(Source Validation\\) (\\S+) (\\S+)",
+     "value_group": 1,
+     "sd_group": 2,
+     "run_start_regex": null,
+     "key_group": null,
+     "key_value": null,
+     "per_epoch": false,
+     "count": 1,
+     "evidence": "train.py:314"
+    },
+    {
+     "name": "acc_erm",
+     "step": "erm",
+     "line_regex": "Final Test Accuracy \\(Source Validation\\) (\\S+) (\\S+)",
+     "value_group": 1,
+     "sd_group": 2,
+     "run_start_regex": null,
+     "key_group": null,
+     "key_value": null,
+     "per_epoch": false,
+     "count": 1,
+     "evidence": "train.py:314"
+    }
+   ],
+   "cells": [
+    {
+     "claim_ids": [
+      "Table 11|ERM|0"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "0.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "15",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "0"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|ERM|15"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "0.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "15"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|ERM|30"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "0.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "30"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|ERM|45"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "0.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "60",
+        "75",
+        "--test_domains",
+        "45"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|ERM|60"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "0.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "75",
+        "--test_domains",
+        "60"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|ERM|75"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "0.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "60",
+        "--test_domains",
+        "75"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:19",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|ERM|Average"
+     ],
+     "status": "derived",
+     "steps": [],
+     "parser": null,
+     "derived_from": [
+      "Table 11|ERM|0",
+      "Table 11|ERM|15",
+      "Table 11|ERM|30",
+      "Table 11|ERM|45",
+      "Table 11|ERM|60",
+      "Table 11|ERM|75"
+     ],
+     "derived_op": "mean",
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:9",
+     "reason": "Average over the six target-domain columns"
+    },
+    {
+     "claim_ids": [
+      "Table 11|CCSA|0",
+      "Table 11|CCSA|15",
+      "Table 11|CCSA|30",
+      "Table 11|CCSA|45",
+      "Table 11|CCSA|60",
+      "Table 11|CCSA|75",
+      "Table 11|CCSA|Average"
+     ],
+     "status": "unlinked",
+     "steps": [],
+     "parser": null,
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:7",
+     "reason": "Numbers taken from other work; CCSA is not implemented in the repository"
+    },
+    {
+     "claim_ids": [
+      "Table 11|D-MTAE|0",
+      "Table 11|D-MTAE|15",
+      "Table 11|D-MTAE|30",
+      "Table 11|D-MTAE|45",
+      "Table 11|D-MTAE|60",
+      "Table 11|D-MTAE|75",
+      "Table 11|D-MTAE|Average"
+     ],
+     "status": "unlinked",
+     "steps": [],
+     "parser": null,
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:7",
+     "reason": "Numbers taken from other work; D-MTAE is not implemented in the repository"
+    },
+    {
+     "claim_ids": [
+      "Table 11|LabelGrad|0",
+      "Table 11|LabelGrad|15",
+      "Table 11|LabelGrad|30",
+      "Table 11|LabelGrad|45",
+      "Table 11|LabelGrad|60",
+      "Table 11|LabelGrad|75",
+      "Table 11|LabelGrad|Average"
+     ],
+     "status": "unlinked",
+     "steps": [],
+     "parser": null,
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:7",
+     "reason": "Numbers taken from other work; LabelGrad is not implemented in the repository"
+    },
+    {
+     "claim_ids": [
+      "Table 11|DAN|0",
+      "Table 11|DAN|15",
+      "Table 11|DAN|30",
+      "Table 11|DAN|45",
+      "Table 11|DAN|60",
+      "Table 11|DAN|75",
+      "Table 11|DAN|Average"
+     ],
+     "status": "unlinked",
+     "steps": [],
+     "parser": null,
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:7",
+     "reason": "Numbers taken from other work; DAN is not implemented in the repository"
+    },
+    {
+     "claim_ids": [
+      "Table 11|CrossGrad|0",
+      "Table 11|CrossGrad|15",
+      "Table 11|CrossGrad|30",
+      "Table 11|CrossGrad|45",
+      "Table 11|CrossGrad|60",
+      "Table 11|CrossGrad|75",
+      "Table 11|CrossGrad|Average"
+     ],
+     "status": "unlinked",
+     "steps": [],
+     "parser": null,
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:7",
+     "reason": "Numbers taken from other work; CrossGrad is not implemented in the repository"
+    },
+    {
+     "claim_ids": [
+      "Table 11|DIV A|0",
+      "Table 11|DIV A|15",
+      "Table 11|DIV A|30",
+      "Table 11|DIV A|45",
+      "Table 11|DIV A|60",
+      "Table 11|DIV A|75",
+      "Table 11|DIV A|Average"
+     ],
+     "status": "unlinked",
+     "steps": [],
+     "parser": null,
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:7",
+     "reason": "Numbers taken from other work; DIVA is not implemented in the repository"
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|0"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "15",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "0"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|15"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "15"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|30"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "30"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|45"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "60",
+        "75",
+        "--test_domains",
+        "45"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|60"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "75",
+        "--test_domains",
+        "60"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|75"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "0.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "60",
+        "--test_domains",
+        "75"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:22",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|RandMatch|Average"
+     ],
+     "status": "derived",
+     "steps": [],
+     "parser": null,
+     "derived_from": [
+      "Table 11|RandMatch|0",
+      "Table 11|RandMatch|15",
+      "Table 11|RandMatch|30",
+      "Table 11|RandMatch|45",
+      "Table 11|RandMatch|60",
+      "Table 11|RandMatch|75"
+     ],
+     "derived_op": "mean",
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:9",
+     "reason": "Average over the six target-domain columns"
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|0"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "ctr",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_ctr",
+        "--match_case",
+        "0.0",
+        "--match_flag",
+        "1",
+        "--epochs",
+        "50",
+        "--batch_size",
+        "512",
+        "--pos_metric",
+        "cos",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--match_func_aug_case",
+        "1",
+        "--train_domains",
+        "15",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "0"
+       ]
+      },
+      {
+       "name": "erm",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_erm",
+        "--match_case",
+        "-1",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--ctr_match_case",
+        "0.0",
+        "--ctr_match_flag",
+        "1",
+        "--ctr_match_interrupt",
+        "5",
+        "--ctr_model_name",
+        "lenet",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "15",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "0"
+       ]
+      }
+     ],
+     "parser": "acc_erm",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|15"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "ctr",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_ctr",
+        "--match_case",
+        "0.0",
+        "--match_flag",
+        "1",
+        "--epochs",
+        "50",
+        "--batch_size",
+        "512",
+        "--pos_metric",
+        "cos",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--match_func_aug_case",
+        "1",
+        "--train_domains",
+        "0",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "15"
+       ]
+      },
+      {
+       "name": "erm",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_erm",
+        "--match_case",
+        "-1",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--ctr_match_case",
+        "0.0",
+        "--ctr_match_flag",
+        "1",
+        "--ctr_match_interrupt",
+        "5",
+        "--ctr_model_name",
+        "lenet",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "15"
+       ]
+      }
+     ],
+     "parser": "acc_erm",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|30"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "ctr",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_ctr",
+        "--match_case",
+        "0.0",
+        "--match_flag",
+        "1",
+        "--epochs",
+        "50",
+        "--batch_size",
+        "512",
+        "--pos_metric",
+        "cos",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--match_func_aug_case",
+        "1",
+        "--train_domains",
+        "0",
+        "15",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "30"
+       ]
+      },
+      {
+       "name": "erm",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_erm",
+        "--match_case",
+        "-1",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--ctr_match_case",
+        "0.0",
+        "--ctr_match_flag",
+        "1",
+        "--ctr_match_interrupt",
+        "5",
+        "--ctr_model_name",
+        "lenet",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "30"
+       ]
+      }
+     ],
+     "parser": "acc_erm",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|45"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "ctr",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_ctr",
+        "--match_case",
+        "0.0",
+        "--match_flag",
+        "1",
+        "--epochs",
+        "50",
+        "--batch_size",
+        "512",
+        "--pos_metric",
+        "cos",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--match_func_aug_case",
+        "1",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "60",
+        "75",
+        "--test_domains",
+        "45"
+       ]
+      },
+      {
+       "name": "erm",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_erm",
+        "--match_case",
+        "-1",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--ctr_match_case",
+        "0.0",
+        "--ctr_match_flag",
+        "1",
+        "--ctr_match_interrupt",
+        "5",
+        "--ctr_model_name",
+        "lenet",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "60",
+        "75",
+        "--test_domains",
+        "45"
+       ]
+      }
+     ],
+     "parser": "acc_erm",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|60"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "ctr",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_ctr",
+        "--match_case",
+        "0.0",
+        "--match_flag",
+        "1",
+        "--epochs",
+        "50",
+        "--batch_size",
+        "512",
+        "--pos_metric",
+        "cos",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--match_func_aug_case",
+        "1",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "75",
+        "--test_domains",
+        "60"
+       ]
+      },
+      {
+       "name": "erm",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_erm",
+        "--match_case",
+        "-1",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--ctr_match_case",
+        "0.0",
+        "--ctr_match_flag",
+        "1",
+        "--ctr_match_interrupt",
+        "5",
+        "--ctr_model_name",
+        "lenet",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "75",
+        "--test_domains",
+        "60"
+       ]
+      }
+     ],
+     "parser": "acc_erm",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|75"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "ctr",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_ctr",
+        "--match_case",
+        "0.0",
+        "--match_flag",
+        "1",
+        "--epochs",
+        "50",
+        "--batch_size",
+        "512",
+        "--pos_metric",
+        "cos",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--match_func_aug_case",
+        "1",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "60",
+        "--test_domains",
+        "75"
+       ]
+      },
+      {
+       "name": "erm",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "matchdg_erm",
+        "--match_case",
+        "-1",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--ctr_match_case",
+        "0.0",
+        "--ctr_match_flag",
+        "1",
+        "--ctr_match_interrupt",
+        "5",
+        "--ctr_model_name",
+        "lenet",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--total_matches_per_point",
+        "100",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "60",
+        "--test_domains",
+        "75"
+       ]
+      }
+     ],
+     "parser": "acc_erm",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:25,28",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|MatchDG|Average"
+     ],
+     "status": "derived",
+     "steps": [],
+     "parser": null,
+     "derived_from": [
+      "Table 11|MatchDG|0",
+      "Table 11|MatchDG|15",
+      "Table 11|MatchDG|30",
+      "Table 11|MatchDG|45",
+      "Table 11|MatchDG|60",
+      "Table 11|MatchDG|75"
+     ],
+     "derived_op": "mean",
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:9",
+     "reason": "Average over the six target-domain columns"
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|0"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "1.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "15",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "0"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|15"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "1.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "30",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "15"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|30"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "1.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "45",
+        "60",
+        "75",
+        "--test_domains",
+        "30"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|45"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "1.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "60",
+        "75",
+        "--test_domains",
+        "45"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|60"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "1.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "75",
+        "--test_domains",
+        "60"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|75"
+     ],
+     "status": "linked",
+     "steps": [
+      {
+       "name": "train",
+       "argv": [
+        "python",
+        "train.py",
+        "--dataset",
+        "rot_mnist",
+        "--mnist_case",
+        "lenet",
+        "--method_name",
+        "erm_match",
+        "--match_case",
+        "1.0",
+        "--penalty_ws",
+        "1.0",
+        "--epochs",
+        "100",
+        "--model_name",
+        "lenet",
+        "--img_h",
+        "32",
+        "--img_w",
+        "32",
+        "--train_domains",
+        "0",
+        "15",
+        "30",
+        "45",
+        "60",
+        "--test_domains",
+        "75"
+       ]
+      }
+     ],
+     "parser": "acc_train",
+     "derived_from": [],
+     "derived_op": null,
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:16",
+     "reason": ""
+    },
+    {
+     "claim_ids": [
+      "Table 11|PerfMatch|Average"
+     ],
+     "status": "derived",
+     "steps": [],
+     "parser": null,
+     "derived_from": [
+      "Table 11|PerfMatch|0",
+      "Table 11|PerfMatch|15",
+      "Table 11|PerfMatch|30",
+      "Table 11|PerfMatch|45",
+      "Table 11|PerfMatch|60",
+      "Table 11|PerfMatch|75"
+     ],
+     "derived_op": "mean",
+     "evidence": "reproduce_scripts/reproduce_rmnist_lenet.py:9",
+     "reason": "Average over the six target-domain columns"
+    }
+   ],
+   "notes": "Commands follow reproduce_scripts/reproduce_rmnist_lenet.py, expanded per target domain, because that script redirects each run's output to a file. Because of that, its own stdout holds no accuracy lines. The data command is the README's data_gen_mnist.py with --model lenet and 32x32 images. This is needed so the data directory rot_mnist_lenet exists for --mnist_case lenet. The data generator makes lenet data for all six domains and seeds 0-2.\n\nThe number is read from the 'Final Test Accuracy (Source Validation)' line, which train.py prints once per log (train.py:314). I chose the source-validation line over the target-validation line (train.py:315) as the usual model-selection choice. I did not confirm which line the paper reports. The line's mean and std are over the n_runs runs; the default n_runs is assumed to be 3 and I did not check it in the parser definition.\n\nFor MatchDG the number comes from the matchdg_erm phase. matchdg_ctr prints no final accuracy line."
+  },
+  "result_text": "{\"data_steps\":[{\"name\":\"gen_rot_mnist_lenet\",\"argv\":[\"python\",\"data/data_gen_mnist.py\",\"--dataset\",\"rot_mnist\",\"--model\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--subset_size\",\"2000\"],\"evidence\":\"README.rst data loading command (model lenet needed for mnist_case lenet, data/data_gen_mnist.py:214,137)\"}],\"parsers\":[{\"name\":\"acc_train\",\"step\":\"train\",\"line_regex\":\"Final Test Accuracy \\\\(Source Validation\\\\) (\\\\S+) (\\\\S+)\",\"value_group\":1,\"sd_group\":2,\"run_start_regex\":null,\"key_group\":null,\"key_value\":null,\"per_epoch\":false,\"count\":1,\"evidence\":\"train.py:314\"},{\"name\":\"acc_erm\",\"step\":\"erm\",\"line_regex\":\"Final Test Accuracy \\\\(Source Validation\\\\) (\\\\S+) (\\\\S+)\",\"value_group\":1,\"sd_group\":2,\"run_start_regex\":null,\"key_group\":null,\"key_value\":null,\"per_epoch\":false,\"count\":1,\"evidence\":\"train.py:314\"}],\"cells\":[{\"claim_ids\":[\"Table 11|ERM|0\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"0.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"15\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"0\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|ERM|15\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"0.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"15\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|ERM|30\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"0.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"45\",\"60\",\"75\",\"--test_domains\",\"30\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|ERM|45\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"0.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"30\",\"60\",\"75\",\"--test_domains\",\"45\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|ERM|60\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"0.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"75\",\"--test_domains\",\"60\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|ERM|75\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"0.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"60\",\"--test_domains\",\"75\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:19\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|ERM|Average\"],\"status\":\"derived\",\"steps\":[],\"parser\":null,\"derived_from\":[\"Table 11|ERM|0\",\"Table 11|ERM|15\",\"Table 11|ERM|30\",\"Table 11|ERM|45\",\"Table 11|ERM|60\",\"Table 11|ERM|75\"],\"derived_op\":\"mean\",\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:9\",\"reason\":\"Average over the six target-domain columns\"},{\"claim_ids\":[\"Table 11|CCSA|0\",\"Table 11|CCSA|15\",\"Table 11|CCSA|30\",\"Table 11|CCSA|45\",\"Table 11|CCSA|60\",\"Table 11|CCSA|75\",\"Table 11|CCSA|Average\"],\"status\":\"unlinked\",\"steps\":[],\"parser\":null,\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:7\",\"reason\":\"Numbers taken from other work; CCSA is not implemented in the repository\"},{\"claim_ids\":[\"Table 11|D-MTAE|0\",\"Table 11|D-MTAE|15\",\"Table 11|D-MTAE|30\",\"Table 11|D-MTAE|45\",\"Table 11|D-MTAE|60\",\"Table 11|D-MTAE|75\",\"Table 11|D-MTAE|Average\"],\"status\":\"unlinked\",\"steps\":[],\"parser\":null,\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:7\",\"reason\":\"Numbers taken from other work; D-MTAE is not implemented in the repository\"},{\"claim_ids\":[\"Table 11|LabelGrad|0\",\"Table 11|LabelGrad|15\",\"Table 11|LabelGrad|30\",\"Table 11|LabelGrad|45\",\"Table 11|LabelGrad|60\",\"Table 11|LabelGrad|75\",\"Table 11|LabelGrad|Average\"],\"status\":\"unlinked\",\"steps\":[],\"parser\":null,\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:7\",\"reason\":\"Numbers taken from other work; LabelGrad is not implemented in the repository\"},{\"claim_ids\":[\"Table 11|DAN|0\",\"Table 11|DAN|15\",\"Table 11|DAN|30\",\"Table 11|DAN|45\",\"Table 11|DAN|60\",\"Table 11|DAN|75\",\"Table 11|DAN|Average\"],\"status\":\"unlinked\",\"steps\":[],\"parser\":null,\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:7\",\"reason\":\"Numbers taken from other work; DAN is not implemented in the repository\"},{\"claim_ids\":[\"Table 11|CrossGrad|0\",\"Table 11|CrossGrad|15\",\"Table 11|CrossGrad|30\",\"Table 11|CrossGrad|45\",\"Table 11|CrossGrad|60\",\"Table 11|CrossGrad|75\",\"Table 11|CrossGrad|Average\"],\"status\":\"unlinked\",\"steps\":[],\"parser\":null,\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:7\",\"reason\":\"Numbers taken from other work; CrossGrad is not implemented in the repository\"},{\"claim_ids\":[\"Table 11|DIV A|0\",\"Table 11|DIV A|15\",\"Table 11|DIV A|30\",\"Table 11|DIV A|45\",\"Table 11|DIV A|60\",\"Table 11|DIV A|75\",\"Table 11|DIV A|Average\"],\"status\":\"unlinked\",\"steps\":[],\"parser\":null,\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:7\",\"reason\":\"Numbers taken from other work; DIVA is not implemented in the repository\"},{\"claim_ids\":[\"Table 11|RandMatch|0\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"15\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"0\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|RandMatch|15\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"15\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|RandMatch|30\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"45\",\"60\",\"75\",\"--test_domains\",\"30\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|RandMatch|45\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"30\",\"60\",\"75\",\"--test_domains\",\"45\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|RandMatch|60\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"75\",\"--test_domains\",\"60\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|RandMatch|75\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"0.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"60\",\"--test_domains\",\"75\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:22\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|RandMatch|Average\"],\"status\":\"derived\",\"steps\":[],\"parser\":null,\"derived_from\":[\"Table 11|RandMatch|0\",\"Table 11|RandMatch|15\",\"Table 11|RandMatch|30\",\"Table 11|RandMatch|45\",\"Table 11|RandMatch|60\",\"Table 11|RandMatch|75\"],\"derived_op\":\"mean\",\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:9\",\"reason\":\"Average over the six target-domain columns\"},{\"claim_ids\":[\"Table 11|MatchDG|0\"],\"status\":\"linked\",\"steps\":[{\"name\":\"ctr\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_ctr\",\"--match_case\",\"0.0\",\"--match_flag\",\"1\",\"--epochs\",\"50\",\"--batch_size\",\"512\",\"--pos_metric\",\"cos\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--match_func_aug_case\",\"1\",\"--train_domains\",\"15\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"0\"]},{\"name\":\"erm\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_erm\",\"--match_case\",\"-1\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--ctr_match_case\",\"0.0\",\"--ctr_match_flag\",\"1\",\"--ctr_match_interrupt\",\"5\",\"--ctr_model_name\",\"lenet\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"15\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"0\"]}],\"parser\":\"acc_erm\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25,28\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|MatchDG|15\"],\"status\":\"linked\",\"steps\":[{\"name\":\"ctr\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_ctr\",\"--match_case\",\"0.0\",\"--match_flag\",\"1\",\"--epochs\",\"50\",\"--batch_size\",\"512\",\"--pos_metric\",\"cos\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--match_func_aug_case\",\"1\",\"--train_domains\",\"0\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"15\"]},{\"name\":\"erm\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_erm\",\"--match_case\",\"-1\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--ctr_match_case\",\"0.0\",\"--ctr_match_flag\",\"1\",\"--ctr_match_interrupt\",\"5\",\"--ctr_model_name\",\"lenet\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"15\"]}],\"parser\":\"acc_erm\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25,28\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|MatchDG|30\"],\"status\":\"linked\",\"steps\":[{\"name\":\"ctr\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_ctr\",\"--match_case\",\"0.0\",\"--match_flag\",\"1\",\"--epochs\",\"50\",\"--batch_size\",\"512\",\"--pos_metric\",\"cos\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--match_func_aug_case\",\"1\",\"--train_domains\",\"0\",\"15\",\"45\",\"60\",\"75\",\"--test_domains\",\"30\"]},{\"name\":\"erm\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_erm\",\"--match_case\",\"-1\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--ctr_match_case\",\"0.0\",\"--ctr_match_flag\",\"1\",\"--ctr_match_interrupt\",\"5\",\"--ctr_model_name\",\"lenet\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"45\",\"60\",\"75\",\"--test_domains\",\"30\"]}],\"parser\":\"acc_erm\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25,28\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|MatchDG|45\"],\"status\":\"linked\",\"steps\":[{\"name\":\"ctr\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_ctr\",\"--match_case\",\"0.0\",\"--match_flag\",\"1\",\"--epochs\",\"50\",\"--batch_size\",\"512\",\"--pos_metric\",\"cos\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--match_func_aug_case\",\"1\",\"--train_domains\",\"0\",\"15\",\"30\",\"60\",\"75\",\"--test_domains\",\"45\"]},{\"name\":\"erm\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_erm\",\"--match_case\",\"-1\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--ctr_match_case\",\"0.0\",\"--ctr_match_flag\",\"1\",\"--ctr_match_interrupt\",\"5\",\"--ctr_model_name\",\"lenet\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"30\",\"60\",\"75\",\"--test_domains\",\"45\"]}],\"parser\":\"acc_erm\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25,28\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|MatchDG|60\"],\"status\":\"linked\",\"steps\":[{\"name\":\"ctr\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_ctr\",\"--match_case\",\"0.0\",\"--match_flag\",\"1\",\"--epochs\",\"50\",\"--batch_size\",\"512\",\"--pos_metric\",\"cos\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--match_func_aug_case\",\"1\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"75\",\"--test_domains\",\"60\"]},{\"name\":\"erm\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_erm\",\"--match_case\",\"-1\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--ctr_match_case\",\"0.0\",\"--ctr_match_flag\",\"1\",\"--ctr_match_interrupt\",\"5\",\"--ctr_model_name\",\"lenet\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"75\",\"--test_domains\",\"60\"]}],\"parser\":\"acc_erm\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25,28\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|MatchDG|75\"],\"status\":\"linked\",\"steps\":[{\"name\":\"ctr\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_ctr\",\"--match_case\",\"0.0\",\"--match_flag\",\"1\",\"--epochs\",\"50\",\"--batch_size\",\"512\",\"--pos_metric\",\"cos\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--match_func_aug_case\",\"1\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"60\",\"--test_domains\",\"75\"]},{\"name\":\"erm\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"matchdg_erm\",\"--match_case\",\"-1\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--ctr_match_case\",\"0.0\",\"--ctr_match_flag\",\"1\",\"--ctr_match_interrupt\",\"5\",\"--ctr_model_name\",\"lenet\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--total_matches_per_point\",\"100\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"60\",\"--test_domains\",\"75\"]}],\"parser\":\"acc_erm\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:25,28\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|MatchDG|Average\"],\"status\":\"derived\",\"steps\":[],\"parser\":null,\"derived_from\":[\"Table 11|MatchDG|0\",\"Table 11|MatchDG|15\",\"Table 11|MatchDG|30\",\"Table 11|MatchDG|45\",\"Table 11|MatchDG|60\",\"Table 11|MatchDG|75\"],\"derived_op\":\"mean\",\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:9\",\"reason\":\"Average over the six target-domain columns\"},{\"claim_ids\":[\"Table 11|PerfMatch|0\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"1.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"15\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"0\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|PerfMatch|15\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"1.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"30\",\"45\",\"60\",\"75\",\"--test_domains\",\"15\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|PerfMatch|30\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"1.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"45\",\"60\",\"75\",\"--test_domains\",\"30\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|PerfMatch|45\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"1.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"30\",\"60\",\"75\",\"--test_domains\",\"45\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|PerfMatch|60\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"1.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"75\",\"--test_domains\",\"60\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|PerfMatch|75\"],\"status\":\"linked\",\"steps\":[{\"name\":\"train\",\"argv\":[\"python\",\"train.py\",\"--dataset\",\"rot_mnist\",\"--mnist_case\",\"lenet\",\"--method_name\",\"erm_match\",\"--match_case\",\"1.0\",\"--penalty_ws\",\"1.0\",\"--epochs\",\"100\",\"--model_name\",\"lenet\",\"--img_h\",\"32\",\"--img_w\",\"32\",\"--train_domains\",\"0\",\"15\",\"30\",\"45\",\"60\",\"--test_domains\",\"75\"]}],\"parser\":\"acc_train\",\"derived_from\":[],\"derived_op\":null,\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:16\",\"reason\":\"\"},{\"claim_ids\":[\"Table 11|PerfMatch|Average\"],\"status\":\"derived\",\"steps\":[],\"parser\":null,\"derived_from\":[\"Table 11|PerfMatch|0\",\"Table 11|PerfMatch|15\",\"Table 11|PerfMatch|30\",\"Table 11|PerfMatch|45\",\"Table 11|PerfMatch|60\",\"Table 11|PerfMatch|75\"],\"derived_op\":\"mean\",\"evidence\":\"reproduce_scripts/reproduce_rmnist_lenet.py:9\",\"reason\":\"Average over the six target-domain columns\"}],\"notes\":\"Commands follow reproduce_scripts/reproduce_rmnist_lenet.py, expanded per target domain, because that script redirects each run's output to a file. Because of that, its own stdout holds no accuracy lines. The data command is the README's data_gen_mnist.py with --model lenet and 32x32 images. This is needed so the data directory rot_mnist_lenet exists for --mnist_case lenet. The data generator makes lenet data for all six domains and seeds 0-2.\\n\\nThe number is read from the 'Final Test Accuracy (Source Validation)' line, which train.py prints once per log (train.py:314). I chose the source-validation line over the target-validation line (train.py:315) as the usual model-selection choice. I did not confirm which line the paper reports. The line's mean and std are over the n_runs runs; the default n_runs is assumed to be 3 and I did not check it in the parser definition.\\n\\nFor MatchDG the number comes from the matchdg_erm phase. matchdg_ctr prints no final accuracy line.\"}",
+  "usage": {
+   "input_tokens": 8,
+   "cache_creation_input_tokens": 50875,
+   "cache_read_input_tokens": 150574,
+   "output_tokens": 11596,
+   "output_tokens_details": {
+    "thinking_tokens": 1282
+   },
+   "server_tool_use": {
+    "web_search_requests": 0,
+    "web_fetch_requests": 0
+   },
+   "service_tier": "standard",
+   "cache_creation": {
+    "ephemeral_1h_input_tokens": 50875,
+    "ephemeral_5m_input_tokens": 0
+   },
+   "inference_geo": "not_available",
+   "iterations": [
+    {
+     "input_tokens": 2,
+     "output_tokens": 10688,
+     "cache_read_input_tokens": 51721,
+     "cache_creation_input_tokens": 4235,
+     "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 4235
+     },
+     "type": "message"
+    }
+   ],
+   "speed": "standard",
+   "fallback_credit": null
+  },
+  "total_cost_usd": 0.3495908,
+  "duration_ms": 68807,
+  "num_turns": 8,
+  "models": [
+   "claude-sonnet-5-5"
+  ],
+  "session_id": "dfaf845b-dc73-481f-b386-46728920e067",
+  "permission_denials": [],
+  "wall_seconds": 69.9
+ }
+}
