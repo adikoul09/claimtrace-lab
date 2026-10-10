@@ -126,7 +126,9 @@ class Controller:
     SCORE_SCAN = 200  # most recently finished tasks looked at per tick
 
     def score(self, now: datetime) -> None:
-        tasks = self.q("tasks", "id,project_id,agent_id,capability,status,output,tokens,cpu_seconds")             .in_("status", ["done", "failed"]).not_.is_("agent_id", "null")             .order("finished_at", desc=True).limit(self.SCORE_SCAN).execute().data
+        tasks = self.q("tasks", "id,project_id,agent_id,capability,status,input,output,tokens,cpu_seconds") \
+            .in_("status", ["done", "failed"]).not_.is_("agent_id", "null") \
+            .order("finished_at", desc=True).limit(self.SCORE_SCAN).execute().data
         if not tasks:
             return
         ids = [t["id"] for t in tasks]
@@ -138,23 +140,32 @@ class Controller:
         if not todo:
             return
         tokens: dict[str, int] = defaultdict(int)
-        for c in self.db.table("llm_calls").select("task_id,tokens_in,tokens_out")                 .in_("task_id", [t["id"] for t in todo]).execute().data:
+        for c in self.db.table("llm_calls").select("task_id,tokens_in,tokens_out") \
+                .in_("task_id", [t["id"] for t in todo]).execute().data:
             tokens[c["task_id"]] += (c["tokens_in"] or 0) + (c["tokens_out"] or 0)
         names = {a["id"]: a["name"] for a in self.db.table("agents").select("id,name").execute().data}
+        up_ids = sorted({i for t in todo if t["capability"] == "run"
+                         for i in ((t.get("input") or {}).get("upstream") or {}).values()})
+        up = {u["id"]: u for u in self.db.table("tasks").select("id,agent_id,capability,output").in_("id", up_ids)
+              .execute().data} if up_ids else {}
         for t in todo:
-            s = reward.score(t, tokens.get(t["id"], t.get("tokens") or 0), feedback.get(t["id"]))
+            charged, why = reward.charged_agent(t, up)
+            s = reward.score(t, tokens.get(t["id"], t.get("tokens") or 0), feedback.get(t["id"]), charged, why)
             old = existing.get(t["id"])
             if old:
-                self.db.table("rewards").update({k: s.row[k] for k in ("outcome", "cost_norm", "feedback", "reward")})                     .eq("task_id", t["id"]).execute()
+                self.db.table("rewards").update({k: s.row[k] for k in ("outcome", "cost_norm", "feedback", "reward")}) \
+                    .eq("task_id", t["id"]).execute()
             else:
                 self.db.table("rewards").insert(s.row).execute()
-            recent = self.db.table("rewards").select("agent_id,reward,ts").eq("agent_id", t["agent_id"])                 .order("ts", desc=True).limit(ROLLING_WINDOW).execute().data
-            mean = reward.rolling_means(recent).get(t["agent_id"])
-            name = names.get(t["agent_id"], "agent")
+            agent_id = s.row["agent_id"]
+            recent = self.db.table("rewards").select("agent_id,reward,ts").eq("agent_id", agent_id) \
+                .order("ts", desc=True).limit(ROLLING_WINDOW).execute().data
+            mean = reward.rolling_means(recent).get(agent_id)
+            name = names.get(agent_id, "agent")
             verb = f"rescored {old['reward']:.2f} → {s.row['reward']:.2f}" if old else f"scored {s.row['reward']:.2f}"
             emit(self.db, "reward_updated" if old else "reward", f"{name} {verb} on {t['capability']}",
                  f"{s.reason}; rolling mean {mean:.2f} over its last {len(recent)} scored task(s)",
-                 project_id=t.get("project_id"), agent_id=t["agent_id"], task_id=t["id"],
+                 project_id=t.get("project_id"), agent_id=agent_id, task_id=t["id"],
                  data={**s.row, "rolling_mean": round(mean, 4), "rolling_n": len(recent)})
 
     # ---- lifecycle (SPEC §4) -----------------------------------------------------------------------------------------

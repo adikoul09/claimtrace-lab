@@ -4,7 +4,8 @@
               agent's role prompt with the lesson; code makes the new row (origin refined, parent_id the old row) and
               retires the old one "superseded by vN+1". Code-only agents (max_tokens 0, e.g. the Runner) are not
               refined: they have no prompt that could fix anything.
-  4.2 retire  rolling mean reward over the agent's last MIN_SCORED scored tasks < RETIRE_BELOW.
+  4.2 retire  rolling mean reward over the agent's last MIN_SCORED scored tasks < RETIRE_BELOW. Code-only agents
+              are exempt too: a crashed run counts against the agent that wrote the code (reward.charged_agent).
   4.4 merge   two active agents whose capability overlap (shared tags / all tags) is ≥ MERGE_OVERLAP, each with at
               least MIN_SCORED scored tasks: the lower-scored one becomes merged into a new version of the other
               that carries the union of both agents' capabilities and tools.
@@ -72,7 +73,7 @@ def retire_candidates(agents: list[dict], rewards: list[dict]) -> list[Retire]:
     out = []
     for a in agents:
         xs = last.get(a["id"], [])
-        if a.get("status") != "active" or len(xs) < MIN_SCORED:
+        if a.get("status") != "active" or len(xs) < MIN_SCORED or not (a.get("budget") or {}).get("max_tokens"):
             continue
         mean = round(sum(xs) / len(xs), 6)  # rewards are stored to 4 decimals; no float dust at the threshold
         if mean < RETIRE_BELOW:

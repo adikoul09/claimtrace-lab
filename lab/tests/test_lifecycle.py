@@ -134,3 +134,9 @@ def test_version_names():
     assert lifecycle.next_name("reader-v1", 1) == "reader-v2"
     assert lifecycle.next_name("crash-debugger-2-v3", 3) == "crash-debugger-2-v4"
     assert lifecycle.next_name("odd", 1) == "odd-v2"
+
+
+def test_code_only_agents_are_exempt_from_retire():
+    a = [agent("r", "runner-v1", ["run"], max_tokens=0), agent("i", "implementer-v1", ["write_code"])]
+    r = rewards("r", [0.3, 0.3, 0.3]) + rewards("i", [0.3, 0.3, 0.3])
+    assert [c.agent["id"] for c in lifecycle.retire_candidates(a, r)] == ["i"]
