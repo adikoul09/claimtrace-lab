@@ -821,6 +821,7 @@ class Controller:
             if agent is None:
                 return None
             pick = assign.Pick(agent, None, f"{agent['name']}: spawned for this task ({trig.reason})")
+        self.raise_step_floor(pick.agent)
         inp["budget"] = {**inp.get("budget", {}),
                          "max_tokens": (pick.agent.get("budget") or {}).get("max_tokens", 20_000)}
         lessons, tags = [], []
@@ -854,6 +855,25 @@ class Controller:
              task_id=row["id"], data={"caps": caps, "eligible": [e["name"] for e in live], "score": pick.score,
                                       "budget": inp["budget"]})
         return row
+
+    def raise_step_floor(self, agent: dict) -> bool:
+        """Raise the agent row's max_steps to its capability's floor (rules.STEP_FLOORS), with an event."""
+        new = assign.step_floor(agent)
+        if new is None:
+            return False
+        old = (agent.get("budget") or {}).get("max_steps")
+        self.db.table("agents").update({"budget": new}).eq("id", agent["id"]).execute()
+        agent["budget"] = new
+        emit(self.db, "agent_budget_raised", f"{agent['name']}: max_steps {old} → {new['max_steps']}",
+             f"agents with {', '.join(c for c in agent.get('capabilities') or [] if c in assign.STEP_FLOORS)} get at "
+             f"least {new['max_steps']} steps (LAB_ENVBUILDER_STEPS); {old} ran out in live runs",
+             agent_id=agent["id"], data={"from": old, "to": new["max_steps"]})
+        return True
+
+    def apply_step_floors(self) -> list[str]:
+        """One-off: raise every active agent below its floor now (python -m lab.controller --apply-step-floors)."""
+        return [a["name"] for a in self.db.table("agents").select("*").eq("status", "active").execute().data
+                if self.raise_step_floor(a)]
 
     SPAWN_RETRY_S = 60  # a failed spawn (LLM down, bad draft) is tried again after this long
 

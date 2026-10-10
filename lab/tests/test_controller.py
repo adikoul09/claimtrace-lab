@@ -166,3 +166,16 @@ def test_latest_attempt_of_a_step_counts():
     tasks = [{"input": {"step": 0}, "status": "failed", "created_at": "2026-10-10T10:00:00Z"},
              {"input": {"step": 0}, "status": "done", "created_at": "2026-10-10T10:05:00Z"}]
     assert progress.next_action(2, tasks) == ("create", 1)
+
+
+# ---- envbuilder step limit 4 -> 6 (HoO-A) -------------------------------------------------------------------------
+
+def test_an_envbuilder_gets_at_least_six_steps():
+    from lab.controller.rules import STEP_FLOORS
+    assert STEP_FLOORS == {"setup_env": 6}
+    env = {"id": "e", "name": "envbuilder-v2", "capabilities": ["setup_env"],
+           "budget": {"max_tokens": 10000, "max_cpu_s": 600, "max_steps": 4}}
+    assert assign.step_floor(env) == {"max_tokens": 10000, "max_cpu_s": 600, "max_steps": 6}
+    assert assign.step_floor({**env, "budget": {**env["budget"], "max_steps": 8}}) is None     # already enough
+    reader = {"id": "r", "name": "reader-v1", "capabilities": ["read_paper"], "budget": {"max_steps": 2}}
+    assert assign.step_floor(reader) is None                                                    # no floor for it

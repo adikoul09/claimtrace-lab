@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from lab.controller.rules import NEUTRAL_REWARD
+from lab.controller.rules import NEUTRAL_REWARD, STEP_FLOORS
 
 
 @dataclass
@@ -12,6 +12,15 @@ class Pick:
     agent: dict
     score: Optional[float]   # None: no scored task yet
     reason: str
+
+
+def step_floor(agent: dict) -> Optional[dict]:
+    """The agent's budget with max_steps raised to its capabilities' floor (STEP_FLOORS), or None if already enough."""
+    floor = max([STEP_FLOORS[c] for c in agent.get("capabilities") or [] if c in STEP_FLOORS] or [0])
+    budget = dict(agent.get("budget") or {})
+    if floor and int(budget.get("max_steps") or 0) < floor:
+        return {**budget, "max_steps": floor}
+    return None
 
 
 def pick_agent(agents: list[dict], capability: str, scores: dict[str, float],
