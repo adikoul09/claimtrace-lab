@@ -105,6 +105,7 @@ const FAILED = new Set(["failed", "rejected"]);
 const RULES: [RegExp, string][] = [
   [/429|resource_exhausted|quota|rate.?limit/i, "The AI service's usage limit was reached, so the agent could not answer."],
   [/max_tokens|token.{0,20}(cap|limit|allowance)|output cap/i, "The agent used up its token allowance before it could answer."],
+  [/max_steps/i, "The agent used up its allowed number of steps before it finished."],
   [/timed? ?out|timeout/i, "The step ran out of time."],
   [/no space left|out of memory|memoryerror|killed/i, "The machine ran out of memory or disk."],
   [/code check/i, "The written code failed its automatic check."],

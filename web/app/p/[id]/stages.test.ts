@@ -85,6 +85,7 @@ test("plainReason turns common failures into plain words and keeps unknown ones 
   assert.equal(plainReason("gemini call failed: ClientError: 429 RESOURCE_EXHAUSTED. quota"), "The AI service's usage limit was reached, so the agent could not answer.");
   assert.equal(plainReason("agent stopped: max_tokens reached: 7966 of 4000 tokens used"), "The agent used up its token allowance before it could answer.");
   assert.equal(plainReason("KeyError: slice(None, 2000, None)"), "A bug in the lab's own code stopped this step.");
+  assert.equal(plainReason("agent stopped: max_steps reached: 6 of 6 steps used"), "The agent used up its allowed number of steps before it finished.");
   assert.equal(plainReason("run timed out after 300 s"), "The step ran out of time.");
   assert.equal(plainReason("no public data: JFT is not public"), "No public data: JFT is not public.");
   assert.equal(plainReason(null), "The step failed without recording why.");
