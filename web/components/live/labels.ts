@@ -6,6 +6,25 @@ export function humanize(code: string): string {
   return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
+const WORD: Record<string, string> = {
+  cpu: "CPU",
+  llm: "LLM",
+  envbuilder: "env builder",
+  whatif: "what-if",
+  requeued: "re-queued",
+};
+const words = (code: string, sep: RegExp) => humanize(code.split(sep).map((w) => WORD[w] ?? w).join(" "));
+
+/** "reader-v13" (version 13) → "Reader · version 13". */
+export function agentLabel(a: { name: string; version: number }): string {
+  return `${words(a.name.replace(/-v\d+$/, ""), /[-_]/)} · version ${a.version}`;
+}
+
+/** "task_requeued" → "Task re-queued"; "llm_daily_cap" → "LLM daily cap". */
+export function eventTypeLabel(type: string): string {
+  return words(type, /_/);
+}
+
 const CAPABILITY: Record<string, string> = {
   plan: "Plan",
   read_paper: "Read the paper",

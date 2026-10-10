@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Agent, Event, Json, Project, Reward, Task } from "@/lib/types";
 import { PasscodeForm, post, useAuthed } from "@/components/live/write";
-import { budgetLabel, capabilityLabel, statusLabel } from "@/components/live/labels";
+import { agentLabel, budgetLabel, capabilityLabel, statusLabel } from "@/components/live/labels";
 
 type Row = Pick<
   Task,
@@ -81,9 +81,13 @@ export function ApprovalsView() {
   useEffect(() => {
     const db = supabase();
     db.from("agents")
-      .select("id,name")
+      .select("id,name,version")
       .then(({ data }) =>
-        setNames(Object.fromEntries(((data ?? []) as Pick<Agent, "id" | "name">[]).map((a) => [a.id, a.name]))),
+        setNames(
+          Object.fromEntries(
+            ((data ?? []) as Pick<Agent, "id" | "name" | "version">[]).map((a) => [a.id, agentLabel(a)]),
+          ),
+        ),
       );
     db.from("projects")
       .select("id,title")
