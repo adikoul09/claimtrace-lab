@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { EventStream } from "@/components/live/event-stream";
+import { TeamView } from "@/components/team/team-view";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 
@@ -58,6 +59,8 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
 
       {tab === "live" ? (
         <EventStream projectId={id} />
+      ) : tab === "team" ? (
+        <TeamView />
       ) : (
         <p className="text-sm text-neutral-500">Not built yet (next).</p>
       )}
