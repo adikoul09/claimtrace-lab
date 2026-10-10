@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
+import { ExecutorDots } from "@/components/live/executor-dots";
 
 async function newestTs(table: "events" | "metrics"): Promise<string | null> {
   const { data } = await supabase()
@@ -67,6 +68,7 @@ export function LiveHeader() {
         <Link href="/" className="mr-auto text-sm font-semibold">
           ClaimTrace Lab
         </Link>
+        <ExecutorDots now={now} />
         <Stamp label="latest event" ts={eventTs} now={now} />
         <Stamp label="latest metric" ts={metricTs} now={now} />
       </div>
