@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { collapseLineage, lineageEdges, layoutLineage, refineChains, rollingReward, scoreboard } from "./lineage.ts";
+import {
+  collapseLineage,
+  latestPerRole,
+  lineageEdges,
+  layoutLineage,
+  refineChains,
+  rollingReward,
+  scoreboard,
+} from "./lineage.ts";
 
 type A = {
   id: string;
@@ -185,4 +193,28 @@ test("collapseLineage shows one node per chain and moves edges onto the heads", 
     open.edges.map((e) => e.kind).sort(),
     ["parent", "parent", "spawned"],
   );
+});
+
+test("latestPerRole keeps each role's newest version, folds older ones, and remembers a spawned root", () => {
+  const agents = [
+    ch("r1", "seed", 1),
+    ch("r2", "refined", 2, { parent_id: "r1" }),
+    ch("r3", "refined", 3, { parent_id: "r2" }),
+    ch("s1", "spawned", 1, { created_by_task: "t" }),
+    ch("s2", "refined", 2, { parent_id: "s1" }),
+    ch("e1", "spawned", 1, { created_by_task: "t2" }),
+    ch("d1", "seed", 1),
+  ];
+  const { latest, older, spawnedRoot } = latestPerRole(agents);
+  assert.deepEqual(
+    latest.map((a) => a.id),
+    ["r3", "s2", "e1", "d1"],
+  );
+  assert.deepEqual(
+    older.map((a) => a.id),
+    ["r2", "r1", "s1"], // newest first within a role
+  );
+  assert.equal(spawnedRoot.s2?.id, "s1");
+  assert.equal(spawnedRoot.e1?.id, "e1");
+  assert.equal(spawnedRoot.r3, undefined);
 });

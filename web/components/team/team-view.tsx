@@ -10,7 +10,7 @@ import type { Agent, Event, Reward, Task } from "@/lib/types";
 import { applyAgentChange, sortAgents, type AgentChange } from "./agents";
 import { LessonsPanel } from "./lessons-panel";
 import { LineageGraph } from "./lineage-graph";
-import { lineageEdges, rollingReward } from "./lineage";
+import { latestPerRole, lineageEdges, rollingReward } from "./lineage";
 import { RewardBreakdown, Scoreboard } from "./scoreboard";
 import { ORIGIN_STYLE, STATUS_STYLE } from "./styles";
 
@@ -113,6 +113,8 @@ export function TeamView() {
     [tasks],
   );
   const names: Record<string, string> = Object.fromEntries(agents.map((a) => [a.id, agentLabel(a)]));
+  // Cards show each role's newest version; older versions fold under "History (N)", like the graph.
+  const roles = useMemo(() => latestPerRole(sorted), [sorted]);
   const selected = agents.find((a) => a.id === selectedId) ?? null;
 
   const select = useCallback((id: string) => {
@@ -179,7 +181,7 @@ export function TeamView() {
           <LessonsPanel />
 
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sorted.map((a) => (
+            {roles.latest.map((a) => (
               <li key={a.id}>
                 <AgentCard
                   agent={a}
@@ -187,10 +189,31 @@ export function TeamView() {
                   rolling={rolling[a.id]}
                   selected={a.id === selectedId}
                   onSelect={select}
+                  spawnedRoot={roles.spawnedRoot[a.id]}
                 />
               </li>
             ))}
           </ul>
+          {roles.older.length > 0 && (
+            <details>
+              <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+                History ({roles.older.length}) <span className="font-normal text-neutral-500">older versions</span>
+              </summary>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {roles.older.map((a) => (
+                  <li key={a.id}>
+                    <AgentCard
+                      agent={a}
+                      names={names}
+                      rolling={rolling[a.id]}
+                      selected={a.id === selectedId}
+                      onSelect={select}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </>
       )}
     </section>
@@ -203,12 +226,14 @@ function AgentCard({
   rolling,
   selected,
   onSelect,
+  spawnedRoot,
 }: {
   agent: Agent;
   names: Record<string, string>;
   rolling: number | null;
   selected: boolean;
   onSelect: (id: string) => void;
+  spawnedRoot?: Agent; // set when this role was spawned, so its newest version keeps the badge and the reason
 }) {
   const ref = (id: string | null) => (id ? names[id] ?? "a removed agent" : null);
   const parent = ref(a.parent_id);
@@ -231,7 +256,16 @@ function AgentCard({
         <span className={`rounded border px-1.5 py-0.5 text-xs capitalize ${ORIGIN_STYLE[a.origin]}`}>
           {humanize(a.origin)}
         </span>
+        {spawnedRoot && spawnedRoot.id !== a.id && (
+          <span className={`rounded border px-1.5 py-0.5 text-xs ${ORIGIN_STYLE.spawned}`}>Spawned</span>
+        )}
       </header>
+      {spawnedRoot && spawnedRoot.id !== a.id && (
+        <p className="mt-1 break-words text-xs text-neutral-600 dark:text-neutral-400">
+          <span className="font-medium">Spawned because: </span>
+          {spawnedRoot.origin_reason}
+        </p>
+      )}
 
       <p className="mt-1 break-words text-xs text-neutral-600 dark:text-neutral-400">
         <span className="font-medium">Why: </span>

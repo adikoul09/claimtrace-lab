@@ -80,6 +80,30 @@ export function refineChains(agents: ChainAgent[]): { chainOf: Record<string, st
   return { chainOf, chains };
 }
 
+/**
+ * Cards and scoreboard: each role's newest version (input order kept), the older versions (newest first within a
+ * role, roles in input order), and for a role that was spawned, its spawned root (for the badge and its reason).
+ */
+export function latestPerRole<A extends ChainAgent>(
+  agents: A[],
+): { latest: A[]; older: A[]; spawnedRoot: Record<string, A | undefined> } {
+  const { chainOf, chains } = refineChains(agents);
+  const byId = new Map(agents.map((a) => [a.id, a]));
+  const latest = agents.filter((a) => chains[chainOf[a.id]].head === a.id);
+  const older = latest.flatMap((h) =>
+    chains[chainOf[h.id]].members
+      .filter((id) => id !== h.id)
+      .reverse()
+      .map((id) => byId.get(id)!),
+  );
+  const spawnedRoot: Record<string, A | undefined> = {};
+  for (const h of latest) {
+    const root = byId.get(chains[chainOf[h.id]].root)!;
+    if (root.origin === "spawned") spawnedRoot[h.id] = root;
+  }
+  return { latest, older, spawnedRoot };
+}
+
 /** The graph to draw: each chain as its head unless expanded; edges moved onto what is shown, deduped. */
 export function collapseLineage<A extends ChainAgent>(
   agents: A[],
