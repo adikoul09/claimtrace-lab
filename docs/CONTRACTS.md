@@ -119,8 +119,10 @@ A list, one item per claim (written by the Analyst; the UI computes nothing):
 The `train.py` contract (code-checked at `write_code`) includes `--set KEY=VALUE` (repeatable, JSON value, overrides
 one CONFIG key) and a printed `CONFIG {json}` line. A branch is the same `train.py` plus one `--set`.
 
-1. The web queues a `design_whatif` task (`input.question`; `required_caps ['agent']`). The controller adds
-   `upstream` as usual; `upstream['run']` is the reproduction's latest full run.
+1. The web queues a `design_whatif` task with `input.question` and `required_caps ['controller']` (no worker has
+   that cap, so nobody claims it early). Once the reproduction has a finished full run, the controller assigns the
+   agent and fills `upstream` (`upstream['run']` = that full run), `workdir`, `goal` and `prepared: true`, then sets
+   `required_caps ['agent']` (+ host pin). Until then it emits `whatif_waiting` once.
 2. `design_whatif` output:
    ```
    {question, noise, noise_source, parent_experiment_id, parent_smoke_experiment_id, parent_full_cmd,
@@ -131,6 +133,8 @@ one CONFIG key) and a printed `CONFIG {json}` line. A branch is the same `train.
                                       whatif: {task_id, branch_id, key, value, parent_value, question}}}}]}
    ```
    3–4 branches; code rejects a branch that changes more or fewer than one key.
+Every task the controller creates for a what-if carries `input.whatif_of` = the `design_whatif` task id.
+
 3. The controller creates, per branch, the `experiments` row from `branch.experiment` **exactly as given** (the
    ranking finds branches through `config.whatif.task_id` and `branch_id`) and a smoke `run` task (`['smoke']` +
    host pin; `files`/`requirements` from the reproduction's latest done run task's input; the branch's
@@ -148,6 +152,9 @@ one CONFIG key) and a printed `CONFIG {json}` line. A branch is the same `train.
    from `extend.cmd` / `extend.cwd` with `requires_approval = true` (`awaiting_approval`). After approval and the
    run, it queues a `compare` with `input.extend_experiment_id` (no `whatif_task_id`), which grades that experiment
    like a normal compare.
+6. The sequence ends with one `whatif_finished` event (task = the `design_whatif` task) and its reason: graded, no
+   branch extended, the ranking failed, the extend run was rejected (a redirect counts as a rejection here) or
+   failed. Branch smoke runs are not debugged or retried: a failed smoke is pruned by the ranking ("smoke failed").
 
 `design_experiment` output's `design` may carry `setting_ids` / `settings_used` (the paper settings that belong to the
 experiment; `s1`.. follow the order of `papers.settings`).

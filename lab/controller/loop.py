@@ -5,6 +5,8 @@
   stale       a running task whose executor's heartbeat is older than STALE_HEARTBEAT_S goes back to 'queued'
   score       a finished agent task gets its rewards row (SPEC §5); a new 👍/👎 feedback event rescores it
   lifecycle   retire, merge and refine agents by the rules in lifecycle.py (SPEC §4)
+  whatifs     a queued design_whatif gets its agent, upstream and caps; a finished one's branches, ranking,
+              approval-gated extend run and final compare are created in order (SPEC §7.4, CONTRACTS.md §5b)
   learn       after a failure-then-recovery or a finished project, the Reporter proposes lessons (SPEC §6)
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
@@ -21,7 +23,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, lifecycle, memory, planner, progress, reward, routing, spawn, wiring
+from lab.controller import assign, lifecycle, memory, planner, progress, reward, routing, spawn, whatif, wiring
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
 from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
@@ -42,6 +44,7 @@ class Controller:
         self._replan_failed: dict = {}  # redirected task id -> time of the last failed replan
         self._refine_failed: dict = {}  # (agent id, task id) -> time of the last failed refinement
         self._learn_failed: dict = {}  # lesson trigger -> time of the last failed proposal
+        self._whatif_finished: set = set()  # design_whatif task ids whose sequence is over
 
     @property
     def llm(self):
@@ -72,7 +75,8 @@ class Controller:
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
         for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
-                     self.apply_decisions, self.intake, self.plan_queued, self.advance, self.learn):
+                     self.apply_decisions, self.intake, self.plan_queued, self.advance, self.prepare_whatifs,
+                     self.advance_whatifs, self.learn):
             try:
                 step(now)
             except Exception as e:  # one failing step must not stop the loop
@@ -95,6 +99,8 @@ class Controller:
         rows = self.q("tasks", "id,project_id,agent_id,capability,input").eq("status", "queued") \
             .eq("required_caps", "{}").execute().data
         for t in rows:
+            if t["capability"] == "design_whatif" and not (t.get("input") or {}).get("prepared"):
+                continue  # prepare_whatifs sets its caps once its inputs exist
             try:
                 caps = routing.required_caps(t["capability"], (t.get("input") or {}).get("scale"))
             except ValueError:
@@ -395,19 +401,10 @@ class Controller:
     # ---- advance: create the next ready step, or handle a failed one ------------------------------------------------
     def advance(self, now: datetime) -> None:
         for p in self.q("projects", key="id").eq("status", "running").execute().data:
-            plans = self.db.table("tasks").select("*").eq("project_id", p["id"]).eq("capability", "plan") \
-                .eq("status", "done").order("finished_at", desc=True).limit(1).execute().data
-            if not plans:
+            state = self._plan_state(p["id"])
+            if state is None:
                 continue
-            plan_task = plans[0]
-            steps = (plan_task.get("output") or {}).get("steps") or []
-            tasks = self.db.table("tasks").select("id,status,capability,input,created_at,output,agent_id,executor,"
-                                                  "parent_task_id,decision,decision_note") \
-                .eq("project_id", p["id"]).execute().data
-            step_tasks = [t for t in tasks if t.get("parent_task_id") == plan_task["id"]
-                          and (t.get("input") or {}).get("step") is not None]
-            debugs = [t for t in tasks if t["capability"] == "debug"
-                      and (t.get("input") or {}).get("plan_task_id") == plan_task["id"]]
+            plan_task, steps, step_tasks, debugs = state
             action, i = progress.next_action(len(steps), step_tasks)
             if action == "create":
                 self.create_step(p, plan_task, steps, i, now, step_tasks=step_tasks, debugs=debugs)
@@ -433,6 +430,129 @@ class Controller:
                                      step_tasks=step_tasks)
                 elif kind == "blocked":
                     self.stop_project(p, last, "blocked", why)
+
+    def _plan_state(self, project_id: str):
+        """(plan task, steps, step tasks, debug tasks) of the project's latest done plan, or None."""
+        plans = self.db.table("tasks").select("*").eq("project_id", project_id).eq("capability", "plan") \
+            .eq("status", "done").order("finished_at", desc=True).limit(1).execute().data
+        if not plans:
+            return None
+        plan_task = plans[0]
+        steps = (plan_task.get("output") or {}).get("steps") or []
+        tasks = self.db.table("tasks").select("id,status,capability,input,created_at,output,agent_id,executor,"
+                                              "parent_task_id,decision,decision_note") \
+            .eq("project_id", project_id).execute().data
+        step_tasks = [t for t in tasks if t.get("parent_task_id") == plan_task["id"]
+                      and (t.get("input") or {}).get("step") is not None]
+        debugs = [t for t in tasks if t["capability"] == "debug"
+                  and (t.get("input") or {}).get("plan_task_id") == plan_task["id"]]
+        return plan_task, steps, step_tasks, debugs
+
+    # ---- what-ifs (SPEC §7.4) ---------------------------------------------------------------------------------------
+    def prepare_whatifs(self, now: datetime) -> None:
+        """A queued design_whatif (from the web) gets its agent, upstream (upstream['run'] = the reproduction's full
+        run), workdir and caps; until then no worker has the caps to claim it."""
+        for w in self.q("tasks").eq("status", "queued").eq("capability", "design_whatif").execute().data:
+            inp = w.get("input") or {}
+            if inp.get("prepared"):
+                continue
+            project = self.db.table("projects").select("*").eq("id", w["project_id"]).execute().data[0]
+            state = self._plan_state(project["id"])
+            up, problem = {}, "the project has no finished plan to branch from"
+            if state:
+                plan_task, steps, step_tasks, debugs = state
+                up = wiring.upstream([PlanStep(**st) for st in steps], step_tasks, len(steps), debugs)
+                problem = whatif.ready_problem(up, {t["id"]: t for t in step_tasks})
+            if problem:
+                if self.once(("whatif_waiting", w["id"])):
+                    emit(self.db, "whatif_waiting", "the what-if waits for the reproduction", problem,
+                         project_id=project["id"], task_id=w["id"])
+                continue
+            question = str(inp.get("question") or inp.get("goal") or "").strip()
+            new = {**inp, "question": question, "title": f"what-if: {question[:80]}",
+                   "goal": f"What if: {question}\nDesign 3-4 branches of the reproduction's full run, each changing "
+                           f"exactly one setting.",
+                   "upstream": up, "workdir": f"runs/{project['id']}", "budget": {"max_cpu_s": 300}, "prepared": True}
+            self.create_task(project, "design_whatif", new, now, parent_task_id=w.get("parent_task_id"),
+                             caps=routing.required_caps("design_whatif"),
+                             acceptance="3-4 branches, each changing exactly one CONFIG key (checked by code)",
+                             requires_approval=False, fails=Counter(), trigger_task=w,
+                             context=f"What-if question: {question}", label=f"what-if: {question[:60]}", existing=w)
+
+    def advance_whatifs(self, now: datetime) -> None:
+        db = self.db
+        for w in self.q("tasks").eq("capability", "design_whatif").eq("status", "done").execute().data:
+            if w["id"] in self._whatif_finished:
+                continue
+            pid = w["project_id"]
+            family = db.table("tasks").select("id,capability,status,created_at,input,output,decision,decision_note") \
+                .eq("project_id", pid).eq("input->>whatif_of", w["id"]).execute().data
+            kind, arg = whatif.next_action(w, family)
+            if kind == "wait":
+                continue
+            if kind == "finished":
+                self._whatif_finished.add(w["id"])
+                seen = db.table("events").select("id").eq("task_id", w["id"]).eq("type", "whatif_finished") \
+                    .limit(1).execute().data
+                if not seen:
+                    emit(db, "whatif_finished", f"what-if finished: {(w.get('input') or {}).get('question', '')[:80]}",
+                         arg, project_id=pid, task_id=w["id"])
+                continue
+            project = db.table("projects").select("*").eq("id", pid).execute().data[0]
+            up = (w.get("input") or {}).get("upstream") or {}
+            parents = {t["id"]: t for t in db.table("tasks").select("id,status,input,created_at").eq("project_id", pid)
+                       .eq("capability", "run").eq("status", "done").execute().data}
+            full = parents.get(up.get("run") or "")
+            if full is None:
+                if self.once(("whatif_parent", w["id"])):
+                    emit(db, "whatif_blocked", "the what-if lost its parent run",
+                         f"upstream run {up.get('run')} is not a finished run of this project", project_id=pid,
+                         task_id=w["id"])
+                continue
+            smokes = sorted([t for t in parents.values() if (t.get("input") or {}).get("scale") == "smoke"
+                             and not (t.get("input") or {}).get("whatif_of")],
+                            key=lambda t: t.get("created_at") or "")
+            exps = {}
+            rows = db.table("experiments").select("id,config").eq("project_id", pid) \
+                .eq("config->whatif->>task_id", w["id"]).execute().data
+            for e in rows:
+                cfg = e.get("config") or {}
+                exps[((cfg.get("whatif") or {}).get("branch_id"), cfg.get("scale"))] = e
+            workdir = f"runs/{pid}"
+            if kind == "branches":
+                for b in arg:
+                    exp = exps.get((b["id"], "smoke")) or exps.get((b["id"], None)) or \
+                        db.table("experiments").insert(whatif.experiment_row(b["experiment"], pid)).execute().data[0]
+                    self.create_task(project, "run", whatif.branch_input(b, exp["id"], full, smokes[-1] if smokes
+                                                                         else None, w["id"]), now,
+                                     parent_task_id=w["id"], caps=routing.required_caps("run", "smoke"),
+                                     acceptance="exit code 0 and every final_<model> METRIC line printed",
+                                     requires_approval=False, fails=Counter(), trigger_task=w,
+                                     context=f"what-if branch {b['id']}", label=f"what-if {b['id']} smoke: "
+                                                                                f"{b['key']}={b['value']}")
+            elif kind == "rank":
+                self.create_task(project, "compare", whatif.rank_input(w, workdir), now, parent_task_id=w["id"],
+                                 caps=routing.required_caps("compare"),
+                                 acceptance="every branch ranked by code; pruned branches carry a reason",
+                                 requires_approval=False, fails=Counter(), trigger_task=w,
+                                 context="rank the what-if branches", label="rank the what-if branches")
+            elif kind == "extend":
+                rank = max([t for t in family if whatif.role(t) == "rank"], key=lambda t: t.get("created_at") or "")
+                exp = exps.get((arg["branch_id"], "full")) or \
+                    db.table("experiments").insert(whatif.experiment_row(arg["experiment"], pid)).execute().data[0]
+                self.create_task(project, "run", whatif.extend_input(arg, exp["id"], full, w["id"], rank["id"]), now,
+                                 parent_task_id=rank["id"], caps=routing.required_caps("run", "full"),
+                                 acceptance="exit code 0 and every final_<model> METRIC line printed",
+                                 requires_approval=True, fails=Counter(), trigger_task=rank,
+                                 context=f"extend what-if branch {arg['branch_id']}",
+                                 label=f"what-if {arg['branch_id']} full run: {arg['key']}={arg['value']} "
+                                       f"({arg.get('reason') or 'top-ranked branch'})")
+            elif kind == "final":
+                self.create_task(project, "compare", whatif.final_input(w, arg, workdir), now,
+                                 parent_task_id=arg["id"], caps=routing.required_caps("compare"),
+                                 acceptance="the extended branch's claims graded by code", requires_approval=False,
+                                 fails=Counter(), trigger_task=arg, context="grade the extended what-if branch",
+                                 label="grade the extended what-if branch")
 
     def stop_project(self, project: dict, task: dict, status: str, why: str) -> None:
         out = task.get("output") or {}
@@ -558,9 +678,10 @@ class Controller:
 
     def create_task(self, project: dict, capability: str, inp: dict, now: datetime, *, parent_task_id: str,
                     caps: list[str], acceptance: str, requires_approval: bool, fails: Counter, trigger_task: dict,
-                    context: str, label: str, preferred: Optional[str] = None) -> Optional[dict]:
-        """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task. None: no agent
-        yet (the spawn failed; it is tried again later)."""
+                    context: str, label: str, preferred: Optional[str] = None,
+                    existing: Optional[dict] = None) -> Optional[dict]:
+        """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task, or, with
+        `existing`, fill in that queued row instead. None: no agent yet (the spawn failed; it is tried again later)."""
         db, pid = self.db, project["id"]
         pin = routing.host_pin(db.table("tasks").select("capability,executor,started_at").eq("project_id", pid)
                                .eq("capability", "run").execute().data)
@@ -584,11 +705,17 @@ class Controller:
                 inp["goal"] = inp["goal"] + "\n\n" + memory.lessons_block(lessons)
                 inp["lessons"] = [l["id"] for l in lessons]
         live = routing.eligible(caps, db.table("executors").select("*").execute().data, now)
-        row = db.table("tasks").insert({
-            "project_id": pid, "parent_task_id": parent_task_id, "capability": capability, "required_caps": caps,
-            "agent_id": pick.agent["id"], "input": inp, "acceptance": {"text": acceptance},
-            "requires_approval": requires_approval,
-            "status": "awaiting_approval" if requires_approval else "queued"}).execute().data[0]
+        fields = {"required_caps": caps, "agent_id": pick.agent["id"], "input": inp, "acceptance": {"text": acceptance},
+                  "requires_approval": requires_approval}
+        if existing:
+            moved = db.table("tasks").update(fields).eq("id", existing["id"]).eq("status", "queued").execute().data
+            if not moved:
+                return None
+            row = moved[0]
+        else:
+            row = db.table("tasks").insert({
+                **fields, "project_id": pid, "parent_task_id": parent_task_id, "capability": capability,
+                "status": "awaiting_approval" if requires_approval else "queued"}).execute().data[0]
         memory.apply(db, lessons, tags, f"{capability} task", project_id=pid, task_id=row["id"],
                      agent_id=pick.agent["id"])
         where = (f"live executors that can take it: {', '.join(e['name'] for e in live)}" if live
