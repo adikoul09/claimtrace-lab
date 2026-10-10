@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
+import { ExecutorDots } from "@/components/live/executor-dots";
+import { ReplayBadge } from "@/components/live/replay-badge";
+import { TokenMeter } from "@/components/live/token-meter";
 
 async function newestTs(table: "events" | "metrics"): Promise<string | null> {
   const { data } = await supabase()
@@ -64,9 +67,17 @@ export function LiveHeader() {
   return (
     <header className="border-b border-neutral-200 dark:border-neutral-800">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-xs">
-        <Link href="/" className="mr-auto text-sm font-semibold">
-          ClaimTrace Lab
+        <span className="mr-auto flex items-center gap-2">
+          <Link href="/" className="text-sm font-semibold">
+            ClaimTrace Lab
+          </Link>
+          <ReplayBadge />
+        </span>
+        <Link href="/approvals" className="text-neutral-600 hover:underline dark:text-neutral-400">
+          Approvals
         </Link>
+        <ExecutorDots now={now} />
+        <TokenMeter />
         <Stamp label="latest event" ts={eventTs} now={now} />
         <Stamp label="latest metric" ts={metricTs} now={now} />
       </div>
