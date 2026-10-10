@@ -44,7 +44,7 @@ def test_proposals_are_kept_only_with_real_evidence_and_a_valid_kind():
 
 
 def test_at_most_three_lessons_are_kept():
-    props = [{"text": f"l{i}", "tags": ["x"], "evidence_event_id": "e", "kind": "budget"} for i in range(5)]
+    props = [{"text": f"l{i}", "tags": ["x", f"t{i}"], "evidence_event_id": "e", "kind": "budget"} for i in range(5)]
     kept, dropped = memory.check_proposals(props, {"e"})
     assert len(kept) == memory.MAX_LESSONS == 3 and len(dropped) == 2
 
@@ -89,3 +89,63 @@ def test_effect_without_a_successful_run_says_so():
     e = memory.effect({"created_at": "2026-10-10T10:00:00+00:00"}, [run("r", "failed", "x", "y")], 10,
                       {"created_at": "2026-10-10T10:00:00+00:00"}, [], 0)
     assert e["run1"]["seconds_to_first_result"] is None and e["delta"]["seconds_to_first_result"] is None
+
+
+# ---- MEM-1: lesson policy -----------------------------------------------------------------------------------------
+
+def L(id_, kind, tags, paper=None, applied=0, evidence="e", created="2026-10-10T10:00:00Z"):
+    return {"id": id_, "kind": kind, "tags": tags, "paper": paper, "times_applied": applied,
+            "evidence_event_id": evidence, "created_at": created, "text": f"lesson {id_}"}
+
+
+def test_select_ranks_by_overlap_then_times_applied():
+    ls = [L("a", "failure_fix", ["write_code"], applied=5),
+          L("b", "failure_fix", ["write_code", "ModuleNotFoundError"], applied=0),
+          L("c", "budget", ["write_code"], applied=9)]
+    chosen, skipped = memory.select(ls, ["write_code", "ModuleNotFoundError"], "1503.02531", limit=5)
+    assert [l["id"] for l in chosen] == ["b", "c", "a"]
+    assert skipped == []
+
+
+def test_setting_mattered_lessons_apply_only_to_the_same_paper():
+    ls = [L("same", "setting_mattered", ["design_experiment"], paper="1503.02531"),
+          L("other", "setting_mattered", ["design_experiment"], paper="round0:matchdg"),
+          L("unknown", "setting_mattered", ["design_experiment"], paper=None),
+          L("fix", "failure_fix", ["design_experiment"], paper="round0:matchdg")]
+    chosen, skipped = memory.select(ls, ["design_experiment"], "1503.02531", limit=5)
+    assert {l["id"] for l in chosen} == {"same", "fix"}             # failure_fix carries across papers
+    assert {(l["id"], code) for l, code, _ in skipped} == {("other", "other_paper"), ("unknown", "other_paper")}
+
+
+def test_duplicates_by_kind_and_tags_keep_the_most_applied():
+    ls = [L("x1", "failure_fix", ["setup_env", "torch"], applied=1),
+          L("x2", "failure_fix", ["torch", "setup_env"], applied=4),
+          L("y", "budget", ["setup_env", "torch"], applied=0)]           # same tags, other kind: not a duplicate
+    chosen, skipped = memory.select(ls, ["setup_env"], "p", limit=5)
+    assert {l["id"] for l in chosen} == {"x2", "y"}
+    assert [(l["id"], code) for l, code, _ in skipped] == [("x1", "duplicate")]
+
+
+def test_at_most_limit_lessons_and_the_rest_are_skipped_over_limit():
+    ls = [L(f"l{i}", "failure_fix", ["write_code", f"t{i}"], applied=i) for i in range(7)]
+    chosen, skipped = memory.select(ls, ["write_code"], "p", limit=5)
+    assert len(chosen) == 5 and [l["id"] for l in chosen] == ["l6", "l5", "l4", "l3", "l2"]
+    assert {(l["id"], code) for l, code, _ in skipped} == {("l1", "over_limit"), ("l0", "over_limit")}
+
+
+def test_lessons_without_evidence_are_never_used():
+    chosen, skipped = memory.select([L("n", "failure_fix", ["write_code"], evidence=None)], ["write_code"], "p", 5)
+    assert chosen == [] and skipped[0][1] == "no_evidence"
+
+
+def test_paper_key_of_a_lesson():
+    assert memory.paper_key({"tags": ["round0", "f2"], "project_id": None}, {}) == "round0:matchdg"
+    assert memory.paper_key({"tags": ["x"], "project_id": "p1"}, {"p1": "1503.02531"}) == "1503.02531"
+    assert memory.paper_key({"tags": ["x"], "project_id": None}, {}) is None
+
+
+def test_a_proposal_duplicating_an_existing_lesson_is_dropped():
+    existing = [{"id": "old", "kind": "failure_fix", "tags": ["torch", "setup_env"]}]
+    props = [{"text": "pin torch", "tags": ["setup_env", "torch"], "evidence_event_id": "e1", "kind": "failure_fix"}]
+    kept, dropped = memory.check_proposals(props, {"e1"}, existing=existing)
+    assert kept == [] and "duplicate of lesson old" in dropped[0]

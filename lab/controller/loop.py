@@ -410,7 +410,7 @@ class Controller:
         paper = papers[0] if papers else None
         tags = memory.task_tags(project, "plan") + [c for slot in planner.REPRO_ORDER for c in slot
                                                     if not c.startswith("run")]
-        lessons = memory.relevant(db, tags, memory.PER_PLAN)
+        lessons, skipped_lessons = memory.choose(db, tags, project, memory.PER_PLAN)
         agents = db.table("agents").select("*").eq("status", "active").execute().data
         scores = reward.rolling_means(db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True)
                                       .limit(1000).execute().data)
@@ -435,6 +435,7 @@ class Controller:
             .eq("id", task["id"]).execute()
         db.table("projects").update({"status": "running"}).eq("id", pid).execute()
         memory.apply(db, lessons, tags, "planner", project_id=pid, task_id=task["id"])
+        memory.skip(db, skipped_lessons, tags, "planner", project_id=pid, task_id=task["id"])
         reason = plan.reason or "the planner gave no reason"
         if plan.dropped:
             reason += f" | code dropped {len(plan.dropped)} step(s): " + "; ".join(plan.dropped)
@@ -752,7 +753,7 @@ class Controller:
         lessons, tags = [], []
         if capability != "run":  # a run has no prompt: nothing could apply a lesson there
             tags = memory.task_tags(project, capability, inp.get("error_signature"))
-            lessons = memory.relevant(db, tags, memory.PER_TASK)
+            lessons = memory.relevant(db, tags, memory.PER_TASK, project)
             if lessons:
                 inp["goal"] = inp["goal"] + "\n\n" + memory.lessons_block(lessons)
                 inp["lessons"] = [l["id"] for l in lessons]

@@ -1,8 +1,14 @@
 """Research memory (SPEC §6).
 
-  read    match(): lessons ranked by tag overlap (domain tags of the project, the capability, the error signature).
-          The controller adds the top ones to the planner's prompt and to each task's goal, and emits one
-          lesson_applied event per lesson (times_applied += 1).
+  read    select() is the lesson policy (MEM-1), all code:
+            - a lesson without evidence_event_id is never used                         (skipped: no_evidence)
+            - setting_mattered lessons apply only to the same paper (arXiv id; Round 0 = round0:matchdg);
+              failure_fix, budget and agent_choice lessons carry across projects       (skipped: other_paper)
+            - duplicates by kind + tag set keep the most applied one                   (skipped: duplicate)
+            - rank by tag overlap (domain tags, capability, error signature), then times_applied
+            - at most PER_PLAN (5) in the planner's prompt, PER_TASK (3) in a task's goal (skipped: over_limit)
+          Each used lesson gets a lesson_applied event (times_applied += 1); at plan time each tag-matched lesson
+          that was left out gets a lesson_skipped event with its reason.
   write   after a project finishes, or a failed step later succeeds (failure then recovery), the Reporter proposes
           at most MAX_LESSONS lessons {text, tags, evidence_event_id, kind}; code keeps one only if its evidence is an
           event of that project and its kind is known.
@@ -112,30 +118,96 @@ def lessons_block(lessons: list[dict]) -> str:
         f"- [{l['id']}] {l['text']}" for l in lessons)
 
 
-def relevant(db, tags: list[str], limit: int) -> list[dict]:
+SKIP_REASONS = {"no_evidence": "it has no evidence event",
+                "other_paper": "setting_mattered lessons apply only to the paper they came from",
+                "duplicate": "a lesson of the same kind and tags was applied more often",
+                "over_limit": "the prompt already holds the most relevant ones"}
+
+
+def paper_key(lesson: dict, arxiv_by_project: dict[str, Optional[str]]) -> Optional[str]:
+    if "round0" in (lesson.get("tags") or []):
+        return "round0:matchdg"
+    return arxiv_by_project.get(lesson.get("project_id") or "")
+
+
+def select(lessons: list[dict], tags: list[str], project_paper: Optional[str], limit: int):
+    """(chosen, skipped [(lesson, reason code, detail)]); lessons carry `paper` (paper_key). Only lessons sharing a
+    tag are considered at all."""
+    want = set(tags)
+    matched = [l for l in lessons if want & set(l.get("tags") or [])]
+    skipped, ok = [], []
+    for l in matched:
+        if not l.get("evidence_event_id"):
+            skipped.append((l, "no_evidence", SKIP_REASONS["no_evidence"]))
+        elif l.get("kind") == "setting_mattered" and (not project_paper or l.get("paper") != project_paper):
+            skipped.append((l, "other_paper", f"{SKIP_REASONS['other_paper']} (lesson: {l.get('paper') or 'unknown'}"
+                                              f", this project: {project_paper or 'unknown'})"))
+        else:
+            ok.append(l)
+    rank = lambda l: (-len(want & set(l.get("tags") or [])), -(l.get("times_applied") or 0),  # noqa: E731
+                      l.get("created_at") or "")
+    best: dict[tuple, dict] = {}
+    for l in sorted(ok, key=rank):
+        key = (l.get("kind"), frozenset(l.get("tags") or []))
+        if key in best:
+            skipped.append((l, "duplicate", f"{SKIP_REASONS['duplicate']} ({best[key]['id']})"))
+        else:
+            best[key] = l
+    ranked = sorted(best.values(), key=rank)
+    skipped += [(l, "over_limit", SKIP_REASONS["over_limit"]) for l in ranked[limit:]]
+    return ranked[:limit], skipped
+
+
+def choose(db, tags: list[str], project: dict, limit: int):
+    """select() over the lessons sharing a tag, with each lesson's paper resolved."""
     if not tags:
-        return []
-    rows = db.table("lessons").select("id,kind,text,tags,created_at,times_applied").overlaps("tags", tags) \
-        .limit(200).execute().data
-    return match(rows, tags, limit)
+        return [], []
+    rows = db.table("lessons").select("id,kind,text,tags,created_at,times_applied,project_id,evidence_event_id") \
+        .overlaps("tags", tags).limit(500).execute().data
+    pids = sorted({r["project_id"] for r in rows if r.get("project_id")})
+    arxiv = {p["id"]: p.get("arxiv_id") for p in db.table("projects").select("id,arxiv_id").in_("id", pids)
+             .execute().data} if pids else {}
+    for r in rows:
+        r["paper"] = paper_key(r, arxiv)
+    return select(rows, tags, project.get("arxiv_id"), limit)
+
+
+def relevant(db, tags: list[str], limit: int, project: Optional[dict] = None) -> list[dict]:
+    return choose(db, tags, project or {}, limit)[0]
 
 
 def apply(db, lessons: list[dict], tags: list[str], where: str, *, project_id=None, task_id=None,
           agent_id=None) -> None:
     from lab.db import emit
 
-    for l in lessons:
+    for rank, l in enumerate(lessons, 1):
         shared = sorted(set(tags) & set(l.get("tags") or []))
         emit(db, "lesson_applied", f"lesson applied to the {where}: {l['text'][:120]}",
              f"tags matched: {', '.join(shared)}; the lesson was added to the {where} prompt",
              project_id=project_id, task_id=task_id, agent_id=agent_id,
-             data={"lesson_id": l["id"], "kind": l.get("kind"), "tags": shared, "where": where})
+             data={"lesson_id": l["id"], "kind": l.get("kind"), "tags": shared, "where": where, "rank": rank,
+                   "overlap": len(shared), "times_applied": (l.get("times_applied") or 0) + 1,
+                   "paper": l.get("paper")})
         db.table("lessons").update({"times_applied": (l.get("times_applied") or 0) + 1}).eq("id", l["id"]).execute()
+
+
+def skip(db, skipped: list, tags: list[str], where: str, *, project_id=None, task_id=None) -> None:
+    from lab.db import emit
+
+    for l, code, detail in skipped:
+        shared = sorted(set(tags) & set(l.get("tags") or []))
+        emit(db, "lesson_skipped", f"lesson not used in the {where}: {l['text'][:120]}", detail,
+             project_id=project_id, task_id=task_id,
+             data={"lesson_id": l["id"], "reason": code, "detail": detail, "kind": l.get("kind"), "tags": shared,
+                   "where": where, "paper": l.get("paper")})
 
 
 # ---- write --------------------------------------------------------------------------------------------------------
 
-def check_proposals(props: list[dict], event_ids: set[str]) -> tuple[list[dict], list[str]]:
+def check_proposals(props: list[dict], event_ids: set[str], existing: list[dict] = ()) -> tuple[list[dict], list[str]]:
+    """Kept only with evidence in event_ids; a duplicate (same kind and tag set) of an existing or kept lesson is
+    dropped."""
+    seen = {(l.get("kind"), frozenset(l.get("tags") or [])): l.get("id") for l in existing}
     kept, dropped = [], []
     for p in props or []:
         text, tags = str(p.get("text") or "").strip(), [str(t) for t in p.get("tags") or [] if str(t).strip()]
@@ -147,10 +219,13 @@ def check_proposals(props: list[dict], event_ids: set[str]) -> tuple[list[dict],
             dropped.append(f"{text[:60]}: evidence {p.get('evidence_event_id')!r} is not an event of this project")
         elif not tags:
             dropped.append(f"{text[:60]}: no tags")
+        elif (p["kind"], frozenset(tags)) in seen:
+            dropped.append(f"{text[:60]}: duplicate of lesson {seen[(p['kind'], frozenset(tags))] or 'proposed above'}")
         elif len(kept) >= MAX_LESSONS:
             dropped.append(f"{text[:60]}: more than {MAX_LESSONS} lessons")
         else:
             kept.append({"text": text, "tags": tags, "evidence_event_id": p["evidence_event_id"], "kind": p["kind"]})
+            seen[(p["kind"], frozenset(tags))] = None
     return kept, dropped
 
 
@@ -198,7 +273,8 @@ def propose(db, llm, project: dict, reporter: dict, trigger: str, focus: str) ->
     resp = llm.call(Request(agent=reporter["name"], system=reporter["role_prompt"], prompt=prompt,
                             schema=PROPOSAL_SCHEMA, model="smart"), agent_id=reporter["id"])
     props = (resp.output or {}).get("lessons") if isinstance(resp.output, dict) else []
-    kept, dropped = check_proposals(props or [], {e["id"] for e in events})
+    existing = db.table("lessons").select("id,kind,tags").limit(1000).execute().data
+    kept, dropped = check_proposals(props or [], {e["id"] for e in events}, existing)
     rows = [db.table("lessons").insert({**k, "project_id": project["id"]}).execute().data[0] for k in kept]
     emit(db, "lessons_proposed", f"{reporter['name']} proposed {len(props or [])} lessons, {len(rows)} kept",
          f"{focus}; code kept only lessons whose evidence is an event of this project"
