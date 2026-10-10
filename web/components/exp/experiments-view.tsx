@@ -16,6 +16,8 @@ import {
   upsertRows,
   type TreeNode,
 } from "./experiments";
+import { statusLabel } from "@/components/live/labels";
+import { configKeyLabel, metricLabel } from "./labels";
 import { MetricChart } from "./metric-chart";
 
 type Status = "connecting" | "live" | "error";
@@ -217,8 +219,8 @@ function ExpTree({
           >
             <span className="block break-words font-medium">{e.label}</span>
             <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
-              <span className={`rounded px-1.5 py-0.5 font-medium ${statusStyle(e.status)}`}>{e.status}</span>
-              {e.changed_key && <span className="font-mono">Δ {e.changed_key}</span>}
+              <span className={`rounded px-1.5 py-0.5 font-medium ${statusStyle(e.status)}`}>{statusLabel(e.status)}</span>
+              {e.changed_key && <span title={e.changed_key}>changes {configKeyLabel(e.changed_key)}</span>}
               <span className="tabular-nums">{counts(e.id)} metrics</span>
             </span>
           </button>
@@ -238,7 +240,7 @@ function ExpDetail({ exp: e, task, metrics }: { exp: Experiment; task: TaskRow |
       <header className="mb-3 space-y-1 text-sm">
         <h3 className="flex flex-wrap items-center gap-2">
           <span className="break-words font-semibold">{e.label}</span>
-          <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${statusStyle(e.status)}`}>{e.status}</span>
+          <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${statusStyle(e.status)}`}>{statusLabel(e.status)}</span>
         </h3>
         <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-xs">
           <dt className="text-neutral-500">Executor</dt>
@@ -248,7 +250,7 @@ function ExpDetail({ exp: e, task, metrics }: { exp: Experiment; task: TaskRow |
           {e.changed_key && (
             <>
               <dt className="text-neutral-500">Changes</dt>
-              <dd className="font-mono">{e.changed_key}</dd>
+              <dd title={e.changed_key}>{configKeyLabel(e.changed_key)}</dd>
             </>
           )}
           {e.margin !== null && (
@@ -318,7 +320,9 @@ function ExpDetail({ exp: e, task, metrics }: { exp: Experiment; task: TaskRow |
               <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
                 {scalars.map(({ name, points: [p] }) => (
                   <tr key={name}>
-                    <td className="break-all py-1 pr-2 font-mono">{name}</td>
+                    <td className="break-words py-1 pr-2" title={name}>
+                      {metricLabel(name)}
+                    </td>
                     <td className="py-1 pr-2 text-right tabular-nums">{p.text}</td>
                     <td className="py-1 text-right tabular-nums">
                       <a href={`/logs/${e.id}#L${p.log_line}`} className="underline">
