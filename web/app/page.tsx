@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 import { NewResearchForm } from "@/components/live/new-research-form";
+import { projectBadge } from "@/components/live/project-badge";
 
 export default function Home() {
   return (
@@ -30,17 +31,27 @@ async function ProjectList() {
 
   return (
     <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
-      {projects.map((p) => (
-        <li key={p.id}>
-          <Link href={`/p/${p.id}?tab=live`} className="block py-3 hover:underline">
-            <span className="block break-words font-medium">{p.title}</span>
-            <span className="text-xs text-neutral-500">
-              {p.arxiv_id ? `arXiv ${p.arxiv_id} · ` : ""}
-              {p.status}
-            </span>
-          </Link>
-        </li>
-      ))}
+      {projects.map((p) => {
+        const badge = projectBadge(p.status);
+        return (
+          <li key={p.id}>
+            <Link href={`/p/${p.id}?tab=live`} className="block py-3 hover:underline">
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="min-w-0 break-words font-medium">{p.title}</span>
+                {badge && (
+                  <span className={badge.className} title={badge.title}>
+                    {badge.label}
+                  </span>
+                )}
+              </span>
+              <span className="text-xs text-neutral-500">
+                {p.arxiv_id ? `arXiv ${p.arxiv_id} · ` : ""}
+                {p.status}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }

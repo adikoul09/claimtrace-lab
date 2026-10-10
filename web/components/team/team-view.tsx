@@ -140,7 +140,11 @@ export function TeamView() {
       {error && <p className="text-sm text-red-600">Could not load the team: {error}</p>}
 
       {agents.length === 0 ? (
-        <p className="text-sm text-neutral-500">{loaded ? "No agents yet." : "Loading…"}</p>
+        !loaded ? (
+          <p className="text-sm text-neutral-500">Loading…</p>
+        ) : (
+          !error && <p className="text-sm text-neutral-500">No agents yet.</p>
+        )
       ) : (
         <>
           <div>

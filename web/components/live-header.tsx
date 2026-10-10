@@ -3,10 +3,13 @@
 // Header live-data check (SPEC §10): when did the newest event and metric land?
 // Global on purpose: it proves the whole bus is alive, on every page.
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
 import { ExecutorDots } from "@/components/live/executor-dots";
+import { InboxCard } from "@/components/live/inbox-card";
+import { projectIdFromPath } from "@/components/live/inbox";
 import { ReplayBadge } from "@/components/live/replay-badge";
 import { TokenMeter } from "@/components/live/token-meter";
 
@@ -32,6 +35,18 @@ function Stamp({ label, ts, now }: { label: string; ts: string | null; now: numb
         <span>never</span>
       )}
     </span>
+  );
+}
+
+// On a project page (any tab), the newest journal email for that project. The pathname is request data, so the
+// caller wraps this in <Suspense> (cacheComponents).
+function ProjectInbox() {
+  const projectId = projectIdFromPath(usePathname());
+  if (!projectId) return null;
+  return (
+    <div className="mx-auto max-w-5xl px-4">
+      <InboxCard key={projectId} projectId={projectId} />
+    </div>
   );
 }
 
@@ -81,6 +96,9 @@ export function LiveHeader() {
         <Stamp label="latest event" ts={eventTs} now={now} />
         <Stamp label="latest metric" ts={metricTs} now={now} />
       </div>
+      <Suspense fallback={null}>
+        <ProjectInbox />
+      </Suspense>
     </header>
   );
 }

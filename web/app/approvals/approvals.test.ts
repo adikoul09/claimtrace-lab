@@ -131,13 +131,13 @@ test("planProject keeps an https repo URL and a budget in range, and refuses oth
   assert.equal(planProject({ arxiv_id: "nope" }).ok, false);
 });
 
-test("planWhatIf queues a design_whatif task with the question and parse caps", () => {
+test("planWhatIf queues a design_whatif task with controller caps until the controller prepares it", () => {
   const p = planWhatIf("p1", { question: "  What if T = 5?  " });
   assert.ok(p.ok);
   assert.deepEqual(p.task, {
     project_id: "p1",
     capability: "design_whatif",
-    required_caps: ["parse"],
+    required_caps: ["controller"],
     status: "queued",
     input: { question: "What if T = 5?" },
   });
