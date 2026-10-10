@@ -109,10 +109,9 @@ class Ctx:
     def materialize(self) -> list[str]:
         """Write train.py (latest write_code/debug output) and requirements.txt (setup_env/debug) into the workdir."""
         files, req = {}, None
-        for cap in ("write_code", "setup_env", "debug"):
-            out = self.out_of(cap, required=False)
-            files.update(out.get("files") or {})
-            req = out.get("requirements") if out.get("requirements") is not None else req
+        for src in (*(self.out_of(c, required=False) for c in ("write_code", "setup_env", "debug")), self.inp):
+            files.update(src.get("files") or {})  # a debug task's input carries the failed run's own files: last
+            req = src.get("requirements") if src.get("requirements") is not None else req
         if req is not None:
             files["requirements.txt"] = req
         if files:
