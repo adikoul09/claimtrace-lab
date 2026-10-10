@@ -1,7 +1,9 @@
 """Spawn (SPEC §4.3): a new agent row, drafted by the LLM, checked by code.
 
 Triggers (code): (a) a gap, no active agent has the capability a task needs; (b) the agent that would get the task
-already failed this same task SPAWN_ON_FAILURES times. The LLM drafts {name, role_prompt, tools, capabilities, budget,
+already failed this same task SPAWN_ON_FAILURES times. "The same agent" is its role (the name without -vN): a refined
+version is the same agent with a better prompt, so implementer-v1 failing and then implementer-v2 failing is twice.
+Every failed attempt counts, including one where the agent produced no answer. The LLM drafts {name, role_prompt, tools, capabilities, budget,
 reason} from the gap and the failure context. Code then keeps only tools from the fixed set, grants the needed
 capability, clips the budget, makes the name unique, and gives a Debugger the baseline repair-agent tools and policy
 (baseline/el01-auditor/el01/llm/prompts/repair.md, el01/repair/policy.py)."""
@@ -16,6 +18,7 @@ from lab.controller.rules import SPAWN_ON_FAILURES
 from lab.schemas import CAPABILITIES
 
 MAX_TOKENS = 60_000
+MIN_TOKENS = 20_000  # below this a new agent cannot even read a paper excerpt (live 808f07a4: 4000 ran out at once)
 MAX_STEPS = 15
 DEFAULT_BUDGET = {"max_tokens": 40_000, "max_cpu_s": 600, "max_steps": 10}
 LLM_AGENT = "controller"
@@ -60,13 +63,29 @@ class Trigger:
     reason: str
 
 
+def role_of(name: str) -> str:
+    """An agent's role: its name without the version suffix (reader-v13 -> reader)."""
+    return re.sub(r"-v\d+$", "", name or "")
+
+
+def fails_by_role(attempts: list[dict], names: dict[str, str]) -> dict[str, int]:
+    """role -> failed attempts of this same task (names: agent_id -> agent name, retired agents included)."""
+    out: dict[str, int] = {}
+    for t in attempts:
+        if t.get("status") == "failed" and t.get("agent_id") in names:
+            r = role_of(names[t["agent_id"]])
+            out[r] = out.get(r, 0) + 1
+    return out
+
+
 def trigger(pick, capability: str, fails: dict[str, int]) -> Optional[Trigger]:
-    """pick: assign.pick_agent's result (None = gap); fails: agent_id -> failed attempts of this same task."""
+    """pick: assign.pick_agent's result (None = gap); fails: role -> failed attempts of this same task."""
     if pick is None:
         return Trigger("gap", f"gap: no active agent has the capability {capability}")
-    n = fails.get(pick.agent["id"], 0)
+    role = role_of(pick.agent["name"])
+    n = fails.get(role, 0)
     if n >= SPAWN_ON_FAILURES:
-        return Trigger("repeated_failure", f"{pick.agent['name']} failed this task {n} times "
+        return Trigger("repeated_failure", f"{role} failed this task {n} times, the last as {pick.agent['name']} "
                                            f"(spawn after {SPAWN_ON_FAILURES})")
     return None
 
@@ -84,7 +103,8 @@ def unique_name(base: str, taken: set[str]) -> str:
     return name
 
 
-def check_spec(draft: dict, capability: str, budget_cap_s: int, taken: set[str]) -> tuple[dict, list[str]]:
+def check_spec(draft: dict, capability: str, budget_cap_s: int, taken: set[str],
+               floor_tokens: int = MIN_TOKENS) -> tuple[dict, list[str]]:
     """The agents row fields code allows from the draft, plus notes on every change code made."""
     notes = []
     prompt = (draft.get("role_prompt") or "").strip()
@@ -110,6 +130,11 @@ def check_spec(draft: dict, capability: str, budget_cap_s: int, taken: set[str])
                                    if k in DEFAULT_BUDGET and isinstance(v, int) and v > 0}}
     limits = {"max_tokens": MAX_TOKENS, "max_cpu_s": int(budget_cap_s), "max_steps": MAX_STEPS}
     for k, cap in limits.items():
+        floor = min(max(floor_tokens, MIN_TOKENS), MAX_TOKENS)
+        if k == "max_tokens" and budget[k] < floor:
+            notes.append(f"budget max_tokens raised from {budget[k]} to {floor} (floor: an existing agent's budget for "
+                         f"{capability}, at least {MIN_TOKENS})")
+            budget[k] = floor
         if budget[k] > cap:
             if (draft.get("budget") or {}).get(k) is not None:
                 notes.append(f"budget {k} clipped from {budget[k]} to {cap}")
@@ -137,7 +162,8 @@ Tools that exist (choose only from these):
 
 Draft the agent: a short role name, a role prompt (its system prompt: what it does, how it works step by step, what it
 must never do), the tools it needs, its capabilities, and a budget (max_tokens, max_cpu_s up to {budget_cap_s},
-max_steps)."""
+max_steps). Its task goal will carry its inputs (claims, settings, earlier outputs). The role prompt must not assume
+any file exists in the run folder: do not assume file names; if it needs files, it should list_dir first."""
 
 
 def draft_spec(llm, capability: str, trig: Trigger, context: str, agents: list[dict], budget_cap_s: int, *,

@@ -239,6 +239,9 @@ class Controller:
                 continue
             self.refine(r, key)
 
+    def _agent_names(self) -> dict[str, str]:
+        return {a["id"]: a["name"] for a in self.db.table("agents").select("id,name").execute().data}
+
     def _refine_counts(self, agents: list[dict]) -> dict:
         refined = [a for a in agents if a.get("origin") == "refined" and a.get("created_by_task")]
         ids = sorted({a["created_by_task"] for a in refined})
@@ -671,7 +674,7 @@ class Controller:
             inp.update(fields)
             inp.update({"scale": step.scale, "experiment_id": exp_row["id"], "label": step.title,
                         "timeout_s": max(step.budget_cpu_s, RUN_TIMEOUT_FLOOR_S)})
-        fails = Counter(t.get("agent_id") for t in attempts if t["status"] == "failed")
+        fails = spawn.fails_by_role(attempts, self._agent_names())
         context = f"Plan step {i + 1} of {len(steps)}: {step.title}\nInstructions: {step.instructions}"
         if attempts:
             context += "\nEarlier attempts failed: " + "; ".join(
@@ -717,11 +720,11 @@ class Controller:
                          acceptance="the failing command gets past the error, and the change is labelled REPAIR(env) "
                                     "or REPAIR(code)",
                          requires_approval=False,
-                         fails=Counter(d.get("agent_id") for d in mine if d["status"] == "failed"),
+                         fails=spawn.fails_by_role(mine, self._agent_names()),
                          trigger_task=failed, context=context, label=f"debug step {i + 1}: {sig}")
 
     def create_task(self, project: dict, capability: str, inp: dict, now: datetime, *, parent_task_id: str,
-                    caps: list[str], acceptance: str, requires_approval: bool, fails: Counter, trigger_task: dict,
+                    caps: list[str], acceptance: str, requires_approval: bool, fails: dict, trigger_task: dict,
                     context: str, label: str, preferred: Optional[str] = None,
                     existing: Optional[dict] = None) -> Optional[dict]:
         """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task, or, with
@@ -790,8 +793,11 @@ class Controller:
         try:
             draft, resp = spawn.draft_spec(self.llm, capability, trig, context, agents, cap_s,
                                            task_id=trigger_task["id"])
-            taken = {a["name"] for a in db.table("agents").select("name").execute().data}
-            row, notes = spawn.check_spec(draft, capability, cap_s, taken)
+            everyone = db.table("agents").select("name,capabilities,budget").execute().data
+            taken = {a["name"] for a in everyone}
+            floor = max([(a.get("budget") or {}).get("max_tokens") or 0 for a in everyone
+                         if capability in (a.get("capabilities") or [])] or [spawn.MIN_TOKENS])
+            row, notes = spawn.check_spec(draft, capability, cap_s, taken, floor_tokens=floor)
         except Exception as e:
             self._spawn_failed[key] = time.monotonic()
             emit(db, "spawn_failed", f"could not spawn an agent for {capability}",

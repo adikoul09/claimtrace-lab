@@ -17,7 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from lab.controller.rules import MAX_REFINES_PER_ROLE, MERGE_OVERLAP, MIN_SCORED, RETIRE_BELOW
-from lab.controller.spawn import REPAIR_POLICY
+from lab.controller.spawn import REPAIR_POLICY, role_of
 
 MAX_PROMPT_CHARS = 8000
 
@@ -143,10 +143,6 @@ def refine_triggers(agents: list[dict], tasks: list[dict], feedback: dict[str, s
         out.append(Refine(a, t, kind, reason))
         seen.add(a["id"])
     return out
-
-
-def role_of(name: str) -> str:
-    return re.sub(r"-v\d+$", "", name)
 
 
 def refine_counts(agents: list[dict], project_of: dict[str, str]) -> dict[tuple[str, str], int]:
