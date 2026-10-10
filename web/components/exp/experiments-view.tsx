@@ -53,6 +53,7 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const db = supabase();
@@ -84,6 +85,7 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
       .select("*")
       .eq("project_id", projectId)
       .then(({ data, error }) => {
+        setLoaded(true);
         if (error) return fail(error);
         const rows = (data ?? []) as Experiment[];
         setExperiments((cur) => upsertRows(cur, rows));
@@ -140,7 +142,9 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
 
       {error && <p className="mb-3 text-sm text-red-600">Could not load experiments: {error}</p>}
 
-      {experiments.length === 0 ? (
+      {!loaded && experiments.length === 0 ? (
+        <p className="text-sm text-neutral-500">Loading experiments…</p>
+      ) : experiments.length === 0 ? (
         <p className="text-sm text-neutral-500">No experiments yet. Runs appear here when they start.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
