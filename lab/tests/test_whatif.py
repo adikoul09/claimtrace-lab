@@ -106,3 +106,13 @@ def test_extend_still_names_the_top_branch_when_all_effects_are_noise():
     r = by_id(wi.rank(results(b1=-3, b2=2, b3=1), PARENT_FINALS, ["student_distilled"], noise=10))
     assert r["b1"]["decision"] == "extend" and "inside noise" in r["b1"]["reason"]
     assert r["b2"]["decision"] == r["b3"]["decision"] == "pruned"
+
+
+def test_data_dir_is_rewritten_for_the_branch_folder():
+    cmd = "python train.py --data-dir ../../data --epochs 1 --subset 5000 --seed 0"
+    assert shlex.split(wi.with_data_dir(cmd, "../../../../data"))[2:4] == ["--data-dir", "../../../../data"]
+
+
+def test_whatif_goal_lists_the_parent_keys():
+    goal = wi.whatif_goal("Does T matter?", PARENT, "MNIST distillation")
+    assert "- lr.student = 0.1" in goal and "Does T matter?" in goal and "EXACTLY ONE" in goal

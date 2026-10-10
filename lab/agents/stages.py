@@ -261,7 +261,9 @@ def h_debug(ctx: Ctx) -> dict:
 def h_grade(ctx: Ctx) -> dict:
     from lab.agents import analyst
 
-    exp_id = ctx.inp.get("experiment_id") or ctx.out_of("run").get("experiment_id")
+    if ctx.inp.get("whatif_task_id") and not ctx.inp.get("extend_experiment_id"):
+        return h_whatif_rank(ctx)
+    exp_id = ctx.inp.get("extend_experiment_id") or ctx.inp.get("experiment_id") or         ctx.out_of("run").get("experiment_id")
     if not exp_id:
         raise StepError("no experiment to grade: input.experiment_id and the upstream run's output are empty")
     explain = ctx.task["capability"] == "explain_diff"
@@ -294,9 +296,6 @@ def h_generic(ctx: Ctx) -> dict:
     return out
 
 
-HANDLERS = {"design_experiment": h_design, "write_code": h_write_code, "setup_env": h_setup_env,
-            "budget": h_budget, "debug": h_debug, "compare": h_grade, "explain_diff": h_grade,
-            **{c: h_paper for c in PAPER_CAPS}}
 
 
 def handle(db, task: dict, executor: str, llm=None) -> dict:
@@ -310,3 +309,172 @@ def handle(db, task: dict, executor: str, llm=None) -> dict:
         out = {"outcome": "failed", "agent_status": "failed", "tokens": 0, "cpu_s": 0.0, "error": str(e)[:1000]}
     out["handler"] = handler.__name__
     return out
+
+
+# ---- what-if (T18; SPEC §7.4; CONTRACTS.md: the controller creates the branch runs from these outputs) ----------------
+
+def log_lines(ctx: Ctx, experiment_id: str) -> list[str]:
+    """An experiment's log: the local copy the worker kept (same machine), else Storage."""
+    local = RUNS / "logs" / f"{experiment_id}.log"
+    if local.is_file():
+        return local.read_text(encoding="utf-8", errors="replace").splitlines()
+    try:
+        return ctx.db.storage.from_("logs").download(f"{experiment_id}.log").decode("utf-8", "replace").splitlines()
+    except Exception as e:
+        raise StepError(f"the log of experiment {experiment_id} is not available: {type(e).__name__}") from None
+
+
+def _experiments(ctx: Ctx) -> list[dict]:
+    return ctx.db.table("experiments").select("*").eq("project_id", ctx.pid).execute().data
+
+
+def _finals(ctx: Ctx, experiment_id: str, models) -> dict:
+    rows = ctx.db.table("metrics").select("name,value,log_line").eq("experiment_id", experiment_id).execute().data
+    want = {f"final_{m}": m for m in models}
+    return {want[r["name"]]: r["value"] for r in rows if r["name"] in want and r["value"] is not None}
+
+
+def parent_smoke_task(ctx: Ctx) -> dict:
+    """The reproduction's latest finished smoke run (not a what-if branch's)."""
+    branch_exps = {e["id"] for e in _experiments(ctx) if (e.get("config") or {}).get("whatif")}
+    rows = ctx.db.table("tasks").select("*").eq("project_id", ctx.pid).eq("capability", "run") \
+        .eq("status", "done").order("created_at", desc=True).execute().data
+    for t in rows:
+        inp = t.get("input") or {}
+        if inp.get("scale") == "smoke" and inp.get("experiment_id") not in branch_exps:
+            return t
+    raise StepError("no finished smoke run of the reproduction: branches start from its command")
+
+
+def method_models(claim_map: dict, claims: list[dict]) -> list[str]:
+    whose = {c["id"]: c.get("whose") for c in claims}
+    return [m for m, cid in claim_map.items() if whose.get(cid) == "method"] or list(claim_map)
+
+
+def h_design_whatif(ctx: Ctx) -> dict:
+    from lab.agents import whatif as wi
+
+    question = ctx.inp.get("question") or ctx.inp.get("goal")
+    if not question:
+        raise StepError("the what-if task has no question")
+    full_run = ctx.upstream("run")
+    parent_id = (full_run.get("output") or {}).get("experiment_id") or (full_run.get("input") or {}).get(
+        "experiment_id")
+    parent = next((e for e in _experiments(ctx) if e["id"] == parent_id), None)
+    if not parent:
+        raise StepError("the upstream run has no experiment to branch from")
+    pcfg = parent.get("config") or {}
+    cfg, cfg_line = wi.parse_config(log_lines(ctx, parent_id))
+    smoke = parent_smoke_task(ctx)
+    # Reproductions run one seed (budget output seeds [0]), so the declared margin is the noise scale.
+    n, n_src = wi.noise([], parent.get("margin"))
+    design = pcfg.get("design") or {}
+
+    def branched(answer):
+        """3-4 branches, each changing exactly one key of the parent run's CONFIG"""
+        parsed = parse_answer(answer)
+        checked_branches = wi.check_branches(parsed.get("branches") or [], cfg)
+        out = []
+        for b in checked_branches:
+            cwd = f"runs/{ctx.pid}/whatif/{ctx.task['id'][:8]}-{b['id']}"
+            data_rel = data_dir_rel(cwd)
+            out.append({**{k: b[k] for k in ("id", "key", "value", "parent_value", "reason")}, "scale": "smoke",
+                        "cwd": cwd, "cmd": wi.branch_cmd(wi.with_data_dir(smoke["input"]["cmd"], data_rel),
+                                                         b["key"], b["value"]),
+                        "experiment": {"label": f"what-if {b['id']}: {b['key']}={json.dumps(b['value'])} (smoke)",
+                                       "parent_id": parent_id, "changed_key": b["key"], "margin": parent.get("margin"),
+                                       "config": {**{k: pcfg[k] for k in ("claim_map", "seeds", "design",
+                                                                          "margin_reason") if k in pcfg},
+                                                  "scale": "smoke", "settings": b["config"],
+                                                  "whatif": {"task_id": ctx.task["id"], "branch_id": b["id"],
+                                                             "key": b["key"], "value": b["value"],
+                                                             "parent_value": b["parent_value"],
+                                                             "question": question}}}})
+        emit(ctx.db, "whatif_designed", f"what-if: {len(out)} one-change branches: " +
+             ", ".join(f"{b['key']}={json.dumps(b['value'])}" for b in out),
+             f"code checked each changes exactly one key of the parent CONFIG (log line {cfg_line}); noise {n_src}",
+             project_id=ctx.pid, task_id=ctx.task["id"], agent_id=ctx.agent.get("id"))
+        return {"question": question, "branches": out, "noise": n, "noise_source": n_src,
+                "parent_experiment_id": parent_id, "parent_smoke_experiment_id": smoke["input"]["experiment_id"],
+                "parent_full_cmd": (full_run.get("input") or {}).get("cmd"), "parent_config_log_line": cfg_line}
+    return checked(ctx, wi.whatif_goal(question, cfg, design.get("experiment")) + ctx.notes(), branched)
+
+
+def data_dir_rel(cwd_rel: str) -> str:
+    import os
+    return os.path.relpath(ROOT / "data", ROOT / cwd_rel).replace(os.sep, "/")
+
+
+def h_whatif_rank(ctx: Ctx) -> dict:
+    from lab.agents import whatif as wi
+
+    tid = ctx.inp["whatif_task_id"]
+    rows = ctx.db.table("tasks").select("*").eq("id", tid).execute().data
+    d = (rows[0].get("output") or {}) if rows else {}
+    if not d.get("branches"):
+        raise StepError(f"what-if task {tid} has no branches in its output")
+    exps = {(e.get("config") or {}).get("whatif", {}).get("branch_id"): e for e in _experiments(ctx)
+            if ((e.get("config") or {}).get("whatif") or {}).get("task_id") == tid}
+    runs_by_exp = {(t.get("input") or {}).get("experiment_id"): t for t in
+                   ctx.db.table("tasks").select("*").eq("project_id", ctx.pid).eq("capability", "run").execute().data}
+    parent = next((e for e in _experiments(ctx) if e["id"] == d["parent_experiment_id"]), {})
+    cmap = (parent.get("config") or {}).get("claim_map") or {}
+    methods = method_models(cmap, ctx.claims)
+    parent_finals = _finals(ctx, d["parent_smoke_experiment_id"], cmap)
+    results, errors = {}, {}
+    for b in d["branches"]:
+        e = exps.get(b["id"])
+        run = runs_by_exp.get(e["id"]) if e else None
+        finals = _finals(ctx, e["id"], cmap) if e else {}
+        if not e or not run or run.get("status") != "done" or not finals:
+            results[b["id"]] = None
+            errors[b["id"]] = ((run or {}).get("output") or {}).get("error_signature") or \
+                ("no smoke run" if not run else f"status {run.get('status')}" if run.get("status") != "done"
+                 else "no final metrics")
+        else:
+            results[b["id"]] = finals
+    ranking = wi.rank(results, parent_finals, methods, d["noise"], errors=errors)
+    by_branch = {b["id"]: b for b in d["branches"]}
+    for r in ranking:
+        e = exps.get(r["id"])
+        r.update(key=by_branch[r["id"]]["key"], value=by_branch[r["id"]]["value"],
+                 experiment_id=e["id"] if e else None)
+        if not e:
+            continue
+        cfg = {**(e.get("config") or {})}
+        cfg["whatif"] = {**cfg.get("whatif", {}), "decision": r["decision"], "reason": r["reason"],
+                         "effect": r.get("effect"), "score": r.get("score")}
+        patch = {"config": cfg}
+        if r["decision"] == "pruned":
+            patch.update(status="pruned", pruned_reason=r["reason"])
+            emit(ctx.db, "branch_pruned", f"what-if {r['id']} ({r['key']}={json.dumps(r['value'])}) pruned",
+                 r["reason"], project_id=ctx.pid, task_id=ctx.task["id"], data={"experiment_id": e["id"]})
+        ctx.db.table("experiments").update(patch).eq("id", e["id"]).execute()
+    top = next((r for r in ranking if r["decision"] == "extend"), None)
+    extend = None
+    if top:
+        b = by_branch[top["id"]]
+        if not d.get("parent_full_cmd"):
+            raise StepError("the what-if output has no parent_full_cmd to extend the branch with")
+        extend = {"branch_id": b["id"], "key": b["key"], "value": b["value"], "reason": top["reason"],
+                  "smoke_experiment_id": top["experiment_id"], "cwd": b["cwd"], "scale": "full",
+                  "cmd": wi.branch_cmd(wi.with_data_dir(d["parent_full_cmd"], data_dir_rel(b["cwd"])), b["key"],
+                                       b["value"]),
+                  "experiment": {**b["experiment"],
+                                 "label": f"what-if {b['id']}: {b['key']}={json.dumps(b['value'])} (full)",
+                                 "config": {**b["experiment"]["config"], "scale": "full"}}}
+    emit(ctx.db, "whatif_ranked",
+         f"what-if ranked: extend {top['id'] if top else 'none'}; pruned "
+         f"{', '.join(r['id'] for r in ranking if r['decision'] == 'pruned') or 'none'}",
+         f"code: |effect on {', '.join(methods)}| / noise {d['noise']:g} ({d.get('noise_source')}) against the parent "
+         "smoke run; extending needs approval", project_id=ctx.pid, task_id=ctx.task["id"],
+         data={"ranking": ranking, "extend": extend})
+    return {"outcome": "passed", "agent_status": "skipped", "tokens": 0, "cpu_s": 0.0, "error": None,
+            "answer": "; ".join(f"{r['id']} {r['decision']}: {r['reason']}" for r in ranking),
+            "ranking": ranking, "extend": extend, "whatif_task_id": tid,
+            "experiment_id": d["parent_experiment_id"]}
+
+
+HANDLERS = {"design_experiment": h_design, "write_code": h_write_code, "setup_env": h_setup_env,
+            "budget": h_budget, "design_whatif": h_design_whatif, "debug": h_debug, "compare": h_grade, "explain_diff": h_grade,
+            **{c: h_paper for c in PAPER_CAPS}}

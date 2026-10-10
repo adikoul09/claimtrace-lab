@@ -130,3 +130,27 @@ def rank(results: dict, parent_finals: dict, method_models: list[str], noise: fl
                 r["decision"] = "kept"
                 r["reason"] = f"{r['model']} {r['effect']:+g} ({r['score']:g}× noise {noise:g}); not the largest"
     return rows
+
+
+def with_data_dir(cmd: str, data_rel: str) -> str:
+    """The same command with --data-dir pointing at data/ from another run folder (a branch runs in its own)."""
+    argv = shlex.split(cmd)
+    if "--data-dir" in argv:
+        i = argv.index("--data-dir")
+        if i + 1 < len(argv):
+            argv[i + 1] = data_rel
+    else:
+        argv += ["--data-dir", data_rel]
+    return shlex.join(argv)
+
+
+def whatif_goal(question: str, parent_config: dict, experiment: str | None) -> str:
+    flat = flatten(parent_config)
+    lines = "\n".join(f"- {k} = {json.dumps(v)}" for k, v in sorted(flat.items()))
+    return (f"A researcher asks about the reproduction of: {experiment or 'the paper'}\nQuestion: {question}\n\n"
+            "Propose 3 to 4 what-if branches that would answer it. Each branch changes EXACTLY ONE setting below to "
+            "one new value (code rejects anything else); everything else stays as in the parent run. Prefer the "
+            "changes most likely to explain or test the question.\n\nThe parent run's settings (CONFIG keys):\n"
+            f"{lines}\n\nFinish with answer = a JSON object: "
+            '{"branches": [{"key": "<one key from the list>", "value": <new JSON value>, '
+            '"reason": "<what this branch tests>"}]}')

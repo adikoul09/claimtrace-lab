@@ -301,3 +301,113 @@ def test_worker_turns_a_handler_crash_into_a_failed_task(monkeypatch):
     monkeypatch.setattr(stages, "handle", boom)
     _worker(db).run_agent_task(t)
     assert db.rows["tasks"][0]["status"] == "failed" and "db down" in db.rows["tasks"][0]["output"]["error"]
+
+
+# ---- what-if (T18): design_whatif and the ranking compare -----------------------------------------------------------
+
+PARENT_CFG = {"optimizer": "SGD", "lr": {"teacher": 0.03, "student": 0.1}, "temperature": 20, "soft_weight": 0.9}
+CLAIMS_3 = CLAIMS + [{"id": "c9", "model": "Distilled", "metric": "test errors", "value": 74, "unit": "errors",
+                      "direction": "lower_is_better", "whose": "method", "valid": True, "page": 4, "quote": "74"}]
+CMAP = {"teacher": "c7", "student_hard": "c8", "student_distilled": "c9"}
+
+
+def reproduction(runs, db):
+    """A finished reproduction: smoke and full experiments with their run tasks, metrics and logs."""
+    db.rows["papers"][0]["claims"] = CLAIMS_3
+    full = db.table("experiments").insert({"project_id": PID, "label": "full", "margin": 10, "status": "done",
+                                           "config": {"claim_map": CMAP, "seeds": [0], "scale": "full"}}
+                                          ).execute().data[0]
+    smoke = db.table("experiments").insert({"project_id": PID, "label": "smoke", "margin": 10, "status": "done",
+                                            "config": {"claim_map": CMAP, "seeds": [0], "scale": "smoke"}}
+                                           ).execute().data[0]
+    for exp, vals in ((smoke, (300, 260, 280)), (full, (80, 143, 96))):
+        for m, v in zip(CMAP, vals):
+            db.rows["metrics"].append({"experiment_id": exp["id"], "name": f"final_{m}", "value": v, "step": 0,
+                                       "log_line": 9})
+        (runs / "runs" / "logs").mkdir(parents=True, exist_ok=True)
+        (runs / "runs" / "logs" / f"{exp['id']}.log").write_text(
+            "start\nCONFIG " + json.dumps(PARENT_CFG) + "\n", encoding="utf-8")
+    db.rows["tasks"] += [
+        {"id": "run-smoke", "project_id": PID, "capability": "run", "status": "done", "executor": "laptop-b",
+         "created_at": "2026-10-10T10:00:00", "output": {"experiment_id": smoke["id"]},
+         "input": {"scale": "smoke", "experiment_id": smoke["id"],
+                   "cmd": "python train.py --data-dir ../../data --epochs 1 --subset 5000 --seed 0"}},
+        {"id": "run-full", "project_id": PID, "capability": "run", "status": "done", "executor": "laptop-b",
+         "created_at": "2026-10-10T11:00:00", "output": {"experiment_id": full["id"]},
+         "input": {"scale": "full", "experiment_id": full["id"],
+                   "cmd": "python train.py --data-dir ../../data --epochs 12 --subset 0 --seed 0"}}]
+    return full, smoke
+
+
+WHATIF = {"branches": [{"key": "temperature", "value": 5, "reason": "lower T"},
+                       {"key": "lr.student", "value": 0.03, "reason": "the divergence"},
+                       {"key": "soft_weight", "value": 0.5, "reason": "more hard-label weight"}]}
+
+
+def test_design_whatif_outputs_one_key_branches_ready_to_run(runs, scripted):
+    db = store()
+    db.rows["agents"].append({**AGENTS[0], "id": "a-design_whatif", "capabilities": ["design_whatif"]})
+    full, smoke = reproduction(runs, db)
+    agent = scripted(json.dumps(WHATIF))
+    t = task("design_whatif", f"runs/{PID}", question="Does the temperature matter?", upstream={"run": "run-full"})
+    out = stages.handle(db, t, executor="laptop-b")
+    assert out["outcome"] == "passed", out.get("error")
+    assert "- temperature = 20" in agent.goals[0] and "Does the temperature matter?" in agent.goals[0]
+    b1 = out["branches"][0]
+    assert (b1["id"], b1["key"], b1["parent_value"], b1["value"]) == ("b1", "temperature", 20, 5)
+    assert b1["cwd"] == f"runs/{PID}/whatif/t-design-b1"
+    assert b1["cmd"] == ("python train.py --data-dir ../../../../data --epochs 1 --subset 5000 --seed 0 "
+                         "--set temperature=5")
+    assert b1["experiment"]["parent_id"] == full["id"] and b1["experiment"]["changed_key"] == "temperature"
+    assert b1["experiment"]["config"]["claim_map"] == CMAP
+    assert b1["experiment"]["config"]["whatif"]["task_id"] == t["id"]
+    assert (out["noise"], out["parent_smoke_experiment_id"]) == (10, smoke["id"])
+
+
+def test_design_whatif_with_a_two_key_branch_fails(runs, scripted):
+    db = store()
+    db.rows["agents"].append({**AGENTS[0], "id": "a-design_whatif", "capabilities": ["design_whatif"]})
+    reproduction(runs, db)
+    bad = {"branches": WHATIF["branches"][:2] + [{"key": "lr", "value": 0.01}]}
+    scripted(json.dumps(bad))
+    out = stages.handle(db, task("design_whatif", f"runs/{PID}", question="?", upstream={"run": "run-full"}),
+                        executor="laptop-b")
+    assert out["outcome"] == "failed" and "not in the parent CONFIG" in out["error"]
+
+
+def test_compare_after_the_branch_smokes_ranks_prunes_and_proposes_the_extend(runs, scripted):
+    db = store()
+    db.rows["agents"].append({**AGENTS[0], "id": "a-design_whatif", "capabilities": ["design_whatif"]})
+    full, smoke = reproduction(runs, db)
+    scripted(json.dumps(WHATIF))
+    t = task("design_whatif", f"runs/{PID}", question="?", upstream={"run": "run-full"})
+    design = stages.handle(db, t, executor="laptop-b")
+    db.rows["tasks"].append({**t, "status": "done", "output": design})
+    # the controller's part: one experiment and smoke run per branch (effects on the distilled student: -40, +4, fail)
+    for b, val, ok in zip(design["branches"], (240, 284, None), (True, True, False)):
+        e = db.table("experiments").insert({"project_id": PID, **b["experiment"],
+                                            "status": "done" if ok else "failed"}).execute().data[0]
+        db.rows["tasks"].append({"id": f"run-{b['id']}", "project_id": PID, "capability": "run",
+                                 "status": "done" if ok else "failed", "created_at": "2026-10-10T12:00:00",
+                                 "input": {"scale": "smoke", "experiment_id": e["id"]},
+                                 "output": {"experiment_id": e["id"],
+                                            "error_signature": None if ok else "RuntimeError: shape"}})
+        if ok:
+            for m, v in zip(CMAP, (300, 260, val)):
+                db.rows["metrics"].append({"experiment_id": e["id"], "name": f"final_{m}", "value": v, "step": 0,
+                                           "log_line": 5})
+    agent = scripted("unused")
+    out = stages.handle(db, task("compare", f"runs/{PID}", whatif_task_id=t["id"]), executor="laptop-b")
+    assert out["outcome"] == "passed" and agent.goals == []  # ranking is code only
+    rank = {r["id"]: r for r in out["ranking"]}
+    assert (rank["b1"]["decision"], rank["b1"]["effect"]) == ("extend", -40)
+    assert rank["b2"]["decision"] == "pruned" and "inside noise" in rank["b2"]["reason"]
+    assert rank["b3"]["decision"] == "pruned" and "RuntimeError" in rank["b3"]["reason"]
+    pruned = [e for e in db.rows["experiments"] if e.get("status") == "pruned"]
+    assert len(pruned) == 2 and all(e["pruned_reason"] for e in pruned)
+    ext = out["extend"]
+    assert (ext["branch_id"], ext["key"], ext["value"]) == ("b1", "temperature", 5)
+    assert ext["cmd"] == ("python train.py --data-dir ../../../../data --epochs 12 --subset 0 --seed 0 "
+                          "--set temperature=5")
+    assert ext["experiment"]["parent_id"] == full["id"] and ext["experiment"]["config"]["scale"] == "full"
+    assert any(e["type"] == "whatif_ranked" for e in db.rows["events"])
