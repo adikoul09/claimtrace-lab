@@ -58,7 +58,7 @@ DAY_START_UTC = timedelta(0)       # 05:30 IST is 00:00 UTC
 
 
 class LLMError(RuntimeError):
-    pass
+    usage: Optional[dict] = None  # set when the provider answered and billed tokens, but the answer was unusable
 
 
 class LLMEventError(LLMError):
@@ -257,25 +257,32 @@ def _elevate(req: Request, model: str) -> dict:
                 raise LLMEventError(f"elevate returned HTTP {r.status_code}, request id {rid}: {scrub(r.text, key)}")
             break
 
+    u = (body or {}).get("usage") or {}
+    total = int(u.get("total_tokens") or 0)
+    tin = min(int(u.get("prompt_tokens") or 0), total)
+    usage = {"tokens_in": tin, "tokens_out": total - tin, "total_tokens": total, "request_id": rid}
+
+    def spent(exc: LLMError) -> LLMError:
+        exc.usage = usage  # the tokens were billed; LLM.call still logs them
+        return exc
+
     choice = ((body or {}).get("choices") or [{}])[0]
     text = (choice.get("message") or {}).get("content") or ""
     finish = choice.get("finish_reason")
     if finish == "content_filter":
-        raise LLMFiltered(f"elevate filtered the answer (finish_reason content_filter; not retried), request id {rid}")
+        raise spent(LLMFiltered(f"elevate filtered the answer (finish_reason content_filter; not retried), "
+                                f"request id {rid}"))
     if not text and finish == "length":
-        raise LLMError(f"the {cap}-token output cap (reasoning included) ran out before any answer, request id {rid}")
+        raise spent(LLMError(f"the {cap}-token output cap (reasoning included) ran out before any answer, "
+                             f"request id {rid}"))
     if req.schema is not None:
         try:
             output = parse_json(text)
         except json.JSONDecodeError:
-            raise LLMError(f"elevate returned non-JSON for a schema call: {text[:300]!r}") from None
+            raise spent(LLMError(f"elevate returned non-JSON for a schema call: {text[:300]!r}")) from None
     else:
         output = text
-    u = (body or {}).get("usage") or {}
-    total = int(u.get("total_tokens") or 0)
-    tin = min(int(u.get("prompt_tokens") or 0), total)
-    return {"output": output, "text": text, "tokens_in": tin, "tokens_out": total - tin, "total_tokens": total,
-            "request_id": rid, "models": [(body or {}).get("model") or model]}
+    return {"output": output, "text": text, **usage, "models": [(body or {}).get("model") or model]}
 
 
 PROVIDERS: dict[str, Callable[[Request, str], dict]] = {"gemini": _gemini, "elevate": _elevate}
@@ -382,6 +389,9 @@ class LLM:
                 text = scrub(str(e) if isinstance(e, LLMError) else f"{type(e).__name__}: {e}", setting("LLM_API_KEY"))
                 self._event(getattr(e, "event", "llm_error"), f"LLM call failed for {req.agent} ({self.provider} "
                             f"{model})", text, agent_id, task_id, {"provider": self.provider, "model": model})
+                if getattr(e, "usage", None):  # billed tokens count toward the daily cap even without an answer
+                    self._log_call({"agent_id": agent_id, "task_id": task_id, "model": model, "mode": self.mode,
+                                    "cache_key": key, **e.usage})
                 if isinstance(e, LLMError):
                     raise
                 raise LLMError(text) from None

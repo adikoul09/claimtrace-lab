@@ -192,3 +192,30 @@ def test_any_provider_error_is_an_event_with_the_full_text_and_no_key(monkeypatc
     assert long_detail in ev[0]["reason"]                       # not cut
     assert "AIza-secret-123" not in ev[0]["reason"] and "abc.def" not in ev[0]["reason"]
     assert "AIza-secret-123" not in str(e.value)
+
+
+# ---- a call that spent tokens is logged even when its answer is unusable ------------------------------------------
+
+@pytest.mark.parametrize("response,schema", [
+    (ok("", total=120, finish="length", rid="r-len"), None),                      # cap used up by reasoning
+    (ok("not json at all", total=120, rid="r-json"), {"type": "object"}),           # schema call, no JSON
+    (ok("", total=120, finish="content_filter", rid="r-filt"), None),              # answer filtered
+], ids=["cap-used-up", "non-json", "filtered-answer"])
+def test_spent_tokens_are_logged_when_the_answer_is_unusable(gateway, response, schema):
+    sent, install = gateway
+    llm, db = install(response)
+    with pytest.raises(LLMError):
+        llm.call(Request(agent="a", prompt="p", schema=schema), agent_id="ag", task_id="t")
+    rows = db.rows.get("llm_calls", [])
+    assert len(rows) == 1
+    row = rows[0]
+    assert (row["tokens_in"], row["tokens_out"], row["total_tokens"]) == (100, 20, 120)
+    assert row["mode"] == "live" and row["task_id"] == "t" and row["request_id"].startswith("r-")
+
+
+def test_a_refused_request_that_spent_nothing_writes_no_row(gateway):
+    sent, install = gateway
+    llm, db = install(httpx.Response(403, json={"error": "quota"}))
+    with pytest.raises(LLMQuotaExhausted):
+        llm.call(Request(agent="a", prompt="p"))
+    assert db.rows.get("llm_calls", []) == []
