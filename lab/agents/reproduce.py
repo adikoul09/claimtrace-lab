@@ -270,6 +270,7 @@ class Pipeline:
     def __init__(self, db, project_id: str, executor: str, cap_min: float | None = None, llm: LLM | None = None,
                  wait: bool = True):
         self.db, self.pid, self.executor, self.wait = db, project_id, executor, wait
+        self.reference = None  # golden values for the grade table only (set by --reference)
         self.llm = llm or LLM(db=db)
         self.project = db.table("projects").select("*").eq("id", project_id).single().execute().data
         rows = db.table("papers").select("*").eq("project_id", project_id).execute().data
@@ -483,6 +484,9 @@ class Pipeline:
             self.event("repro_finished" if row["status"] == "done" else "repro_failed",
                        f"reproduction run {row['status']}: {result['finals']}",
                        f"full run task {full['id'][:8]} on {row.get('executor')}", data=result)
+            from lab.agents import analyst  # T11: verdicts by code, then the checked explanation
+            g = analyst.run(self.db, exp["id"], reference=self.reference)
+            result["verdicts"] = {r["claim_id"]: r["label"] for r in g["claims"]}
         return result
 
 
@@ -493,10 +497,16 @@ def main(argv=None) -> None:
                     help="recorded as the executor of the agent steps")
     ap.add_argument("--cap-min", type=float, help="override projects.budget_cpu_min")
     ap.add_argument("--no-wait", action="store_true", help="queue the full run and exit")
+    ap.add_argument("--reference", help="golden results JSON (e.g. papers/distillation/results_full_v2.json): a "
+                                        "column in the grades only; no agent ever sees it")
     a = ap.parse_args(argv)
     db = client()
     try:
-        res = Pipeline(db, a.project_id, a.executor_name, a.cap_min, wait=not a.no_wait).run()
+        pipe = Pipeline(db, a.project_id, a.executor_name, a.cap_min, wait=not a.no_wait)
+        if a.reference:
+            from lab.agents.analyst import reference_values
+            pipe.reference = reference_values(json.loads(Path(a.reference).read_text(encoding="utf-8")))
+        res = pipe.run()
     except StepError as e:
         emit(db, "repro_failed", "Autonomous reproduction stopped", str(e)[:1000], project_id=a.project_id)
         sys.exit(f"stopped: {e}")
