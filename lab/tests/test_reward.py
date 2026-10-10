@@ -97,3 +97,32 @@ def test_rolling_mean_uses_the_last_window_rewards_per_agent():
     assert ROLLING_WINDOW == 3
     assert means["a"] == pytest.approx((1.0 + 0.5 + 0.9) / 3)
     assert means["b"] == pytest.approx(0.2)
+
+
+# ---- who a crashed run counts against -----------------------------------------------------------------------------
+
+def run_task(status="failed", sig="ModuleNotFoundError:torchvision", upstream=None):
+    return {"id": "r1", "agent_id": "runner", "status": status, "capability": "run",
+            "output": {"error_signature": sig} if sig else {"exit_code": 0, "metrics": 3},
+            "input": {"upstream": upstream or {}}}
+
+
+BY_ID = {"w": {"id": "w", "agent_id": "implementer", "capability": "write_code", "output": {"files": {}}},
+         "d": {"id": "d", "agent_id": "debugger", "capability": "debug", "output": {"files": {"train.py": "v2"}}},
+         "e": {"id": "e", "agent_id": "debugger", "capability": "debug", "output": {"requirements": "x"}}}
+
+
+def test_a_crashed_run_counts_against_the_agent_that_wrote_the_code():
+    agent_id, why = reward.charged_agent(run_task(upstream={"write_code": "w"}), BY_ID)
+    assert agent_id == "implementer" and "wrote the code" in why
+
+
+def test_a_debugger_that_changed_the_files_is_charged_over_the_implementer():
+    assert reward.charged_agent(run_task(upstream={"write_code": "w", "debug": "d"}), BY_ID)[0] == "debugger"
+    # a debug task that only changed the requirements did not write the code that crashed
+    assert reward.charged_agent(run_task(upstream={"write_code": "w", "debug": "e"}), BY_ID)[0] == "implementer"
+
+
+def test_successful_runs_and_runs_without_known_code_stay_with_their_agent():
+    assert reward.charged_agent(run_task(status="done", sig=None, upstream={"write_code": "w"}), BY_ID) ==         ("runner", None)
+    assert reward.charged_agent(run_task(upstream={}), BY_ID) == ("runner", None)
