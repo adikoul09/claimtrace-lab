@@ -64,6 +64,9 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
           )}
           {project && <span>{projectStatusLabel(project.status)}</span>}
           <CopyId id={id} />
+          <Link href="/how" className="underline">
+            How it works
+          </Link>
         </p>
         {isPrecomputed(project) && (
           <p className="mt-1 inline-block rounded border border-amber-400 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
