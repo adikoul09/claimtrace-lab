@@ -9,6 +9,7 @@ import type { Agent, Event } from "@/lib/types";
 import { REPLAY_PILL } from "./replay-badge";
 import { eventIsReplay } from "./replay";
 import { WhatIfForm } from "./whatif-form";
+import { agentLabel, eventTypeLabel } from "./labels";
 
 const LIMIT = 200;
 
@@ -61,10 +62,10 @@ export function EventStream({ projectId }: { projectId: string }) {
       });
 
     db.from("agents")
-      .select("id,name")
+      .select("id,name,version")
       .then(({ data }) => {
         const names: Record<string, string> = {};
-        for (const a of (data ?? []) as Pick<Agent, "id" | "name">[]) names[a.id] = a.name;
+        for (const a of (data ?? []) as Pick<Agent, "id" | "name" | "version">[]) names[a.id] = agentLabel(a);
         setAgents(names);
       });
 
@@ -109,10 +110,13 @@ export function EventStream({ projectId }: { projectId: string }) {
                 <time dateTime={e.ts} className="tabular-nums">
                   {new Date(e.ts).toLocaleTimeString()}
                 </time>
-                <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                  {e.type}
+                <span
+                  className="rounded bg-neutral-100 px-1.5 py-0.5 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                  title={e.type}
+                >
+                  {eventTypeLabel(e.type)}
                 </span>
-                {e.agent_id && <span>{agents[e.agent_id] ?? e.agent_id.slice(0, 8)}</span>}
+                {e.agent_id && <span>{agents[e.agent_id] ?? "an agent"}</span>}
                 {eventIsReplay(e.data) && (
                   <span className={REPLAY_PILL} title="This step's LLM call was replayed from the cache of real calls">
                     Replay

@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Event, Lesson } from "@/lib/types";
 import { projectIdFromPath } from "@/components/live/inbox";
-import { capabilityLabel, humanize } from "@/components/live/labels";
+import { capabilityLabel, eventTypeLabel, humanize } from "@/components/live/labels";
 import { lessonUse, skipReasonLabel, type AppliedLesson, type SkippedLesson } from "./lesson-events";
 import { isImported, lessonText, sortLessons } from "./lessons";
 
@@ -127,7 +127,7 @@ export function LessonsPanel() {
                   {ev ? (
                     <div className="mt-1 border-l-2 border-neutral-300 pl-2 dark:border-neutral-700">
                       <p className="break-words">
-                        <span className="font-medium">{humanize(ev.type)}</span>: {ev.message}
+                        <span className="font-medium">{eventTypeLabel(ev.type)}</span>: {ev.message}
                       </p>
                       <p className="break-words text-neutral-500">Why: {ev.reason}</p>
                       {ev.project_id && (

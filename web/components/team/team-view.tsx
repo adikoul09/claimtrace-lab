@@ -5,7 +5,7 @@
 // Rewards are not in the Realtime publication; the controller's reward events (which are) trigger a refetch.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { capabilityLabel } from "@/components/live/labels";
+import { agentLabel, capabilityLabel, humanize, statusLabel } from "@/components/live/labels";
 import type { Agent, Event, Reward, Task } from "@/lib/types";
 import { applyAgentChange, sortAgents, type AgentChange } from "./agents";
 import { LessonsPanel } from "./lessons-panel";
@@ -112,7 +112,7 @@ export function TeamView() {
     () => Object.fromEntries(Object.values(tasks).map((t) => [t.id, t.capability])),
     [tasks],
   );
-  const names: Record<string, string> = Object.fromEntries(agents.map((a) => [a.id, a.name]));
+  const names: Record<string, string> = Object.fromEntries(agents.map((a) => [a.id, agentLabel(a)]));
   const selected = agents.find((a) => a.id === selectedId) ?? null;
 
   const select = useCallback((id: string) => {
@@ -222,13 +222,14 @@ function AgentCard({
       } ${a.status === "active" ? "" : "opacity-70"}`}
     >
       <header className="flex flex-wrap items-center gap-2">
-        <h3 className="break-all font-mono font-semibold">{a.name}</h3>
-        <span className="text-xs text-neutral-500">v{a.version}</span>
+        <h3 className="font-semibold" title={a.name}>
+          {agentLabel(a)}
+        </h3>
         <span className={`rounded px-1.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLE[a.status]}`}>
-          {a.status}
+          {statusLabel(a.status)}
         </span>
         <span className={`rounded border px-1.5 py-0.5 text-xs capitalize ${ORIGIN_STYLE[a.origin]}`}>
-          {a.origin}
+          {humanize(a.origin)}
         </span>
       </header>
 

@@ -5,7 +5,7 @@
 import type { Agent, Reward } from "@/lib/types";
 import { ROLLING_WINDOW, scoreboard, rollingReward } from "./lineage";
 import { STATUS_STYLE } from "./styles";
-import { capabilityLabel } from "@/components/live/labels";
+import { agentLabel, capabilityLabel, statusLabel } from "@/components/live/labels";
 
 const OUTCOME: Record<number, string> = { 0: "failed", 0.5: "partial", 1: "passed" };
 const FEEDBACK: Record<number, string> = { 0: "👎", 0.5: "none", 1: "👍" };
@@ -48,16 +48,16 @@ export function Scoreboard({
                 <button
                   type="button"
                   onClick={() => onSelect(a.id)}
-                  className="break-all text-left font-mono hover:underline"
+                  className="text-left hover:underline"
                   aria-pressed={a.id === selectedId}
+                  title={a.name}
                 >
-                  {a.name}
+                  {agentLabel(a)}
                 </button>
-                <span className="ml-1 text-xs text-neutral-500">v{a.version}</span>
               </td>
               <td className="py-1.5 pr-2">
-                <span className={`rounded px-1.5 py-0.5 text-xs capitalize ${STATUS_STYLE[a.status]}`}>
-                  {a.status}
+                <span className={`rounded px-1.5 py-0.5 text-xs ${STATUS_STYLE[a.status]}`}>
+                  {statusLabel(a.status)}
                 </span>
               </td>
               <td className="py-1.5 pr-2 text-right tabular-nums">{rolling ? rolling.mean.toFixed(2) : "—"}</td>
@@ -97,7 +97,7 @@ export function RewardBreakdown({
     >
       <header className="flex flex-wrap items-baseline gap-2">
         <h3 id="breakdown-heading" className="font-semibold">
-          Reward breakdown: <span className="break-all font-mono">{agent.name}</span>
+          Reward breakdown: <span title={agent.name}>{agentLabel(agent)}</span>
         </h3>
         <button
           type="button"
