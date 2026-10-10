@@ -458,8 +458,11 @@ def fetch_paper(arxiv_id: str, workdir: Path, *, db, project_id) -> dict:
 
 
 def read_paper(project_id: str, arxiv_id: str, *, db, llm, agent: dict, workdir: Path, task_id=None,
-               reference: Optional[dict] = None, model: str = "smart") -> dict:
-    """fetch_paper, then extract, then store papers.claims and papers.settings, with an event for each step."""
+               reference: Optional[dict] = None, model: str = "smart", cap_min: float = 20) -> dict:
+    """fetch_paper, then extract, then tag each claim runnable or not (lab/agents/triage.py), then store
+    papers.claims and papers.settings, with an event for each step."""
+    from lab.agents.triage import extract_facts, summary, triage
+
     info = fetch_paper(arxiv_id, workdir, db=db, project_id=project_id)
     text = (Path(workdir) / "paper.txt").read_text(encoding="utf-8")
     try:
@@ -470,6 +473,19 @@ def read_paper(project_id: str, arxiv_id: str, *, db, llm, agent: dict, workdir:
              project_id=project_id, agent_id=agent.get("id"), task_id=task_id)
         raise
     claims, settings = res["claims"], res["settings"]
+    try:  # facts only (a small call); a failure leaves every claim "unverified", never fails the Reader
+        facts, facts_tokens, facts_error = *extract_facts(text, claims, llm=llm, agent=agent, title=info["title"] or "",
+                                                          arxiv_id=arxiv_id, task_id=task_id, model=model), None
+    except Exception as e:
+        facts, facts_tokens, facts_error = [], 0, f"{type(e).__name__}: {e}"[:300]
+    claims = triage(claims, facts, cap_min)
+    res = {**res, "claims": claims, "tokens": res["tokens"] + facts_tokens}
+    emit(db, "claims_triaged", f"claims triaged: {summary(claims)}",
+         "code rules on the facts the Reader extracted (no public data, dataset too big, compute over budget, needs "
+         f"GPU; cap {cap_min:g} CPU-min)" + (f"; the facts call failed: {facts_error}" if facts_error else ""),
+         project_id=project_id, agent_id=agent.get("id"), task_id=task_id,
+         data={"claims": [{"claim_id": c["id"], **{k: c["runnable"][k] for k in ("status", "reason")}}
+                          for c in claims], "facts_tokens": facts_tokens})
     db.table("papers").update({"claims": claims, "settings": settings}).eq("project_id", project_id).execute()
     n_ok = sum(c["valid"] for c in claims)
     stated = [s for s in settings if s["checks"].get("stated")]

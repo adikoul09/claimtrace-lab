@@ -90,6 +90,8 @@ def check_design(design: dict, claims: list[dict], settings: list[dict] | None =
             problems.append(f"there is no claim {cid} (model {name})")
         elif not by_id[cid].get("valid"):
             problems.append(f"claim {cid} is not valid (its quote or value failed the code check)")
+        elif (by_id[cid].get("runnable") or {}).get("status") == "not_runnable":
+            problems.append(f"claim {cid} is not runnable here: {by_id[cid]['runnable']['reason']}")
     sids = design.get("setting_ids")
     if settings is not None and sids is not None:
         valid_ids = {f"s{i}" for i in range(1, len(settings) + 1)}
@@ -210,7 +212,7 @@ def _setting_line(s: dict) -> str:
 
 
 def designer_goal(claims: list[dict], settings: list[dict], cap_min: float) -> str:
-    valid = [c for c in claims if c.get("valid")]
+    valid = [c for c in claims if c.get("valid") and (c.get("runnable") or {}).get("status") != "not_runnable"]
     return (f"Choose what to reproduce from this paper on a CPU, with at most {cap_min:g} CPU-minutes for the full run.\n"
             "Pick ONE experiment whose key result can be reproduced at small scale on CPU (a dataset available "
             "through torchvision, small models). List the models to train; each model reproduces exactly one claim "
