@@ -86,6 +86,20 @@ def scrub(text: str, *secrets: Optional[str]) -> str:
     return re.sub(r"(?i)(bearer\s+)[A-Za-z0-9._\-]+", r"\1***", text)
 
 
+def live_tokens_today(db, now: Optional[datetime] = None) -> int:
+    """Live tokens (tokens_in + tokens_out) in llm_calls since 05:30 IST, over all processes and providers. Replayed
+    calls are not counted: nothing was billed for them. The 700k cap and the controller's budget hold use this."""
+    since = day_start(now or datetime.now(timezone.utc)).isoformat()
+    total, page, start = 0, 1000, 0
+    while True:
+        rows = db.table("llm_calls").select("tokens_in,tokens_out").eq("mode", "live").gte("ts", since) \
+            .range(start, start + page - 1).execute().data
+        total += sum((r.get("tokens_in") or 0) + (r.get("tokens_out") or 0) for r in rows)
+        if len(rows) < page:
+            return total
+        start += page
+
+
 def day_start(now: datetime) -> datetime:
     """Start of the Elevate quota day (05:30 IST) containing `now`, in UTC."""
     start = now.astimezone(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0) + DAY_START_UTC
@@ -363,15 +377,7 @@ class LLM:
 
     def tokens_today(self) -> int:
         """Live tokens in llm_calls since the start of the quota day (05:30 IST), over all processes."""
-        since = day_start(datetime.now(timezone.utc)).isoformat()
-        total, page, start = 0, 1000, 0
-        while True:
-            rows = self.db.table("llm_calls").select("tokens_in,tokens_out").eq("mode", "live").gte("ts", since) \
-                .range(start, start + page - 1).execute().data
-            total += sum((r.get("tokens_in") or 0) + (r.get("tokens_out") or 0) for r in rows)
-            if len(rows) < page:
-                return total
-            start += page
+        return live_tokens_today(self.db)
 
     def _event(self, type_: str, message: str, reason: str, agent_id, task_id, data: Optional[dict] = None) -> None:
         try:

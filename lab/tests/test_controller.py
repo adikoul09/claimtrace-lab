@@ -166,3 +166,48 @@ def test_latest_attempt_of_a_step_counts():
     tasks = [{"input": {"step": 0}, "status": "failed", "created_at": "2026-10-10T10:00:00Z"},
              {"input": {"step": 0}, "status": "done", "created_at": "2026-10-10T10:05:00Z"}]
     assert progress.next_action(2, tasks) == ("create", 1)
+
+
+# ---- envbuilder step limit 4 -> 6 (HoO-A) -------------------------------------------------------------------------
+
+def test_an_envbuilder_gets_at_least_six_steps():
+    from lab.controller.rules import STEP_FLOORS
+    assert STEP_FLOORS == {"setup_env": 6}
+    env = {"id": "e", "name": "envbuilder-v2", "capabilities": ["setup_env"],
+           "budget": {"max_tokens": 10000, "max_cpu_s": 600, "max_steps": 4}}
+    assert assign.step_floor(env) == {"max_tokens": 40_000, "max_cpu_s": 600, "max_steps": 6}   # tokens floor too
+    assert assign.step_floor({**env, "budget": {**env["budget"], "max_steps": 8, "max_tokens": 40_000}}) is None
+    reader = {"id": "r", "name": "reader-v1", "capabilities": ["read_paper"], "budget": {"max_steps": 2}}
+    assert assign.step_floor(reader) is None                                                    # no floor for it
+
+
+# ---- unblock: a reset step counts only attempts after the reset, and gets a fresh try --------------------------------
+
+def test_attempts_before_an_unblock_do_not_count():
+    a = [{"id": "a1", "status": "failed", "created_at": "2026-10-11T01:00:00+00:00", "output": {}},
+         {"id": "a2", "status": "failed", "created_at": "2026-10-11T01:10:00+00:00", "output": {}},
+         {"id": "a3", "status": "failed", "created_at": "2026-10-11T03:10:00+00:00", "output": {}}]
+    assert [t["id"] for t in progress.since_reset(a, "2026-10-11T03:00:00+00:00")] == ["a3"]
+    assert progress.since_reset(a, None) == a
+
+
+def test_a_step_with_no_attempt_since_its_reset_is_tried_fresh():
+    assert progress.failure_action([], []) == ("retry", None)
+
+
+def test_unblock_targets_the_step_the_project_blocked_on():
+    steps = [{"input": {"step": 0}, "status": "done", "capability": "read_paper", "created_at": "1"},
+             {"input": {"step": 3}, "status": "failed", "capability": "setup_env", "created_at": "3"},
+             {"input": {"step": 2}, "status": "done", "capability": "write_code", "created_at": "2"}]
+    assert progress.blocked_step(steps) == (3, "setup_env")
+    assert progress.blocked_step(steps[:1]) is None          # nothing failed: nothing to unblock
+
+
+# ---- envbuilder token budget 10k -> 40k (same pattern as its 6 steps) ---------------------------------------------
+
+def test_an_envbuilder_gets_at_least_40k_tokens_and_6_steps():
+    from lab.controller.rules import TOKEN_FLOORS
+    assert TOKEN_FLOORS == {"setup_env": 40_000}
+    env = {"id": "e", "name": "envbuilder-v2", "capabilities": ["setup_env"],
+           "budget": {"max_tokens": 10000, "max_cpu_s": 600, "max_steps": 6}}
+    assert assign.step_floor(env) == {"max_tokens": 40_000, "max_cpu_s": 600, "max_steps": 6}

@@ -1,5 +1,6 @@
 """The controller loop (SPEC §3). Each tick:
 
+  budget      at BUDGET_HOLD_TOKENS live tokens today, hold all LLM work (budget.py); release it below
   heartbeat   upsert executors row 'controller' (caps ['controller']) so the UI shows the controller is alive
   caps        a queued task with empty required_caps gets them from the capability map (any worker could claim it)
   stale       a running task whose executor's heartbeat is older than STALE_HEARTBEAT_S goes back to 'queued'
@@ -24,10 +25,11 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import (assign, inbox, lifecycle, memory, planner, progress, reward, routing, spawn, whatif,
-                            wiring)
+from lab.controller import (assign, budget, inbox, lifecycle, memory, planner, progress, reward, routing, spawn,
+                            whatif, wiring)
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
-from lab.controller.rules import MAX_REFINES_PER_ROLE, ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
+from lab.controller.rules import (BUDGET_HOLD_TOKENS, MAX_REFINES_PER_ROLE, ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S,
+                                  TICK_S)
 from lab.db import client, emit
 from lab.schemas import PlanStep
 
@@ -47,6 +49,7 @@ class Controller:
         self._refine_failed: dict = {}  # (agent id, task id) -> time of the last failed refinement
         self._learn_failed: dict = {}  # lesson trigger -> time of the last failed proposal
         self._whatif_finished: set = set()  # design_whatif task ids whose sequence is over
+        self.hold = False  # the token guard: no LLM call and no new LLM task while True
 
     @property
     def llm(self):
@@ -76,7 +79,7 @@ class Controller:
 
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
-        for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
+        for step in (self.budget_check, self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
                      self.apply_decisions, self.intake, self.engine_requests, self.plan_queued, self.advance,
                      self.prepare_whatifs,
                      self.advance_whatifs, self.learn):
@@ -92,6 +95,35 @@ class Controller:
         while True:
             self.tick()
             time.sleep(interval)
+
+    # ---- token guard ----------------------------------------------------------------------------------------------
+    def budget_check(self, now: datetime) -> None:
+        from lab.llm import day_start, live_tokens_today
+
+        db, used = self.db, live_tokens_today(self.db, now)
+        hold = budget.on_hold(used, BUDGET_HOLD_TOKENS)
+        queued = self.q("tasks", "id,project_id,capability,required_caps").in_(
+            "status", ["queued", "awaiting_approval"]).execute().data
+        changed = []
+        for t in queued:
+            caps = t.get("required_caps") or []
+            new = budget.held(caps) if hold and budget.needs_llm(t["capability"]) else budget.released(caps)
+            if new != caps:
+                db.table("tasks").update({"required_caps": new}).eq("id", t["id"]).execute()
+                changed.append(t["id"])
+        if hold and not self.hold:
+            seen = db.table("events").select("id").eq("type", "budget_hold").gte("ts", day_start(now).isoformat()) \
+                .limit(1).execute().data
+            if not seen:
+                emit(db, "budget_hold", f"LLM work on hold: {used} live tokens today",
+                     f"{used} >= {BUDGET_HOLD_TOKENS} (token guard, since 05:30 IST); no LLM call and no new LLM task "
+                     f"until the quota day resets; runs and code-only compares continue; {len(changed)} queued LLM "
+                     f"task(s) held", data={"tokens_today": used, "threshold": BUDGET_HOLD_TOKENS, "held": changed})
+        if not hold and changed:
+            emit(db, "budget_released", f"LLM work resumes: {used} live tokens today",
+                 f"{used} < {BUDGET_HOLD_TOKENS}; {len(changed)} held task(s) released",
+                 data={"tokens_today": used, "threshold": BUDGET_HOLD_TOKENS, "released": changed})
+        self.hold = hold
 
     # ---- heartbeat, caps, stale -------------------------------------------------------------------------------------
     def heartbeat(self, now: datetime) -> None:
@@ -232,7 +264,7 @@ class Controller:
         already = {(a["parent_id"], a["created_by_task"]) for a in agents
                    if a.get("origin") == "refined" and a.get("parent_id") and a.get("created_by_task")}
         counts = self._refine_counts(agents)
-        for r in lifecycle.refine_triggers(agents, tasks, feedback, already):
+        for r in ([] if self.hold else lifecycle.refine_triggers(agents, tasks, feedback, already)):
             key = (r.agent["id"], r.task["id"])
             pid = r.task.get("project_id")
             if lifecycle.is_capped(pid, r.agent["name"], counts):
@@ -335,6 +367,8 @@ class Controller:
 
     # ---- learn (SPEC §6) ----------------------------------------------------------------------------------------------
     def learn(self, now: datetime) -> None:
+        if self.hold:
+            return  # lesson proposals are LLM calls
         db = self.db
         for p in self.q("projects", key="id").in_("status", ["running", "done", "blocked"]).execute().data:
             plans = db.table("tasks").select("id").eq("project_id", p["id"]).eq("capability", "plan") \
@@ -425,6 +459,8 @@ class Controller:
                  data={**ev["data"], "plan_task_id": row["id"]})
 
     def plan_queued(self, now: datetime) -> None:
+        if self.hold:
+            return  # planning is an LLM call
         for t in self.q("tasks", "id").eq("status", "queued").eq("capability", "plan").execute().data:
             claimed = self.db.table("tasks").update({"status": "running", "executor": CONTROLLER_NAME,
                                                      "started_at": now.isoformat()}) \
@@ -501,8 +537,9 @@ class Controller:
                     self.stop_project(p, last, "stopped", "a researcher rejected its task"
                                       + (f": {last['decision_note']}" if last.get("decision_note") else ""))
             elif action == "failed":
-                attempts = [t for t in step_tasks if t["input"]["step"] == i]
-                last = progress.latest_per_step(attempts)[i]
+                every = [t for t in step_tasks if t["input"]["step"] == i]
+                last = progress.latest_per_step(every)[i]
+                attempts = progress.since_reset(every, self._reset_ts(p["id"], plan_task["id"], i))
                 kind, why = progress.failure_action(attempts, debugs)
                 if kind == "debug":
                     self.create_debug(p, plan_task, steps, i, last, debugs, now, step_tasks=step_tasks)
@@ -511,6 +548,37 @@ class Controller:
                                      step_tasks=step_tasks)
                 elif kind == "blocked":
                     self.stop_project(p, last, "blocked", why)
+
+    def _reset_ts(self, project_id: str, plan_task_id: str, step: int) -> Optional[str]:
+        """When step was last reset by a project_unblocked event (its attempts before that do not count)."""
+        rows = self.db.table("events").select("ts").eq("project_id", project_id).eq("type", "project_unblocked") \
+            .eq("data->>plan_task_id", plan_task_id).eq("data->>step", str(step)).order("ts", desc=True).limit(1) \
+            .execute().data
+        return rows[0]["ts"] if rows else None
+
+    def unblock(self, project_id: str, reason: str) -> dict:
+        """Resume a blocked project at the step it stopped on, with fresh attempts; done steps are kept. The running
+        controller creates the new attempt on its next tick (python -m lab.controller --unblock ID --reason ...)."""
+        p = self.db.table("projects").select("id,status").eq("id", project_id).execute().data
+        if not p:
+            raise SystemExit(f"no project {project_id}")
+        if p[0]["status"] != "blocked":
+            raise SystemExit(f"project {project_id} is {p[0]['status']}, not blocked: nothing to unblock")
+        state = self._plan_state(project_id)
+        if state is None:
+            raise SystemExit("the project has no finished plan")
+        plan_task, steps, step_tasks, _ = state
+        where = progress.blocked_step(step_tasks)
+        if where is None:
+            raise SystemExit("the project's latest step attempt did not fail: nothing to unblock")
+        step, capability = where
+        before = [t for t in step_tasks if t["input"]["step"] == step]
+        ev = emit(self.db, "project_unblocked", f"project resumed at step {step + 1} ({capability})", reason,
+                  project_id=project_id, task_id=plan_task["id"],
+                  data={"plan_task_id": plan_task["id"], "step": str(step), "capability": capability,
+                        "previous_attempts": len(before)})
+        self.db.table("projects").update({"status": "running"}).eq("id", project_id).execute()
+        return {"step": step, "capability": capability, "previous_attempts": len(before), "event_id": ev["id"]}
 
     def _plan_state(self, project_id: str):
         """(plan task, steps, step tasks, debug tasks) of the project's latest done plan, or None."""
@@ -645,6 +713,8 @@ class Controller:
     def redirect_step(self, project: dict, plan_task: dict, steps: list[dict], i: int, task: dict,
                       step_tasks: list[dict], debugs: list[dict], now: datetime) -> None:
         """SPEC §9: replan step i with the researcher's note, store it in the plan, then create the new attempt."""
+        if self.hold:
+            return  # replanning is an LLM call
         if time.monotonic() - self._replan_failed.get(task["id"], -1e9) < self.SPAWN_RETRY_S:
             return
         note = task.get("decision_note") or ""
@@ -764,6 +834,8 @@ class Controller:
         """Assign the best agent (spawning one on a gap or a repeated failure), then queue the task, or, with
         `existing`, fill in that queued row instead. None: no agent yet (the spawn failed; it is tried again later)."""
         db, pid = self.db, project["id"]
+        if self.hold and budget.needs_llm(capability):
+            return None  # the token guard: no new LLM task (budget_check emitted budget_hold)
         pin = routing.host_pin(db.table("tasks").select("capability,executor,started_at").eq("project_id", pid)
                                .eq("capability", "run").execute().data)
         caps = routing.with_pin(caps, pin)
@@ -781,6 +853,7 @@ class Controller:
             if agent is None:
                 return None
             pick = assign.Pick(agent, None, f"{agent['name']}: spawned for this task ({trig.reason})")
+        self.raise_step_floor(pick.agent)
         inp["budget"] = {**inp.get("budget", {}),
                          "max_tokens": (pick.agent.get("budget") or {}).get("max_tokens", 20_000)}
         lessons, tags = [], []
@@ -815,12 +888,34 @@ class Controller:
                                       "budget": inp["budget"]})
         return row
 
+    def raise_step_floor(self, agent: dict) -> bool:
+        """Raise the agent row's max_steps to its capability's floor (rules.STEP_FLOORS), with an event."""
+        new = assign.step_floor(agent)
+        if new is None:
+            return False
+        before = dict(agent.get("budget") or {})
+        old = before.get("max_steps")
+        self.db.table("agents").update({"budget": new}).eq("id", agent["id"]).execute()
+        agent["budget"] = new
+        emit(self.db, "agent_budget_raised",
+             f"{agent['name']}: max_steps {old} → {new.get('max_steps')}, max_tokens {before.get('max_tokens')} → "
+             f"{new.get('max_tokens')}",
+             f"agents with {', '.join(c for c in agent.get('capabilities') or [] if c in assign.STEP_FLOORS)} get at "
+             f"least the floor budget (LAB_ENVBUILDER_STEPS, LAB_ENVBUILDER_TOKENS); the old budget ran out in live "
+             f"runs", agent_id=agent["id"], data={"from": before, "to": new})
+        return True
+
+    def apply_step_floors(self) -> list[str]:
+        """One-off: raise every active agent below its floor now (python -m lab.controller --apply-step-floors)."""
+        return [a["name"] for a in self.db.table("agents").select("*").eq("status", "active").execute().data
+                if self.raise_step_floor(a)]
+
     SPAWN_RETRY_S = 60  # a failed spawn (LLM down, bad draft) is tried again after this long
 
     def spawn_agent(self, project: dict, capability: str, trig, context: str, trigger_task: dict,
                     agents: list[dict]) -> Optional[dict]:
         key = (trigger_task["id"], capability, trig.kind)
-        if time.monotonic() - self._spawn_failed.get(key, -1e9) < self.SPAWN_RETRY_S:
+        if self.hold or time.monotonic() - self._spawn_failed.get(key, -1e9) < self.SPAWN_RETRY_S:
             return None
         db = self.db
         cap_s = int(project.get("budget_cpu_min") or 20) * 60

@@ -500,3 +500,14 @@ def test_implementer_uses_the_smart_model(runs, monkeypatch):
     monkeypatch.setattr(stages, "run_agent", fake)
     stages.handle(db, task("write_code", f"runs/{PID}", upstream=up), executor="laptop-b")
     assert models == ["smart"]
+
+
+def test_designer_uses_the_smart_model(runs, monkeypatch):
+    """Live run 42fb4944: designer-v1 on gpt-5-mini ran through the 4000-token cap before answering."""
+    models = []
+    def fake(agent, goal, workdir, **kw):
+        models.append(kw.get("model"))
+        return RunResult("finished", json.dumps(DESIGN), "x", 1, 10, 0.1)
+    monkeypatch.setattr(stages, "run_agent", fake)
+    stages.handle(store(), task("design_experiment", f"runs/{PID}"), executor="laptop-b")
+    assert models == ["smart"]

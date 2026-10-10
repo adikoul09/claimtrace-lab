@@ -182,7 +182,8 @@ def h_design(ctx: Ctx) -> dict:
              task_id=ctx.task["id"], agent_id=ctx.agent.get("id"))
         return {"design": d, "margin": margin, "margin_reason": why,
                 "config": {"claim_map": d["claim_map"], "design": d, "seeds": [0], "margin_reason": why}}
-    return checked(ctx, designer_goal(ctx.claims, ctx.settings, ctx.cap_s / 60) + ctx.notes(), designed)
+    return checked(ctx, designer_goal(ctx.claims, ctx.settings, ctx.cap_s / 60) + ctx.notes(), designed,
+                   model="smart")  # live 42fb4944: gpt-5-mini ran through the 4000-token cap before answering
 
 
 def h_write_code(ctx: Ctx) -> dict:

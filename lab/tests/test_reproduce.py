@@ -93,6 +93,23 @@ def test_implementer_goal_never_points_at_the_golden_reference():
     assert "--subset" in goal and "METRIC final_teacher=" in goal and "74" in goal
 
 
+def test_envbuilder_goal_names_the_versions_this_executor_already_runs(monkeypatch):
+    """Live run 42fb4944: three EnvBuilders pinned torch 2.2.x, which has no wheel for Windows ARM64 / Python 3.12,
+    and none recovered from pip's error. The goal names the versions the executor's own Python runs (read from the
+    host, not hard-coded) as pins known to install here; packages it lacks are left out."""
+    from importlib import metadata
+    installed = {"torch": "2.14.1+cpu", "torchvision": "0.29.1+cpu"}
+    def version(name):
+        if name not in installed:
+            raise metadata.PackageNotFoundError(name)
+        return installed[name]
+    monkeypatch.setattr(rp.metadata, "version", version)
+    goal = rp.envbuilder_goal()
+    assert "torch==2.14.1+cpu" in goal and "torchvision==0.29.1+cpu" in goal and "numpy==" not in goal
+    monkeypatch.setattr(rp.metadata, "version", lambda n: (_ for _ in ()).throw(metadata.PackageNotFoundError(n)))
+    assert "known to install" not in rp.envbuilder_goal()  # nothing installed: no line
+
+
 # ---- smoke timing and budget (code decides) ---------------------------------------------------------------------
 
 SMOKE_METRICS = [
