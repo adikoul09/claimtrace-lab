@@ -281,14 +281,16 @@ def host_pins() -> list[str]:
 
 def envbuilder_goal(feedback: str | None = None) -> str:
     pins = host_pins()
-    goal = ("train.py in your run dir needs a Python environment. Read train.py, then call make_env with the "
+    goal = ("train.py in your run dir needs a Python environment. Call make_env with the "
             "requirements.txt content: one line per third-party package that train.py imports, pinned as "
             f"name==version.\nExecutor: Python {platform.python_version()} on {platform.platform()} "
             f"({platform.machine()}). Choose versions that publish wheels for this platform and Python; if a pin is "
             "wrong, pip's error lists the versions that exist. For PyTorch CPU wheels you may add the line "
             "--extra-index-url https://download.pytorch.org/whl/cpu\n"
             + (f"Pins known to install here (this executor's own Python runs them; prefer these): {', '.join(pins)}\n"
-               if pins else "")
+               "Call make_env FIRST with exactly the host pins listed (add nothing else unless train.py imports it "
+               "and it isn't installed); once make_env reports env ready, finish immediately; do not write "
+               "validation scripts.\n" if pins else "")
             + "Finish when make_env reports 'env ready'.")
     if feedback:
         goal += f"\n\nThe last run failed because of the environment:\n{feedback}"

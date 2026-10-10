@@ -106,6 +106,9 @@ def test_envbuilder_goal_names_the_versions_this_executor_already_runs(monkeypat
     monkeypatch.setattr(rp.metadata, "version", version)
     goal = rp.envbuilder_goal()
     assert "torch==2.14.1+cpu" in goal and "torchvision==0.29.1+cpu" in goal and "numpy==" not in goal
+    # live 42fb4944: agents read, wrote setup scripts and validated, and ran out of steps around make_env
+    assert "Call make_env FIRST with exactly the host pins listed" in goal and "Read train.py" not in goal
+    assert "finish immediately; do not write validation scripts" in goal
     monkeypatch.setattr(rp.metadata, "version", lambda n: (_ for _ in ()).throw(metadata.PackageNotFoundError(n)))
     assert "known to install" not in rp.envbuilder_goal()  # nothing installed: no line
 
