@@ -351,27 +351,51 @@ def check_request_size(prompt: str, system: str = "") -> None:
 
 # ---- the Reader ---------------------------------------------------------------------------------------------------
 
+READER_SYSTEM = ("You are the Reader. You extract claims and settings from the paper text in the message, in one "
+                 "structured answer. You have no tools: do not try to read, write or save files; everything you need "
+                 "is in the message. Answer with exactly the JSON object the schema asks for and nothing else: no "
+                 "extra keys, no prose.")
+COMPACT_SETTINGS = ("\n\nThis call: return only the settings, compactly: each value in a few words and each quote the "
+                    "shortest verbatim span that states it. The claims were extracted in a separate call.")
+
+
+def reader_system(agent: dict) -> str:
+    """The code's Reader instruction first; the agent's own role prompt (refined by the controller) only as additional
+    guidance after it, so the schema and the no-tools rule win."""
+    role = (agent.get("role_prompt") or "").strip()
+    return READER_SYSTEM + (f"\n\nAdditional guidance from the agent's role (the rules above win):\n{role}" if role
+                            else "")
+
+
 def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "", task_id=None,
             model: str = "smart") -> dict:
-    """The model sees only the selected sections; quotes are checked against every page of the full text."""
+    """The model sees only the selected sections; quotes are checked against every page of the full text.
+    One call for the claims; when its answer already carries the settings they are used, else one compact settings
+    call (both parts in one requested answer overran the gateway's 4000-token output cap)."""
     from lab.llm import Request
 
     sel, report = select_sections(text)
     prompt = PROMPT.format(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS),
                            text=sel)
+    system = reader_system(agent)
     out, tokens, resp = {}, 0, None
-    for part in ("claims", "settings"):  # one call each: both in one answer overran the gateway's output cap
-        p = prompt + f"\n\nThis call: return only the {part}; the {'settings' if part == 'claims' else 'claims'} " \
-                     "are extracted in a separate call."
-        check_request_size(p, agent.get("role_prompt") or "")
+    for part in ("claims", "settings"):
+        if part == "settings" and isinstance(out.get("settings"), list):
+            break  # the claims answer already has them: no second call
+        p = prompt + ("\n\nThis call: return the claims; the settings may follow in a separate call."
+                      if part == "claims" else COMPACT_SETTINGS)
+        check_request_size(p, system)
         schema = {"type": "object", "properties": {part: EXTRACT_SCHEMA["properties"][part]}, "required": [part]}
-        resp = llm.call(Request(agent=agent["name"], system=agent["role_prompt"], prompt=p, schema=schema,
+        resp = llm.call(Request(agent=agent["name"], system=system, prompt=p, schema=schema,
                                 model=model, max_output=READER_MAX_OUTPUT), agent_id=agent.get("id"), task_id=task_id)
-        out[part] = (resp.output if isinstance(resp.output, dict) else {}).get(part) or []
+        got = resp.output if isinstance(resp.output, dict) else {}
+        out[part] = got.get(part) or []
+        if part == "claims" and isinstance(got.get("settings"), list):
+            out["settings"] = got["settings"]
         tokens += resp.tokens_in + resp.tokens_out
     pages = parse_pages(text)
     return {"claims": check_claims(out["claims"], pages),
-            "settings": [check_setting(s, pages) for s in out["settings"]],
+            "settings": [check_setting(s, pages) for s in out.get("settings") or []],
             "tokens": tokens, "model": resp.model, "mode": resp.mode, "cache_key": resp.key, "sections": report}
 
 

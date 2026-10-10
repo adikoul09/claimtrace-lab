@@ -176,3 +176,34 @@ def test_extract_checks_what_the_model_returns(tmp_path, monkeypatch):
     assert [s["valid"] for s in out["settings"]] == [True, True]
     assert out["tokens"] == 2 * 9800
     assert db.rows["llm_calls"][0]["agent_id"] == "ag-reader"
+
+
+def test_reader_system_is_code_first_and_settings_in_the_claims_answer_skip_the_second_call(tmp_path, monkeypatch):
+    """Live run: a refined role prompt asked for file writes (no tools here) and the model answered empty; another
+    returned claims and settings together, then the settings call overran the 4000-token cap."""
+    both = {"claims": [claim(67, "This net achieved 67 test errors", whose="oracle")],
+            "settings": [{"key": "temperature", "applies_to": "distilled", "value": "20",
+                          "quote": "at a temperature of 20", "page": 4}]}
+    calls = []
+
+    def provider(req, model):
+        calls.append(req)
+        out = answers.pop(0)
+        return {"output": out, "text": json.dumps(out), "tokens_in": 100, "tokens_out": 50, "models": [model]}
+    monkeypatch.setitem(llm_mod.PROVIDERS, "fake", provider)
+    client = LLM(mode="live", provider="fake", cache_dir=tmp_path, db=FakeDB(), models={"smart": "fake-pro"})
+    agent = {"id": "ag", "name": "reader-v9", "role_prompt": "Write paper_summary.json with your findings."}
+    text = paper.render([PAGE3, PAGE4], first=3)
+
+    answers = [both]  # the claims answer already carries settings: one call only
+    out = paper.extract(text, llm=client, agent=agent)
+    assert len(calls) == 1 and [s["valid"] for s in out["settings"]] == [True]
+    system = calls[0].system
+    assert system.startswith(paper.READER_SYSTEM) and "no tools" in system
+    assert system.index("Write paper_summary.json") > system.index("Additional guidance")
+
+    calls.clear()
+    answers = [{"claims": both["claims"]}, {"settings": both["settings"]}]  # no settings: a compact second call
+    out = paper.extract(text, llm=client, agent=agent, arxiv_id="x2")
+    assert len(calls) == 2 and "compact" in calls[1].prompt and list(calls[1].schema["properties"]) == ["settings"]
+    assert out["tokens"] == 300
