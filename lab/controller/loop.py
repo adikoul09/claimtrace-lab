@@ -5,6 +5,7 @@
   stale       a running task whose executor's heartbeat is older than STALE_HEARTBEAT_S goes back to 'queued'
   score       a finished agent task gets its rewards row (SPEC §5); a new 👍/👎 feedback event rescores it
   lifecycle   retire, merge and refine agents by the rules in lifecycle.py (SPEC §4)
+  learn       after a failure-then-recovery or a finished project, the Reporter proposes lessons (SPEC §6)
   intake      a project with status 'new' gets a queued `plan` task and status 'planning'
   plan        queued `plan` tasks are claimed and planned (LLM, checked by code); project -> 'running'
   decisions   an awaiting task with a decision moves on (docs/CONTRACTS.md §6), in case the web did not move it
@@ -20,7 +21,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
-from lab.controller import assign, lifecycle, planner, progress, reward, routing, spawn, wiring
+from lab.controller import assign, lifecycle, memory, planner, progress, reward, routing, spawn, wiring
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
 from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
@@ -40,6 +41,7 @@ class Controller:
         self._spawn_failed: dict = {}  # (trigger task, capability, kind) -> time of the last failed spawn
         self._replan_failed: dict = {}  # redirected task id -> time of the last failed replan
         self._refine_failed: dict = {}  # (agent id, task id) -> time of the last failed refinement
+        self._learn_failed: dict = {}  # lesson trigger -> time of the last failed proposal
 
     @property
     def llm(self):
@@ -70,7 +72,7 @@ class Controller:
     def tick(self, now: Optional[datetime] = None) -> None:
         now = now or utc_now()
         for step in (self.heartbeat, self.fix_empty_caps, self.requeue_stale, self.score, self.lifecycle,
-                     self.apply_decisions, self.intake, self.plan_queued, self.advance):
+                     self.apply_decisions, self.intake, self.plan_queued, self.advance, self.learn):
             try:
                 step(now)
             except Exception as e:  # one failing step must not stop the loop
@@ -264,6 +266,40 @@ class Controller:
             emit(db, "task_reassigned", f"{t['capability']} task → {target['name']}", why,
                  project_id=t.get("project_id"), agent_id=target["id"], task_id=t["id"])
 
+    # ---- learn (SPEC §6) ----------------------------------------------------------------------------------------------
+    def learn(self, now: datetime) -> None:
+        db = self.db
+        for p in self.q("projects", key="id").in_("status", ["running", "done", "blocked"]).execute().data:
+            plans = db.table("tasks").select("id").eq("project_id", p["id"]).eq("capability", "plan") \
+                .eq("status", "done").order("finished_at", desc=True).limit(1).execute().data
+            if not plans:
+                continue
+            steps = db.table("tasks").select("id,status,created_at,input").eq("parent_task_id", plans[0]["id"]) \
+                .execute().data
+            steps = [t for t in steps if (t.get("input") or {}).get("step") is not None]
+            triggers = [(f"recovery:{plans[0]['id']}:{step}",
+                         f"step {step + 1} failed (task {bad[:8]}) and then succeeded (task {good[:8]})")
+                        for step, bad, good in memory.recoveries(steps)]
+            if p["status"] == "done":
+                triggers.append((f"done:{p['id']}", "the project finished all its plan steps"))
+            for key, focus in triggers:
+                if time.monotonic() - self._learn_failed.get(key, -1e9) < self.SPAWN_RETRY_S:
+                    continue
+                seen = db.table("events").select("id").eq("project_id", p["id"]).eq("type", "lessons_proposed") \
+                    .eq("data->>trigger", key).limit(1).execute().data
+                if seen:
+                    continue
+                agents = db.table("agents").select("*").eq("status", "active").execute().data
+                pick = assign.pick_agent(agents, "write_notes", {}) or assign.pick_agent(agents, "write_report", {})
+                if pick is None:
+                    continue
+                try:
+                    memory.propose(db, self.llm, p, pick.agent, key, focus)
+                except Exception as e:
+                    self._learn_failed[key] = time.monotonic()
+                    emit(db, "lessons_failed", "could not propose lessons", f"{focus}; {type(e).__name__}: {e}"[:1000],
+                         project_id=p["id"], agent_id=pick.agent["id"])
+
     # ---- decisions --------------------------------------------------------------------------------------------------
     def apply_decisions(self, now: datetime) -> None:
         """The web moves a decided task itself; this catches a decision written without the status change."""
@@ -308,9 +344,9 @@ class Controller:
         project = db.table("projects").select("*").eq("id", pid).execute().data[0]
         papers = db.table("papers").select("*").eq("project_id", pid).execute().data
         paper = papers[0] if papers else None
-        tags = project.get("tags") or []
-        lessons = db.table("lessons").select("id,kind,text,tags").overlaps("tags", tags).limit(10).execute().data \
-            if tags else []
+        tags = memory.task_tags(project, "plan") + [c for slot in planner.REPRO_ORDER for c in slot
+                                                    if not c.startswith("run")]
+        lessons = memory.relevant(db, tags, memory.PER_PLAN)
         agents = db.table("agents").select("*").eq("status", "active").execute().data
         scores = reward.rolling_means(db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True)
                                       .limit(1000).execute().data)
@@ -334,6 +370,7 @@ class Controller:
                        "lessons": [l["id"] for l in lessons], "model": resp.model, "mode": resp.mode}}) \
             .eq("id", task["id"]).execute()
         db.table("projects").update({"status": "running"}).eq("id", pid).execute()
+        memory.apply(db, lessons, tags, "planner", project_id=pid, task_id=task["id"])
         reason = plan.reason or "the planner gave no reason"
         if plan.dropped:
             reason += f" | code dropped {len(plan.dropped)} step(s): " + "; ".join(plan.dropped)
@@ -528,12 +565,21 @@ class Controller:
             pick = assign.Pick(agent, None, f"{agent['name']}: spawned for this task ({trig.reason})")
         inp["budget"] = {**inp.get("budget", {}),
                          "max_tokens": (pick.agent.get("budget") or {}).get("max_tokens", 20_000)}
+        lessons, tags = [], []
+        if capability != "run":  # a run has no prompt: nothing could apply a lesson there
+            tags = memory.task_tags(project, capability, inp.get("error_signature"))
+            lessons = memory.relevant(db, tags, memory.PER_TASK)
+            if lessons:
+                inp["goal"] = inp["goal"] + "\n\n" + memory.lessons_block(lessons)
+                inp["lessons"] = [l["id"] for l in lessons]
         live = routing.eligible(caps, db.table("executors").select("*").execute().data, now)
         row = db.table("tasks").insert({
             "project_id": pid, "parent_task_id": parent_task_id, "capability": capability, "required_caps": caps,
             "agent_id": pick.agent["id"], "input": inp, "acceptance": {"text": acceptance},
             "requires_approval": requires_approval,
             "status": "awaiting_approval" if requires_approval else "queued"}).execute().data[0]
+        memory.apply(db, lessons, tags, f"{capability} task", project_id=pid, task_id=row["id"],
+                     agent_id=pick.agent["id"])
         where = (f"live executors that can take it: {', '.join(e['name'] for e in live)}" if live
                  else "no live executor has these caps yet; it waits in the queue")
         if pin:
