@@ -27,6 +27,8 @@ from lab.llm import LLM, Request
 cpu_clock = time.process_time
 PROCESS_TOOLS = ("run", "make_env")
 OBS_IN_PROMPT = 2_000  # earlier observations are cut to this in the prompt; the latest is shown in full
+OBS_TIGHT = 300  # ...and to this when the prompt would pass MAX_PROMPT_BYTES
+MAX_PROMPT_BYTES = 36_000  # with the system prompt, every request stays under 40 KB
 
 
 @dataclass
@@ -61,15 +63,29 @@ def system_prompt(agent: dict) -> str:
 
 
 def step_prompt(goal: str, transcript: list[dict]) -> str:
-    parts = [f"Task:\n{goal}"]
-    for i, t in enumerate(transcript):
-        obs = t["observation"]
-        if i < len(transcript) - 1 and len(obs) > OBS_IN_PROMPT:
-            obs = obs[:OBS_IN_PROMPT] + " [cut]"
-        parts.append(f"Step {t['step']}: {t['action']} {json.dumps(t['args'], ensure_ascii=False)}\n"
-                     f"Result:\n{obs}")
-    parts.append("Reply with the next action as JSON.")
-    return "\n\n".join(parts)
+    """The step's prompt, under MAX_PROMPT_BYTES (paper text per request stays under 40 KB with the system prompt):
+    earlier observations are cut to OBS_IN_PROMPT, then harder, then the latest one is cut to fit."""
+    def build(older: int, latest: int | None) -> str:
+        parts = [f"Task:\n{goal}"]
+        for i, t in enumerate(transcript):
+            obs, cap = t["observation"], older if i < len(transcript) - 1 else latest
+            if cap is not None and len(obs) > cap:
+                obs = obs[:cap] + " [cut]"
+            parts.append(f"Step {t['step']}: {t['action']} {json.dumps(t['args'], ensure_ascii=False)}\n"
+                         f"Result:\n{obs}")
+        parts.append("Reply with the next action as JSON.")
+        return "\n\n".join(parts)
+
+    size = lambda text: len(text.encode("utf-8"))  # noqa: E731
+    prompt = build(OBS_IN_PROMPT, None)
+    if size(prompt) <= MAX_PROMPT_BYTES:
+        return prompt
+    prompt = build(OBS_TIGHT, None)
+    if size(prompt) <= MAX_PROMPT_BYTES or not transcript:
+        return prompt
+    over = size(prompt) - MAX_PROMPT_BYTES
+    latest = max(0, len(transcript[-1]["observation"]) - over - 200)
+    return build(OBS_TIGHT, latest)
 
 
 def short(args: dict, n: int = 120) -> str:
