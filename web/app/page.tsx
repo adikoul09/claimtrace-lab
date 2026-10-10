@@ -2,10 +2,14 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
+import { NewResearchForm } from "@/components/live/new-research-form";
 
 export default function Home() {
   return (
     <>
+      <div className="mb-6">
+        <NewResearchForm />
+      </div>
       <h1 className="mb-4 text-lg font-semibold">Projects</h1>
       <Suspense fallback={<p className="text-sm text-neutral-500">Loading…</p>}>
         <ProjectList />
