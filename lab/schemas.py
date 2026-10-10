@@ -11,6 +11,13 @@ Task input contract (tasks.input, written by the controller for every plan step)
   scale           run steps only: "smoke" or "full"
   cmd, cwd, timeout_s   run steps only: what the executor worker runs (cwd = workdir; timeout has a floor)
 tasks.acceptance holds {"text": <acceptance check in words>}; code turns it into an outcome when the task is scored.
+
+Task output fields the reward reads (lab/controller/reward.py), written by whoever ran the task:
+  outcome         passed | partial | failed, when code checked the acceptance (wins over everything else)
+  agent_status    finished | stopped | failed, the agent runtime's RunResult.status (stopped scores partial)
+  metrics         run tasks: number of METRIC lines stored (0 scores partial)
+Tokens come from llm_calls rows with the task's id. Feedback (👍/👎) is an events row: type 'feedback', task_id,
+data {"value": "up" | "down"}; the controller rescores the task when it sees a newer one.
 """
 from __future__ import annotations
 
