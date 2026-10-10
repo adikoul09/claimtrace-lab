@@ -10,6 +10,7 @@ import { REPLAY_PILL } from "./replay-badge";
 import { eventIsReplay } from "./replay";
 import { WhatIfForm } from "./whatif-form";
 import { agentLabel, eventTypeLabel } from "./labels";
+import { isKeyMoment, keyMomentsByDefault, momentLabel } from "./moments";
 
 const LIMIT = 200;
 
@@ -21,6 +22,9 @@ export function EventStream({ projectId }: { projectId: string }) {
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  // null = not chosen yet: on for busy projects (> 30 events), except when a link points at one event (#ev-…),
+  // which might not be a key moment.
+  const [keyChoice, setKeyChoice] = useState<boolean | null>(null);
   const jumped = useRef(false);
 
   // Rows arrive after the first fetch, so a #ev-<id> link (from a lesson's evidence) can't scroll on load; do it here.
@@ -74,6 +78,10 @@ export function EventStream({ projectId }: { projectId: string }) {
     };
   }, [projectId]);
 
+  const linked = typeof window !== "undefined" && window.location.hash.startsWith("#ev-");
+  const keyOnly = keyChoice ?? (keyMomentsByDefault(events.length) && !linked);
+  const shown = keyOnly ? events.filter(isKeyMoment) : events;
+
   return (
     <section aria-labelledby="live-heading">
       <div className="mb-4">
@@ -96,6 +104,32 @@ export function EventStream({ projectId }: { projectId: string }) {
 
       {error && <p className="mb-3 text-sm text-red-600">Could not load events: {error}</p>}
 
+      {events.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => setKeyChoice(!keyOnly)}
+            aria-pressed={keyOnly}
+            className={`min-h-9 rounded border px-2.5 ${
+              keyOnly
+                ? "border-sky-500 bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300"
+                : "border-neutral-300 text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
+            }`}
+          >
+            Key moments
+          </button>
+          <span className="text-neutral-500">
+            {keyOnly
+              ? `${shown.length} of ${events.length}: agents spawned, refined or retired, lessons applied, budget holds, approvals needed`
+              : `all ${events.length} events`}
+          </span>
+        </div>
+      )}
+
+      {events.length > 0 && shown.length === 0 && (
+        <p className="text-sm text-neutral-500">No key moments yet. Turn the filter off to see every event.</p>
+      )}
+
       {events.length === 0 ? (
         !loaded ? (
           <p className="text-sm text-neutral-500">Loading…</p>
@@ -104,8 +138,16 @@ export function EventStream({ projectId }: { projectId: string }) {
         )
       ) : (
         <ol className="divide-y divide-neutral-200 dark:divide-neutral-800">
-          {events.map((e) => (
-            <li key={e.id} id={`ev-${e.id}`} className="scroll-mt-4 py-2 text-sm data-[highlight]:bg-amber-50 dark:data-[highlight]:bg-amber-950/30">
+          {shown.map((e) => (
+            <li
+              key={e.id}
+              id={`ev-${e.id}`}
+              className={`scroll-mt-4 py-2 text-sm data-[highlight]:bg-amber-50 dark:data-[highlight]:bg-amber-950/30 ${
+                e.type === "agent_spawned"
+                  ? "border-l-4 border-amber-500 bg-amber-50/60 pl-2 dark:bg-amber-950/20"
+                  : ""
+              }`}
+            >
               <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-neutral-500">
                 <time dateTime={e.ts} className="tabular-nums">
                   {new Date(e.ts).toLocaleTimeString()}
@@ -114,7 +156,7 @@ export function EventStream({ projectId }: { projectId: string }) {
                   className="rounded bg-neutral-100 px-1.5 py-0.5 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                   title={e.type}
                 >
-                  {eventTypeLabel(e.type)}
+                  {momentLabel(e) ?? eventTypeLabel(e.type)}
                 </span>
                 {e.agent_id && <span>{agents[e.agent_id] ?? "an agent"}</span>}
                 {eventIsReplay(e.data) && (
@@ -125,7 +167,7 @@ export function EventStream({ projectId }: { projectId: string }) {
               </div>
               <p className="mt-1 break-words">{e.message}</p>
               <p className="mt-0.5 break-words text-neutral-600 dark:text-neutral-400">
-                <span className="font-medium">Why: </span>
+                <span className="font-medium">{e.type === "agent_spawned" ? "Spawned because: " : "Why: "}</span>
                 {e.reason}
               </p>
             </li>
