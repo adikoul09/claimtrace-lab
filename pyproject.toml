@@ -1,0 +1,15 @@
+[project]
+name = "claimtrace-lab"
+version = "0.1.0"
+description = "ClaimTrace Lab: controller, agents and executors (lab/)"
+requires-python = ">=3.11"
+dependencies = [
+    "supabase>=2.10",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["lab/tests"]
