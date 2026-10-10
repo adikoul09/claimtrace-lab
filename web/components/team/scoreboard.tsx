@@ -3,8 +3,8 @@
 // Scoreboard (agents ranked by rolling reward) and the reward breakdown of one agent.
 // Every number here is a stored rewards row (lab/controller/reward.py); the UI only averages the window.
 import type { Agent, Reward } from "@/lib/types";
-import { ROLLING_WINDOW, scoreboard, rollingReward } from "./lineage";
-import { STATUS_STYLE } from "./styles";
+import { latestPerRole, ROLLING_WINDOW, scoreboard, rollingReward } from "./lineage";
+import { ORIGIN_STYLE, STATUS_STYLE } from "./styles";
 import { agentLabel, capabilityLabel, statusLabel } from "@/components/live/labels";
 
 const OUTCOME: Record<number, string> = { 0: "failed", 0.5: "partial", 1: "passed" };
@@ -21,11 +21,52 @@ export function Scoreboard({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
-  const rows = scoreboard(agents, rewards);
+  // Each role's newest version is ranked; older versions fold under "History (N)", like the graph.
+  const { latest, older, spawnedRoot } = latestPerRole(agents);
+  return (
+    <div>
+      <ScoreTable
+        rows={scoreboard(latest, rewards)}
+        spawnedRoot={spawnedRoot}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        caption="Each role's newest agent version, ranked by rolling reward"
+      />
+      {older.length > 0 && (
+        <details className="mt-2">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            History ({older.length}) <span className="font-normal text-neutral-500">older versions</span>
+          </summary>
+          <ScoreTable
+            rows={scoreboard(older, rewards)}
+            spawnedRoot={{}}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            caption="Older agent versions, ranked by rolling reward"
+          />
+        </details>
+      )}
+    </div>
+  );
+}
+
+function ScoreTable({
+  rows,
+  spawnedRoot,
+  selectedId,
+  onSelect,
+  caption,
+}: {
+  rows: ReturnType<typeof scoreboard<Agent, Reward>>;
+  spawnedRoot: Record<string, Agent | undefined>;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  caption: string;
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
-        <caption className="sr-only">Agents ranked by rolling reward</caption>
+        <caption className="sr-only">{caption}</caption>
         <thead className="text-xs text-neutral-500">
           <tr className="border-b border-neutral-200 dark:border-neutral-800">
             <th className="py-1.5 pr-2 font-medium">#</th>
@@ -36,34 +77,45 @@ export function Scoreboard({
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ agent: a, rolling }, i) => (
-            <tr
-              key={a.id}
-              className={`border-b border-neutral-100 dark:border-neutral-900 ${
-                a.id === selectedId ? "bg-sky-50 dark:bg-sky-950/40" : ""
-              }`}
-            >
-              <td className="py-1.5 pr-2 tabular-nums text-neutral-500">{rolling ? i + 1 : "–"}</td>
-              <td className="py-1.5 pr-2">
-                <button
-                  type="button"
-                  onClick={() => onSelect(a.id)}
-                  className="text-left hover:underline"
-                  aria-pressed={a.id === selectedId}
-                  title={a.name}
-                >
-                  {agentLabel(a)}
-                </button>
-              </td>
-              <td className="py-1.5 pr-2">
-                <span className={`rounded px-1.5 py-0.5 text-xs ${STATUS_STYLE[a.status]}`}>
-                  {statusLabel(a.status)}
-                </span>
-              </td>
-              <td className="py-1.5 pr-2 text-right tabular-nums">{rolling ? rolling.mean.toFixed(2) : "—"}</td>
-              <td className="py-1.5 text-right tabular-nums text-neutral-500">{rolling?.count ?? 0}</td>
-            </tr>
-          ))}
+          {rows.map(({ agent: a, rolling }, i) => {
+            const spawned = spawnedRoot[a.id];
+            return (
+              <tr
+                key={a.id}
+                className={`border-b border-neutral-100 align-top dark:border-neutral-900 ${
+                  a.id === selectedId ? "bg-sky-50 dark:bg-sky-950/40" : ""
+                }`}
+              >
+                <td className="py-1.5 pr-2 tabular-nums text-neutral-500">{rolling ? i + 1 : "–"}</td>
+                <td className="py-1.5 pr-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelect(a.id)}
+                    className="text-left hover:underline"
+                    aria-pressed={a.id === selectedId}
+                    title={a.name}
+                  >
+                    {agentLabel(a)}
+                  </button>
+                  {spawned && (
+                    <span
+                      className={`ml-1.5 rounded border px-1 py-0.5 text-[10px] ${ORIGIN_STYLE.spawned}`}
+                      title={`Spawned: ${spawned.origin_reason}`}
+                    >
+                      Spawned
+                    </span>
+                  )}
+                </td>
+                <td className="py-1.5 pr-2">
+                  <span className={`rounded px-1.5 py-0.5 text-xs ${STATUS_STYLE[a.status]}`}>
+                    {statusLabel(a.status)}
+                  </span>
+                </td>
+                <td className="py-1.5 pr-2 text-right tabular-nums">{rolling ? rolling.mean.toFixed(2) : "—"}</td>
+                <td className="py-1.5 text-right tabular-nums text-neutral-500">{rolling?.count ?? 0}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
