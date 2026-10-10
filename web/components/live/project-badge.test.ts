@@ -4,7 +4,7 @@ import { projectBadge } from "./project-badge.ts";
 
 test("precomputed and reference projects get a badge on the home list", () => {
   assert.equal(projectBadge("precomputed")?.label, "Precomputed");
-  assert.equal(projectBadge("reference")?.label, "Reference");
+  assert.equal(projectBadge("reference")?.label, "Reference run");
 });
 
 test("live project statuses get no badge", () => {

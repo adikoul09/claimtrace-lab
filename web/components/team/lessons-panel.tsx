@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Event, Lesson } from "@/lib/types";
 import { isImported, lessonText, sortLessons } from "./lessons";
+import { humanize } from "@/components/live/labels";
 
 type Evidence = Pick<Event, "id" | "project_id" | "type" | "message" | "reason">;
 
@@ -92,8 +93,8 @@ export function LessonsPanel() {
                 {l.tags.length > 0 && (
                   <ul aria-label="Tags" className="mt-1 flex flex-wrap gap-1">
                     {l.tags.map((t) => (
-                      <li key={t} className="font-mono text-xs text-neutral-500">
-                        #{t}
+                      <li key={t} className="text-xs text-neutral-500">
+                        #{t.replace(/_/g, " ")}
                       </li>
                     ))}
                   </ul>
@@ -103,7 +104,7 @@ export function LessonsPanel() {
                   {ev ? (
                     <div className="mt-1 border-l-2 border-neutral-300 pl-2 dark:border-neutral-700">
                       <p className="break-words">
-                        <span className="font-mono">{ev.type}</span>: {ev.message}
+                        <span className="font-medium">{humanize(ev.type)}</span>: {ev.message}
                       </p>
                       <p className="break-words text-neutral-500">Why: {ev.reason}</p>
                       {ev.project_id && (
@@ -116,7 +117,7 @@ export function LessonsPanel() {
                       )}
                     </div>
                   ) : (
-                    <p className="mt-1 font-mono text-neutral-500">event {l.evidence_event_id}</p>
+                    <p className="mt-1 text-neutral-500">The evidence event is not available.</p>
                   )}
                 </details>
               </li>
