@@ -3,7 +3,8 @@
   LLM_PROVIDER   gemini (only provider so far); the key is LLM_API_KEY
   LLM_MODE       live (default): every call goes to the provider and the response is cached
                  replay: answers only from the cache of real recorded calls; a miss raises ReplayMiss
-  LLM_MODEL_FAST / LLM_MODEL_SMART   what the aliases "fast" and "smart" mean
+  LLM_MODEL_FAST / LLM_MODEL_SMART   what the aliases "fast" and "smart" mean (default for both: gemini-flash-latest,
+                 the only tier with free quota)
 
 Every answered call writes one llm_calls row (agent_id, task_id, model, tokens_in, tokens_out, mode, cache_key). A
 replayed call logs the token counts of the recorded call with mode 'replay', so budgets behave the same in both modes.
@@ -11,7 +12,9 @@ replayed call logs the token counts of the recorded call with mode 'replay', so 
 Ported from baseline/el01-auditor/el01/llm (cache.py, backend.py): same cache key (sha256 of agent, prompt, schema,
 model and input hashes) and one JSON file per call under .cache/llm/<agent>/<key>.json holding the prompt next to the
 response. Changed for Round 1: `claude -p` and the anthropic backend are gone; the usage log is the llm_calls table;
-live mode does not answer from the cache, so 'live' in llm_calls always means a fresh call."""
+live mode does not answer from the cache, so 'live' in llm_calls always means a fresh call. Replay also finds a call
+recorded under another model name (e.g. before a model rename) when system, prompt, schema and inputs are identical; it
+is logged with the recorded model and key."""
 from __future__ import annotations
 
 import hashlib
@@ -25,6 +28,7 @@ from typing import Callable, Optional
 from lab.db import ROOT, client, setting
 
 CACHE_DIR = ROOT / ".cache" / "llm"
+DEFAULT_MODEL = "gemini-flash-latest"
 MODES = ("live", "replay")
 RETRY_CODES = (429, 500, 503)  # rate limit and transient overload
 RETRY_WAIT_S = (2, 6, 18)
@@ -135,6 +139,16 @@ class Cache:
         p = self.path(agent, key)
         return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
 
+    def find_request(self, req: "Request") -> Optional[dict]:
+        """A recorded call of this agent with the same system, prompt, schema and inputs, under any model."""
+        want = {"system": req.system, "prompt": req.prompt, "schema": req.schema, "inputs": req.inputs}
+        for p in sorted((self.root / req.agent).glob("*.json")):
+            rec = json.loads(p.read_text(encoding="utf-8"))
+            r = rec.get("request") or {}
+            if {k: r.get(k, {} if k == "inputs" else None) for k in want} == want:
+                return rec
+        return None
+
     def put(self, agent: str, key: str, record: dict) -> Path:
         p = self.path(agent, key)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -158,7 +172,7 @@ class LLM:
         self.cache = Cache(cache_dir)
         self.db = db if db is not None else client()
         self.models = models if models is not None else {
-            "fast": setting("LLM_MODEL_FAST"), "smart": setting("LLM_MODEL_SMART")}
+            "fast": setting("LLM_MODEL_FAST", DEFAULT_MODEL), "smart": setting("LLM_MODEL_SMART", DEFAULT_MODEL)}
 
     def model_for(self, alias: str) -> str:
         if alias in ("fast", "smart"):
@@ -172,7 +186,7 @@ class LLM:
         model = self.model_for(req.model)
         key = req.key_for(model)
         if self.mode == "replay":
-            rec = self.cache.get(req.agent, key)
+            rec = self.cache.get(req.agent, key) or self.cache.find_request(req)
             if rec is None:
                 raise ReplayMiss(f"no recorded response for agent {req.agent!r} (key {key[:12]}); "
                                  f"run with LLM_MODE=live to make this call")
@@ -188,8 +202,9 @@ class LLM:
                                 "wall_seconds": round(time.monotonic() - t0, 1)}}
             self.cache.put(req.agent, key, rec)
         resp = rec["response"]
-        out = Response(resp["output"], key, self.mode, model, resp["tokens_in"], resp["tokens_out"], rec)
+        out = Response(resp["output"], rec.get("key", key), self.mode, rec.get("model", model), resp["tokens_in"],
+                       resp["tokens_out"], rec)
         self.db.table("llm_calls").insert({
-            "agent_id": agent_id, "task_id": task_id, "model": model, "tokens_in": out.tokens_in,
-            "tokens_out": out.tokens_out, "mode": self.mode, "cache_key": key}).execute()
+            "agent_id": agent_id, "task_id": task_id, "model": out.model, "tokens_in": out.tokens_in,
+            "tokens_out": out.tokens_out, "mode": self.mode, "cache_key": out.key}).execute()
         return out
