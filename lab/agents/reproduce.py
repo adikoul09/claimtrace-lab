@@ -281,7 +281,7 @@ def host_pins() -> list[str]:
 
 def envbuilder_goal(feedback: str | None = None) -> str:
     pins = host_pins()
-    goal = ("train.py in your run dir needs a Python environment. Read train.py, then call make_env with the "
+    goal = ("train.py in your run dir needs a Python environment. Call make_env with the "
             "requirements.txt content: one line per third-party package that train.py imports, pinned as "
             f"name==version.\nExecutor: Python {platform.python_version()} on {platform.platform()} "
             f"({platform.machine()}). Choose versions that publish wheels for this platform and Python; if a pin is "
