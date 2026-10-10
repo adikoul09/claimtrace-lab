@@ -291,3 +291,12 @@ def test_agent_calls_use_the_fast_model_at_the_full_output_cap(workdir, monkeypa
                             runs_root=workdir.parent)
     assert res.status == "finished" and seen == [("fake-fast", runtime.AGENT_MAX_OUTPUT)] and \
         runtime.AGENT_MAX_OUTPUT == 4000
+
+
+def test_a_json_object_answer_comes_back_as_json_text(workdir, fake_provider):
+    """Live run: the model put the design as an object in "answer"; slicing it crashed the stage (KeyError: slice)."""
+    fake_provider([{"action": "finish", "answer": {"experiment": "MNIST", "models": []}, "reason": "done"}])
+    db = FakeDB()
+    res = runtime.run_agent(agent_row(), "design", workdir, db=db, llm=make_llm(workdir, db), runs_root=workdir.parent)
+    assert res.status == "finished" and isinstance(res.answer, str)
+    assert json.loads(res.answer) == {"experiment": "MNIST", "models": []}
