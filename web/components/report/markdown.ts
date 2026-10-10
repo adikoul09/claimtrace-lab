@@ -1,7 +1,7 @@
 // The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
 // so the export matches the screen. Every number of ours links to its log line.
 import { formatDuration } from "../exp/experiments.ts";
-import type { Authenticity, ReportData, RunStats } from "./report.ts";
+import { splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
 
 /** Wording shared by the screen and the export. */
 export const TEXT = {
@@ -12,6 +12,9 @@ export const TEXT = {
     "Verdicts are computed by code (the Analyst) against the margin declared before the run. Every number of ours links to the log line that printed it.",
   noPaper: "No paper has been read for this project yet.",
   noRows: "No run has targeted a claim yet. Rows appear when a reproduction maps its models to claims.",
+  planned: "Planned, not run yet",
+  plannedIntro: "Claims a planned run will test; they get a value and a verdict once it runs.",
+  noneGraded: "No claim has a value yet.",
   notGraded: "not graded yet",
   notMeasured: "not measured yet",
   settingsIntro: "Paper value vs ours for each setting, labelled scale (budget), omission (the paper does not say), difference or same.",
@@ -43,6 +46,17 @@ export const authenticitySummary = (a: Authenticity) =>
       )}) from ${a.sources.map((s) => s.label).join(", ")}.`;
 /** "2 (1 seed)" */
 export const countText = (r: Authenticity["rows"][number]) => `${r.count}${r.seeds ? ` (${r.seeds})` : ""}`;
+
+/** "18 can be checked on a laptop · 55 can't" (null until the claims carry ANY-1's runnable tags). */
+export const triageSummary = (t: ClaimTriage) =>
+  t.runnable + t.notRunnable === 0
+    ? null
+    : [`${t.runnable} can be checked on a laptop`, `${t.notRunnable} can't`, t.unsorted ? `${t.unsorted} not sorted yet` : null]
+        .filter(Boolean)
+        .join(" · ");
+/** "36 no public data · 19 dataset too big" */
+export const triageReasons = (t: ClaimTriage) =>
+  t.reasons.length ? t.reasons.map((r) => `${r.count} ${r.reason}`).join(" · ") : null;
 
 export const memoryRows = (s: RunStats) => [
   [
@@ -77,23 +91,27 @@ export function reportMarkdown(
   if (d.authenticity.total)
     out.push(table(["Verdict", "Claims"], d.authenticity.rows.map((r) => [r.label, countText(r)])));
 
+  const claimsTable = (rows: ReportRow[]) =>
+    table(
+      ["Claim", "Paper", "Ours", "Verdict"],
+      rows.map((r) => [
+        `${r.claim.id} ${r.claim.model} · ${r.claim.metric} (${r.claim.whose}) — ${r.experimentLabel}`,
+        `${r.claim.value} ${r.claim.unit} (p. ${r.claim.page ?? "?"})`,
+        (r.ours.length ? r.ours.map((p) => log(r.experimentId, p.log_line, p.text)).join(", ") : TEXT.notMeasured) +
+          (r.delta !== null ? ` (Δ ${r.delta > 0 ? "+" : ""}${r.delta})` : "") +
+          (r.margin !== null ? ` ± ${r.margin}` : ""),
+        r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : TEXT.notGraded,
+      ]),
+    );
+
   out.push("## Claims vs ours", TEXT.claimsIntro);
   if (!hasPaper) out.push(TEXT.noPaper);
   else if (!d.rows.length) out.push(TEXT.noRows);
-  else
-    out.push(
-      table(
-        ["Claim", "Paper", "Ours", "Verdict"],
-        d.rows.map((r) => [
-          `${r.claim.id} ${r.claim.model} · ${r.claim.metric} (${r.claim.whose}) — ${r.experimentLabel}`,
-          `${r.claim.value} ${r.claim.unit} (p. ${r.claim.page ?? "?"})`,
-          (r.ours.length ? r.ours.map((p) => log(r.experimentId, p.log_line, p.text)).join(", ") : TEXT.notMeasured) +
-            (r.delta !== null ? ` (Δ ${r.delta > 0 ? "+" : ""}${r.delta})` : "") +
-            (r.margin !== null ? ` ± ${r.margin}` : ""),
-          r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : TEXT.notGraded,
-        ]),
-      ),
-    );
+  else {
+    const { shown, planned } = splitClaimRows(d.rows);
+    out.push(shown.length ? claimsTable(shown) : TEXT.noneGraded);
+    if (planned.length) out.push(`### ${TEXT.planned} (${planned.length})`, TEXT.plannedIntro, claimsTable(planned));
+  }
 
   for (const g of d.graded) {
     out.push(`### ${g.experimentLabel}`);
@@ -162,10 +180,11 @@ export function reportMarkdown(
   if (d.memory?.current.lessonsApplied.length)
     out.push(d.memory.current.lessonsApplied.map((e) => `- Lesson applied: ${e.message}`).join("\n"));
 
-  if (hasPaper && d.untested.length) {
-    out.push(`## Other claims in the paper (${d.untested.length}, not run)`);
+  if (hasPaper && d.triage.total) {
+    out.push(`## All claims in the paper (${d.triage.total})`);
+    for (const line of [triageSummary(d.triage), triageReasons(d.triage)]) if (line) out.push(line);
     out.push(
-      d.untested
+      d.triage.ordered
         .map(
           (c) =>
             `- ${c.id} ${c.model} · ${c.metric}: ${c.value} ${c.unit} (p. ${c.page ?? "?"})${c.valid ? "" : " — failed code check"}` +

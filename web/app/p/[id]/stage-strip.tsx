@@ -114,13 +114,24 @@ export function StageStrip({ projectId }: { projectId: string }) {
               </span>
               <span className="min-w-0 leading-tight">
                 {s.label}
-                <span className="sr-only">: {st.text}</span>
+                <span className="sr-only">
+                  : {st.text}
+                  {s.inferred && ", inferred"}
+                </span>
               </span>
             </>
           );
-          const cls = `flex min-h-9 w-full items-center gap-1 rounded border px-1.5 py-1 text-left text-[11px] font-medium ${st.box}`;
+          // Done without a task of its own: lighter, and the tooltip says how it was inferred.
+          const light = s.inferred ? "border-dashed opacity-60" : "";
+          const how =
+            s.inferred === "later"
+              ? " (inferred from later stages)"
+              : s.inferred === "results"
+                ? ` (inferred from stored results: ${s.note})`
+                : "";
+          const cls = `flex min-h-9 w-full items-center gap-1 rounded border px-1.5 py-1 text-left text-[11px] font-medium ${st.box} ${light}`;
           return (
-            <li key={s.id} title={`${i + 1}. ${s.label}: ${st.text}${s.note ? ` (${s.note})` : ""}`}>
+            <li key={s.id} title={`${i + 1}. ${s.label}: ${st.text}${how}`}>
               {s.state === "failed" ? (
                 <button
                   type="button"
