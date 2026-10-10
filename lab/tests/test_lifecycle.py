@@ -140,3 +140,28 @@ def test_code_only_agents_are_exempt_from_retire():
     a = [agent("r", "runner-v1", ["run"], max_tokens=0), agent("i", "implementer-v1", ["write_code"])]
     r = rewards("r", [0.3, 0.3, 0.3]) + rewards("i", [0.3, 0.3, 0.3])
     assert [c.agent["id"] for c in lifecycle.retire_candidates(a, r)] == ["i"]
+
+
+# ---- R4: at most MAX_REFINES_PER_ROLE refines per agent role per project ------------------------------------------
+
+def test_role_is_the_name_without_its_version():
+    assert lifecycle.role_of("reader-v13") == "reader"
+    assert lifecycle.role_of("crash-debugger-2-v1") == "crash-debugger-2"
+
+
+def test_refine_counts_per_project_and_role():
+    refined = [{"name": f"reader-v{i}", "origin": "refined", "created_by_task": f"t{i}"} for i in range(2, 6)]
+    refined.append({"name": "implementer-v2", "origin": "refined", "created_by_task": "u1"})
+    refined.append({"name": "debugger-v1", "origin": "spawned", "created_by_task": "t2"})   # not a refine
+    project_of = {"t2": "p1", "t3": "p1", "t4": "p1", "t5": "p2", "u1": "p1"}
+    counts = lifecycle.refine_counts(refined, project_of)
+    assert counts == {("p1", "reader"): 3, ("p2", "reader"): 1, ("p1", "implementer"): 1}
+
+
+def test_a_role_is_capped_after_three_refines_in_a_project():
+    from lab.controller.rules import MAX_REFINES_PER_ROLE
+    assert MAX_REFINES_PER_ROLE == 3
+    counts = {("p1", "reader"): 3, ("p2", "reader"): 2}
+    assert lifecycle.is_capped("p1", "reader-v4", counts)
+    assert not lifecycle.is_capped("p2", "reader-v3", counts)
+    assert not lifecycle.is_capped("p1", "implementer-v1", counts)

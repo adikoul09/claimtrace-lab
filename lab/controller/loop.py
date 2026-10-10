@@ -25,7 +25,7 @@ from typing import Optional
 
 from lab.controller import assign, lifecycle, memory, planner, progress, reward, routing, spawn, whatif, wiring
 from lab.controller.routing import CONTROLLER_CAP, CONTROLLER_NAME
-from lab.controller.rules import ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
+from lab.controller.rules import MAX_REFINES_PER_ROLE, ROLLING_WINDOW, RUN_TIMEOUT_FLOOR_S, TICK_S
 from lab.db import client, emit
 from lab.schemas import PlanStep
 
@@ -212,11 +212,39 @@ class Controller:
         agents = db.table("agents").select("*").execute().data
         already = {(a["parent_id"], a["created_by_task"]) for a in agents
                    if a.get("origin") == "refined" and a.get("parent_id") and a.get("created_by_task")}
+        counts = self._refine_counts(agents)
         for r in lifecycle.refine_triggers(agents, tasks, feedback, already):
             key = (r.agent["id"], r.task["id"])
+            pid = r.task.get("project_id")
+            if lifecycle.is_capped(pid, r.agent["name"], counts):
+                self._refine_capped(pid, r.agent, r.task, counts)
+                continue
             if time.monotonic() - self._refine_failed.get(key, -1e9) < self.SPAWN_RETRY_S:
                 continue
             self.refine(r, key)
+
+    def _refine_counts(self, agents: list[dict]) -> dict:
+        refined = [a for a in agents if a.get("origin") == "refined" and a.get("created_by_task")]
+        ids = sorted({a["created_by_task"] for a in refined})
+        project_of = {t["id"]: t["project_id"] for t in self.db.table("tasks").select("id,project_id")
+                      .in_("id", ids).execute().data} if ids else {}
+        return lifecycle.refine_counts(refined, project_of)
+
+    def _refine_capped(self, pid: str, agent: dict, task: dict, counts: dict) -> None:
+        """R4: the role was refined MAX_REFINES_PER_ROLE times in this project; the task stays failed. One event per
+        project and role."""
+        role = lifecycle.role_of(agent["name"])
+        if not self.once(("refine_capped", pid, role)):
+            return
+        seen = self.db.table("events").select("id").eq("project_id", pid).eq("type", "refine_capped") \
+            .eq("data->>role", role).limit(1).execute().data
+        if seen:
+            return
+        emit(self.db, "refine_capped", f"no more refines of {role} in this project",
+             f"{role} was refined {counts.get((pid, role), 0)} times in this project (cap {MAX_REFINES_PER_ROLE}); "
+             f"task {task['id'][:8]} stays failed and no new agent is spawned in its place",
+             project_id=pid, agent_id=agent["id"], task_id=task["id"],
+             data={"role": role, "refines": counts.get((pid, role), 0), "cap": MAX_REFINES_PER_ROLE})
 
     REFINE_SCHEMA = {"type": "object", "properties": {
         "role_prompt": {"type": "string", "description": "the full new system prompt, with the lesson built in"},
@@ -690,6 +718,11 @@ class Controller:
         rewards = db.table("rewards").select("agent_id,reward,ts").order("ts", desc=True).limit(1000).execute().data
         pick = assign.pick_agent(agents, capability, reward.rolling_means(rewards), preferred=preferred)
         trig = spawn.trigger(pick, capability, fails)
+        if trig and trig.kind == "repeated_failure" and lifecycle.is_capped(
+                pid, pick.agent["name"], self._refine_counts(db.table("agents").select("*").execute().data)):
+            trig = None  # R4: a capped role is not replaced by a spawned agent either
+            pick = assign.Pick(pick.agent, pick.score, pick.reason + "; its role reached the refine cap in this "
+                                                                    "project, so no new agent is spawned")
         if trig:
             agent = self.spawn_agent(project, capability, trig, context, trigger_task, agents)
             if agent is None:
