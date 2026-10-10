@@ -2,7 +2,7 @@
 
 // Live tab: the project's events, newest-first, updated over Realtime.
 // Every row shows what happened (message) and why (reason).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { mergeEvents } from "@/lib/live";
 import type { Agent, Event } from "@/lib/types";
@@ -17,6 +17,18 @@ export function EventStream({ projectId }: { projectId: string }) {
   const [agents, setAgents] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const jumped = useRef(false);
+
+  // Rows arrive after the first fetch, so a #ev-<id> link (from a lesson's evidence) can't scroll on load; do it here.
+  useEffect(() => {
+    if (jumped.current || !window.location.hash.startsWith("#ev-")) return;
+    const el = document.getElementById(window.location.hash.slice(1));
+    if (el) {
+      el.scrollIntoView({ block: "center" });
+      el.dataset.highlight = ""; // :target does not apply to rows rendered after load
+      jumped.current = true;
+    }
+  }, [events]);
 
   useEffect(() => {
     const db = supabase();
@@ -84,7 +96,7 @@ export function EventStream({ projectId }: { projectId: string }) {
       ) : (
         <ol className="divide-y divide-neutral-200 dark:divide-neutral-800">
           {events.map((e) => (
-            <li key={e.id} className="py-2 text-sm">
+            <li key={e.id} id={`ev-${e.id}`} className="scroll-mt-4 py-2 text-sm data-[highlight]:bg-amber-50 dark:data-[highlight]:bg-amber-950/30">
               <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-neutral-500">
                 <time dateTime={e.ts} className="tabular-nums">
                   {new Date(e.ts).toLocaleTimeString()}

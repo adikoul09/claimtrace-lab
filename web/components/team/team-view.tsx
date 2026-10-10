@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Agent, Event, Reward, Task } from "@/lib/types";
 import { applyAgentChange, sortAgents, type AgentChange } from "./agents";
+import { LessonsPanel } from "./lessons-panel";
 import { LineageGraph } from "./lineage-graph";
 import { lineageEdges, rollingReward } from "./lineage";
 import { RewardBreakdown, Scoreboard } from "./scoreboard";
@@ -169,6 +170,8 @@ export function TeamView() {
             <h3 className="mb-2 text-sm font-semibold">Scoreboard</h3>
             <Scoreboard agents={agents} rewards={rewards} selectedId={selectedId} onSelect={select} />
           </div>
+
+          <LessonsPanel />
 
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map((a) => (
