@@ -43,13 +43,42 @@ export function budgetLabel(b: Record<string, unknown>): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
-// Home list: what a visitor should see first (live runs, the reference run, precomputed audits) vs. everything else.
+// Home list: what a visitor should see first (the reference run, live runs, precomputed audits) vs. everything else.
 const OTHER = new Set(["test", "plan_failed", "blocked", "stopped"]);
 
-/** Splits projects into the main list and "Other runs" (test and failed), keeping the given order in each. */
+/** Splits projects into the main list (reference run first) and "Other runs" (test and failed), else keeping order. */
 export function groupProjects<P extends { status: string }>(projects: P[]): { main: P[]; other: P[] } {
+  const rank = (p: P) => (p.status === "reference" ? 0 : 1);
   return {
-    main: projects.filter((p) => !OTHER.has(p.status)),
+    main: projects.filter((p) => !OTHER.has(p.status)).sort((a, b) => rank(a) - rank(b)),
     other: projects.filter((p) => OTHER.has(p.status)),
   };
+}
+
+const PROJECT_STATUS: Record<string, string> = {
+  new: "Starting",
+  planning: "Planning",
+  running: "Running",
+  done: "Finished",
+  blocked: "Stopped: needs attention",
+  plan_failed: "Stopped: the plan failed",
+  stopped: "Stopped by a researcher",
+  test: "Test run",
+  reference: "Reference run",
+  precomputed: "Precomputed",
+};
+
+export function projectStatusLabel(s: string): string {
+  return PROJECT_STATUS[s] ?? humanize(s);
+}
+
+export type PaperTitles = { byProject: Record<string, string>; byArxiv: Record<string, string> };
+
+/** The paper's title (from papers) for real runs; test runs keep their own name, which says what was tested. */
+export function projectTitle(
+  p: { id: string; title: string; arxiv_id: string | null; status: string },
+  titles: PaperTitles,
+): string {
+  if (p.status === "test") return p.title;
+  return titles.byProject[p.id] ?? (p.arxiv_id ? titles.byArxiv[p.arxiv_id] : undefined) ?? p.title;
 }
