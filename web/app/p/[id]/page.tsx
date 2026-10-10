@@ -10,6 +10,7 @@ import { ReportView } from "@/components/report/report-view";
 import { TeamView } from "@/components/team/team-view";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
+import { isUuid } from "@/app/logs/log-lines";
 import { CopyId } from "./copy-id";
 import { StageStrip } from "./stage-strip";
 
@@ -39,7 +40,21 @@ async function ProjectView({ params, searchParams }: PageProps<"/p/[id]">) {
   const tab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : "report";
 
   const db = supabase();
-  const { data: project } = await db.from("projects").select("*").eq("id", id).maybeSingle<Project>();
+  const { data: project } = isUuid(id)
+    ? await db.from("projects").select("*").eq("id", id).maybeSingle<Project>()
+    : { data: null };
+  if (!project)
+    return (
+      <div className="space-y-2">
+        <h1 className="text-lg font-semibold">Project not found</h1>
+        <p className="text-sm text-neutral-500">
+          There is no project with the id <span className="break-all font-mono">{id}</span>.
+        </p>
+        <Link href="/" className="text-sm underline">
+          Back to all projects
+        </Link>
+      </div>
+    );
   // The heading is the paper's title (papers.title), from this project's paper or another run of the same arXiv id.
   const paperRows = (q: "project_id" | "arxiv_id", v: string | null | undefined) =>
     v ? db.from("papers").select("project_id,arxiv_id,title").eq(q, v) : Promise.resolve({ data: [] });

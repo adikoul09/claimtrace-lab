@@ -22,7 +22,8 @@ export const TEXT = {
   branchesIntro: "Each what-if branch changes one setting; the effect is branch minus parent on each final value both runs logged.",
   noBranches: "No what-if branches yet.",
   memoryIntro: "Run 2 of the same paper against run 1: retries before the first successful run, time to the first result, and LLM tokens.",
-  noMemory: "This is the first run of this paper; the memory effect needs a second run.",
+  noMemory: "No finished earlier run to compare yet.",
+  unfinishedPrevious: "Compared with the last earlier run instead, which did not finish.",
   explanationHidden: "Explanation not shown",
   precomputed: "Precomputed — Round 0 audit",
 };
@@ -57,6 +58,10 @@ export const triageSummary = (t: ClaimTriage) =>
 /** "36 no public data · 19 dataset too big" */
 export const triageReasons = (t: ClaimTriage) =>
   t.reasons.length ? t.reasons.map((r) => `${r.count} ${r.reason}`).join(" · ") : null;
+
+/** "vs previous run", "vs previous run (stopped at Designing)", or that there is none. */
+export const memoryHint = (m: ReportData["memory"]) =>
+  !m?.previous ? TEXT.noMemory : m.previousStop ? `vs previous run (${m.previousStop})` : "vs previous run";
 
 export const memoryRows = (s: RunStats) => [
   [
@@ -173,6 +178,7 @@ export function reportMarkdown(
   out.push("## Memory effect", TEXT.memoryIntro);
   if (!d.memory?.previous) out.push(TEXT.noMemory);
   else {
+    if (d.memory.previousStop) out.push(`${TEXT.noMemory} ${TEXT.unfinishedPrevious} (${d.memory.previousStop})`);
     const cur = memoryRows(d.memory.current);
     const prev = memoryRows(d.memory.previous);
     out.push(table(["", "This run", `Previous run (${d.memory.previous.title})`], cur.map(([k, v], i) => [k, v, prev[i][1]])));

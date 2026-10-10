@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { howSteps, NO_EVIDENCE, type Evidence } from "./how.ts";
+import { howSteps, isTestProject, NO_EVIDENCE, type Evidence } from "./how.ts";
 
 const ev = (over: Partial<Evidence> = {}): Evidence => ({ ...NO_EVIDENCE, ...over });
 const labels = (e: Evidence) => Object.fromEntries(howSteps(e).map((s) => [s.id, s.live ? "live" : "next"]));
@@ -34,7 +34,12 @@ test("nothing is live without evidence, and Send to engine stays next even with 
 
 test("a live step says how often it has worked, in plain words", () => {
   const s = howSteps(ev({ readerDone: 3, runsDone: 1 }));
-  assert.equal(s.find((x) => x.id === "reader")!.proof, "done 3 times here");
-  assert.equal(s.find((x) => x.id === "worker")!.proof, "done once here");
+  assert.equal(s.find((x) => x.id === "reader")!.proof, "done 3 times in real runs");
+  assert.equal(s.find((x) => x.id === "worker")!.proof, "done once in real runs");
+  assert.equal(howSteps(ev({ projects: 9 }))[0].proof, "real research runs: 9");
+  assert.deepEqual(
+    [{ status: "test" }, { status: "running", tags: ["test"] }, { status: "reference", tags: null }, { status: "blocked" }].map(isTestProject),
+    [true, true, false, false],
+  );
   assert.equal(s.find((x) => x.id === "implementer")!.proof, null);
 });

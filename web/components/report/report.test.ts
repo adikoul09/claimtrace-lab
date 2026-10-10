@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildReport, claimTriage, diffText, latestNotes, parseClaims, readVerdicts, runStats, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
+import { buildReport, claimTriage, diffText, latestNotes, parseClaims, previousStop, readVerdicts, runStats, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
 import { reportMarkdown, TEXT, triageReasons, triageSummary } from "./markdown.ts";
 
 const claim = (id: string, value: unknown, extra: Record<string, unknown> = {}) => ({
@@ -560,4 +560,12 @@ test("the export lists all claims with the laptop summary", () => {
   const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, buildReport({ claims, experiments: [], metrics: [] }), "http://x");
   assert.match(md, /## All claims in the paper \(2\)\n\n1 can be checked on a laptop · 1 can't\n\n1 no public data/);
   assert.ok(md.indexOf("- c2 ") < md.indexOf("- c1 "));
+});
+
+test("previousStop names where an unfinished earlier run stopped, and is null for a finished one", () => {
+  const task = (capability: string, status: string) => ({ id: capability + status, capability, status, created_at: "2026-10-11T00:00:00Z", finished_at: null });
+  assert.equal(previousStop("blocked", [task("plan", "done"), task("read_paper", "failed")]), "stopped at Reading paper");
+  assert.equal(previousStop("blocked", [task("read_paper", "done"), task("design_experiment", "failed")]), "stopped at Designing");
+  assert.equal(previousStop("running", [task("read_paper", "done"), task("write_code", "running")]), "still running, at Writing code");
+  assert.equal(previousStop("done", [task("read_paper", "done")]), null);
 });

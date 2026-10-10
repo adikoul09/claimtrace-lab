@@ -135,3 +135,9 @@ test("Training is not done when only the budget step finished; it runs until the
   assert.equal(training([t("budget", "done"), t("run", "queued", { scale: "full" })]), "running");
   assert.equal(training([t("budget", "done"), t("run", "done", { scale: "full" })]), "done");
 });
+
+test("a stage whose open step waits for a researcher's approval says so instead of running", () => {
+  const s = deriveStages({ ...empty, tasks: [t("budget", "done"), t("run", "awaiting_approval", { scale: "full" })] });
+  assert.equal(s[5].state, "waiting");
+  assert.equal(deriveStages({ ...empty, tasks: [t("run", "awaiting_approval", { scale: "full" }), t("run", "running", { scale: "full" })] })[5].state, "running");
+});

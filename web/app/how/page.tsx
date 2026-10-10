@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
-import { howSteps, NO_EVIDENCE, type Evidence, type HowStep } from "./how";
+import { howSteps, isTestProject, NO_EVIDENCE, type Evidence, type HowStep } from "./how";
 
 export const metadata: Metadata = {
   title: "How it works",
@@ -15,17 +15,25 @@ async function loadEvidence(): Promise<Evidence | null> {
   const count = (q: PromiseLike<{ count: number | null; error: unknown }>) =>
     Promise.resolve(q).then((r) => (r.error ? Promise.reject(r.error) : (r.count ?? 0)));
   const head = { count: "exact", head: true } as const;
-  const done = (caps: string[]) => db.from("tasks").select("id", head).in("capability", caps).eq("status", "done");
-  const events = (types: string[]) => db.from("events").select("id", head).in("type", types);
   try {
-    const [projects, readerDone, designerDone, implementerDone, runsDone, graded, rewards, evolved, lessons, emails] =
+    // Real research runs only: work done in test projects is left out of every count.
+    const all = await db.from("projects").select("id,status,tags");
+    if (all.error) throw all.error;
+    const rows = (all.data ?? []) as { id: string; status: string; tags: string[] | null }[];
+    const tests = rows.filter(isTestProject).map((p) => p.id);
+    // Ids are uuids from the database, so they are safe inside the filter; rows with no project still count.
+    const notTest = `project_id.is.null,project_id.not.in.(${tests.join(",") || "00000000-0000-0000-0000-000000000000"})`;
+    const done = (caps: string[]) =>
+      db.from("tasks").select("id", head).in("capability", caps).eq("status", "done").or(notTest);
+    const events = (types: string[]) => db.from("events").select("id", head).in("type", types).or(notTest);
+    const projects = rows.length - tests.length;
+    const [readerDone, designerDone, implementerDone, runsDone, graded, rewards, evolved, lessons, emails] =
       await Promise.all([
-        count(db.from("projects").select("id", head)),
         count(done(["read_paper", "extract_claims"])),
         count(done(["design_experiment"])),
         count(done(["write_code"])),
         count(done(["run"])),
-        count(db.from("experiments").select("id", head).not("verdicts", "is", null)),
+        count(db.from("experiments").select("id", head).not("verdicts", "is", null).or(notTest)),
         count(events(["reward"])),
         count(events(["agent_refined", "agent_spawned", "agent_retired"])),
         count(db.from("lessons").select("id", head)),
@@ -50,7 +58,7 @@ export default function HowPage() {
         </p>
         <ul className="space-y-1 text-xs text-neutral-500">
           <li className="flex items-baseline gap-2">
-            <Badge live /> <span>has worked here at least once (counted from the lab&apos;s own records)</span>
+            <Badge live /> <span>has worked at least once in a real research run (test runs not counted)</span>
           </li>
           <li className="flex items-baseline gap-2">
             <Badge live={false} /> <span>built or planned, not working here yet</span>

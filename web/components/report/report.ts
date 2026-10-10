@@ -2,6 +2,7 @@
 // ReportData built here, so they cannot disagree. The UI computes no verdicts: they come from experiments.verdicts,
 // written by the Analyst (code). The only arithmetic here is differences and sums of stored, logged values.
 import type { Point } from "../exp/experiments";
+import { deriveStages } from "../../app/p/[id]/stages.ts";
 
 export type Claim = {
   id: string;
@@ -364,7 +365,8 @@ export type ReportData = {
   /** configLogLine: the run's printed CONFIG line, where our values come from (config.why only). */
   settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[]; configLogLine: number | null } | null;
   branches: BranchEffect[];
-  memory: { current: RunStats; previous: RunStats | null } | null;
+  /** previousStop: where the earlier run stopped ("stopped at Designing"), null when it finished. */
+  memory: { current: RunStats; previous: RunStats | null; previousStop: string | null } | null;
 };
 
 /** NaN or inf in the log is stored as NULL (CONTRACTS.md §5, migration 003). */
@@ -389,6 +391,28 @@ export function diffText(parent: Point, branch: Point): string | null {
   const d = branch.value - parent.value;
   const s = d.toFixed(Math.max(decimals(parent.text), decimals(branch.text)));
   return d > 0 ? `+${s}` : s === "-0" ? "0" : s;
+}
+
+const STILL_GOING = new Set(["new", "planning", "running"]);
+
+/** Where an earlier run that did not finish got to, by the stage strip's rules ("stopped at Designing"). */
+export function previousStop(status: string, tasks: TaskRow[]): string | null {
+  if (status === "done") return null;
+  const stages = deriveStages({
+    projectStatus: status,
+    tasks: tasks.map((t) => ({ ...t, scale: null, whatif: null, error: null })),
+    failures: [],
+    claims: 0,
+    sortedClaims: 0,
+    experiments: [],
+  });
+  // The stage that failed, else one still going, else the first after the last finished one.
+  const lastDone = stages.map((s) => s.state).lastIndexOf("done");
+  const at =
+    stages.find((s) => s.state === "failed") ??
+    stages.find((s) => s.state === "running" || s.state === "waiting") ??
+    stages[Math.min(lastDone + 1, stages.length - 1)];
+  return STILL_GOING.has(status) ? `still running, at ${at.label}` : `stopped at ${at.label}`;
 }
 
 /** Run statistics for the memory effect (SPEC §6, R14), from the project's own rows. */
@@ -421,7 +445,7 @@ export type ReportInput = {
     tasks: TaskRow[];
     llm: LlmRow[];
     events: EventRow[];
-    previous: { project: ProjectRow; tasks: TaskRow[]; llm: LlmRow[]; events: EventRow[] } | null;
+    previous: { project: ProjectRow; tasks: TaskRow[]; llm: LlmRow[]; events: EventRow[]; stop?: string | null } | null;
   };
 };
 
@@ -549,6 +573,7 @@ export function buildReport(input: ReportInput): ReportData {
           previous: mem.previous
             ? runStats(mem.previous.project, mem.previous.tasks, mem.previous.llm, mem.previous.events)
             : null,
+          previousStop: mem.previous?.stop ?? null,
         }
       : null,
   };

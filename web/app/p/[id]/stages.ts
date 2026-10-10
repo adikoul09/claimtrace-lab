@@ -4,7 +4,7 @@
 
 import { capabilityLabel } from "../../../components/live/labels.ts";
 
-export type StageState = "done" | "running" | "failed" | "not started";
+export type StageState = "done" | "running" | "waiting" | "failed" | "not started";
 export type Stage = {
   id: string;
   label: string;
@@ -135,7 +135,10 @@ export function deriveStages(input: StageInput): Stage[] {
     for (const t of mine) steps.set(t.capability, [...(steps.get(t.capability) ?? []), t]);
     const stepDone = (ts: typeof mine) => ts.some((t) => t.status === "done");
     const open = [...steps.values()].filter((ts) => !stepDone(ts));
-    if (mine.some((t) => ACTIVE.has(t.status) && !stepDone(steps.get(t.capability)!))) return { ...base, state: "running" };
+    const active = mine.filter((t) => ACTIVE.has(t.status) && !stepDone(steps.get(t.capability)!));
+    // Only waiting for a researcher's approval (e.g. the full run): say so rather than "running".
+    if (active.length && active.every((t) => t.status === "awaiting_approval")) return { ...base, state: "waiting" };
+    if (active.length) return { ...base, state: "running" };
     const finished = mine.some((t) => t.status === "done" && (d.finishes?.(t) ?? true));
     if (!open.length && finished) return { ...base, state: "done" };
     const evidence = d.evidence(input);
@@ -155,7 +158,7 @@ export function deriveStages(input: StageInput): Stage[] {
   // A later stage finished, so every earlier one was done (perhaps outside the task queue, or after a failed try).
   const lastDone = stages.map((s) => s.state).lastIndexOf("done");
   for (let i = 0; i < lastDone; i++)
-    if (stages[i].state !== "done" && stages[i].state !== "running") stages[i] = {
+    if (stages[i].state === "failed" || stages[i].state === "not started") stages[i] = {
         ...stages[i],
         state: "done",
         reason: null,
