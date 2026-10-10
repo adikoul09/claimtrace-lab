@@ -2,6 +2,8 @@
 // from the project's tasks (capability + status). When a stage has no task (e.g. the reference run was done by
 // scripts), stored results count as evidence, and a finished later stage means the earlier ones were done.
 
+import { capabilityLabel } from "../../../components/live/labels.ts";
+
 export type StageState = "done" | "running" | "failed" | "not started";
 export type Stage = {
   id: string;
@@ -9,6 +11,8 @@ export type Stage = {
   state: StageState;
   /** Plain-language reason, for a failed stage. */
   reason: string | null;
+  /** The step that failed, when the stage has more than one ("Set up environment" in Writing code). */
+  failedStep: string | null;
   /** The raw error behind the reason. */
   detail: string | null;
   /** How a done stage was known when no task of it finished. */
@@ -40,6 +44,8 @@ type Def = {
   label: string;
   match: (t: StageInput["tasks"][number]) => boolean;
   evidence: (i: StageInput) => string | null;
+  /** The step whose finishing finishes the stage (default: any of its steps). */
+  finishes?: (t: StageInput["tasks"][number]) => boolean;
 };
 
 const caps = (...c: string[]) => (t: { capability: string }) => c.includes(t.capability);
@@ -73,6 +79,8 @@ const STAGES: Def[] = [
     label: "Training",
     // A run without a scale is a full run (the reference runs predate input.scale).
     match: (t) => t.capability === "budget" || (t.capability === "run" && t.scale !== "smoke"),
+    // The budget step alone does not finish training: the full run must.
+    finishes: (t) => t.capability === "run",
     evidence: (i) =>
       mainExps(i).some((e) => e.status === "done" && e.scale !== "smoke") ? "a full run finished" : null,
   },
@@ -119,17 +127,26 @@ export function deriveStages(input: StageInput): Stage[] {
 
   const stages: Stage[] = STAGES.map((d) => {
     const mine = tasks.filter(d.match).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-    const base = { id: d.id, label: d.label, reason: null, detail: null, note: null, inferred: null };
-    if (mine.some((t) => t.status === "done")) return { ...base, state: "done" };
-    if (mine.some((t) => ACTIVE.has(t.status))) return { ...base, state: "running" };
+    const base = { id: d.id, label: d.label, reason: null, failedStep: null, detail: null, note: null, inferred: null };
+    // A stage can have several steps (write_code then setup_env; budget then the full run). Each step is done if
+    // one of its tasks finished; the stage is done when every step it has started is done and its finishing step is.
+    const steps = new Map<string, typeof mine>();
+    for (const t of mine) steps.set(t.capability, [...(steps.get(t.capability) ?? []), t]);
+    const stepDone = (ts: typeof mine) => ts.some((t) => t.status === "done");
+    const open = [...steps.values()].filter((ts) => !stepDone(ts));
+    if (mine.some((t) => ACTIVE.has(t.status) && !stepDone(steps.get(t.capability)!))) return { ...base, state: "running" };
+    const finished = mine.some((t) => t.status === "done" && (d.finishes?.(t) ?? true));
+    if (!open.length && finished) return { ...base, state: "done" };
     const evidence = d.evidence(input);
     if (evidence) return { ...base, state: "done", note: evidence, inferred: "results" };
-    const failed = mine.filter((t) => FAILED.has(t.status));
+    const failed = open.flat().filter((t) => FAILED.has(t.status));
+    if (!failed.length && mine.some((t) => t.status === "done")) return { ...base, state: "running" }; // next step pending
     if (failed.length) {
       const last = failed[0];
       const raw = last.error ?? failedReason.get(last.id) ?? (last.status === "rejected" ? "rejected by a researcher" : null);
       const tries = failed.length > 1 ? ` Tried ${failed.length} times.` : "";
-      return { ...base, state: "failed", reason: plainReason(raw) + tries, detail: raw };
+      const failedStep = steps.size > 1 ? capabilityLabel(last.capability) : null;
+      return { ...base, state: "failed", reason: plainReason(raw) + tries, failedStep, detail: raw };
     }
     return { ...base, state: "not started" };
   });
@@ -137,10 +154,11 @@ export function deriveStages(input: StageInput): Stage[] {
   // A later stage finished, so every earlier one was done (perhaps outside the task queue, or after a failed try).
   const lastDone = stages.map((s) => s.state).lastIndexOf("done");
   for (let i = 0; i < lastDone; i++)
-    if (stages[i].state !== "done") stages[i] = {
+    if (stages[i].state !== "done" && stages[i].state !== "running") stages[i] = {
         ...stages[i],
         state: "done",
         reason: null,
+        failedStep: null,
         detail: null,
         note: "a later stage finished with its result",
         inferred: "later",

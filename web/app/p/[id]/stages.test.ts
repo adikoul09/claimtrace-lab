@@ -114,3 +114,21 @@ test("stages done without a task of their own say how they were inferred", () =>
   );
   assert.equal(deriveStages(empty)[0].inferred, null);
 });
+
+test("a stage with several steps is done only when each finished: setup failing after the code was written shows", () => {
+  const code = (setup: string[]) =>
+    deriveStages({ ...empty, tasks: [t("write_code", "done"), ...setup.map((s) => t("setup_env", s))] })[3];
+  assert.equal(code(["failed", "failed", "running"]).state, "running");
+  assert.equal(code(["failed", "failed", "failed"]).state, "failed");
+  assert.equal(code(["failed", "failed", "failed"]).failedStep, "Set up environment");
+  assert.equal(deriveStages({ ...empty, tasks: [t("write_code", "failed")] })[3].failedStep, null);
+  assert.equal(code(["failed", "done"]).state, "done");
+  assert.equal(code([]).state, "done");
+});
+
+test("Training is not done when only the budget step finished; it runs until the full run is done", () => {
+  const training = (tasks: StageInput["tasks"]) => deriveStages({ ...empty, tasks })[5].state;
+  assert.equal(training([t("budget", "done")]), "running");
+  assert.equal(training([t("budget", "done"), t("run", "queued", { scale: "full" })]), "running");
+  assert.equal(training([t("budget", "done"), t("run", "done", { scale: "full" })]), "done");
+});
