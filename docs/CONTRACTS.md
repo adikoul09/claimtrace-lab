@@ -114,6 +114,26 @@ A list, one item per claim (written by the Analyst; the UI computes nothing):
 `metrics.value` may be `NULL` (migration 003): a `METRIC` line whose value is NaN or inf is stored as a row with
 `value = NULL` and its `log_line`, plus a `divergence_detected` event.
 
+## 5b. What-if fan-out (SPEC §7.4; logic B2, sequencing B1)
+
+1. The web queues a `design_whatif` task (`input.question`; `required_caps ['agent']`). The controller adds
+   `upstream` as usual; `upstream['run']` is the reproduction's latest full run.
+2. Its output: `branches` (3–4 items) `{id: "b1", key, value, parent_value, reason, scale: "smoke", cwd:
+   "runs/<pid>/whatif/<task8>-b1", cmd (ready to run, with one `--set KEY=VALUE`), experiment: {label, parent_id,
+   changed_key, config}}`, plus `noise`, `noise_source`, `parent_smoke_experiment_id`. Code rejects a branch that
+   changes more or fewer than one key (`train.py --set KEY=VALUE` overrides one CONFIG key).
+3. The controller creates, per branch, the `experiments` row from `branch.experiment` and a smoke `run` task
+   (`['smoke']` + host pin; `files`/`requirements` from the reproduction's latest done run task's input; the
+   branch's `experiment_id`, `cmd`, `cwd`).
+4. When every branch's smoke is `done` or `failed`, the controller creates one `compare` task with
+   `input.whatif_task_id`. Its handler ranks by code, sets `experiments.pruned_reason` and `status = 'pruned'` on
+   pruned branches, and outputs `ranking` and `extend: {branch id, experiment_id, key, value, cmd, cwd, reason}`.
+5. The controller creates the full `run` for `extend` with `requires_approval = true` (`awaiting_approval`). After
+   approval and the run, it queues a `compare` with `input.whatif_task_id` and `input.extend_experiment_id`.
+
+`experiments.config.why = {settings_diff: [...], branch_effects: [...]}` is merged into the config by the Analyst at
+`compare` / `explain_diff` (SPEC §7.5).
+
 ## 6. Decisions and feedback (written by the web, acted on by the controller)
 
 `POST /api/tasks/<id>/decision` moves a task out of `awaiting_approval` and writes a `decision` event
