@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
@@ -5,6 +6,11 @@ import type { Project } from "@/lib/types";
 import { NewResearchForm } from "@/components/live/new-research-form";
 import { projectBadge } from "@/components/live/project-badge";
 import { groupProjects, projectStatusLabel, projectTitle, type PaperTitles } from "@/components/live/labels";
+
+export const metadata: Metadata = {
+  title: { absolute: "ClaimTrace Lab · Projects" }, // the layout's template only applies to routes below it
+  description: "Start a reproduction of an arXiv paper and follow the reference run, live runs and precomputed audits.",
+};
 
 export default function Home() {
   return (

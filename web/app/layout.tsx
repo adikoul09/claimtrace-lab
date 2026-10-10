@@ -3,7 +3,7 @@ import { LiveHeader } from "@/components/live-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ClaimTrace Lab",
+  title: { default: "ClaimTrace Lab", template: "ClaimTrace Lab · %s" },
   description: "An evolving team of AI agents reproduces a paper's key result and explains why results differ.",
 };
 
