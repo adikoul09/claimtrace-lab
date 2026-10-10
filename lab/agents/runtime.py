@@ -139,7 +139,10 @@ def run_agent(agent: dict, goal: str, workdir: Path, *, db=None, llm: LLM | None
         action, args, why = act.get("action"), act.get("args") or {}, act.get("reason") or ""
 
         if action == "finish":
-            return result("finished", act.get("answer") or "", why or "the agent returned its answer",
+            answer = act.get("answer")
+            if answer is not None and not isinstance(answer, str):  # a JSON object instead of text: keep it as JSON
+                answer = json.dumps(answer, ensure_ascii=False)
+            return result("finished", answer or "", why or "the agent returned its answer",
                           "agent_finished", f"{name} finished in {steps} steps")
 
         t0 = time.monotonic()
