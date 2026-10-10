@@ -193,8 +193,9 @@ export function planWhatIf(
     task: {
       project_id: projectId,
       capability: "design_whatif",
-      // Same caps as routing.required_caps("design_whatif") in lab/controller/routing.py.
-      required_caps: ["parse"],
+      // docs/CONTRACTS.md §5b: no worker has 'controller', so nobody claims the task until the controller has
+      // filled its agent, upstream and goal and switched it to ['agent'].
+      required_caps: ["controller"],
       status: "queued",
       input: { question: q },
     },
