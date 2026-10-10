@@ -1,0 +1,453 @@
+{
+  "paper": {
+    "arxiv": "1503.02531",
+    "section": "3 Preliminary experiments on MNIST",
+    "teacher_test_errors": 67,
+    "student_hard_test_errors": 146,
+    "student_distilled_test_errors": 74,
+    "temperature": 20
+  },
+  "mode": "quick",
+  "seed": 0,
+  "created_utc": "2026-10-10T06:35:06+00:00",
+  "environment": {
+    "python": "3.12.10",
+    "torch": "2.14.1+cpu",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "ARM64",
+    "threads": 8
+  },
+  "settings": {
+    "batch": 128,
+    "optimizer": "SGD",
+    "lr": {
+      "teacher": 0.03,
+      "student_hard": 0.1,
+      "student_distilled": 0.1
+    },
+    "momentum": 0.9,
+    "quick_epochs_note": "cut to fit <=15 min on CPU; paper trains to convergence",
+    "lr_schedule": "linear decay to 0",
+    "normalise": [
+      0.1307,
+      0.3081
+    ],
+    "teacher": {
+      "hidden": [
+        1200,
+        1200
+      ],
+      "dropout_input": 0.2,
+      "dropout_hidden": 0.5,
+      "max_norm": 3.5,
+      "jitter_px": 2
+    },
+    "student_hard": {
+      "hidden": [
+        800,
+        800
+      ],
+      "regularisation": "none"
+    },
+    "student_distilled": {
+      "hidden": [
+        800,
+        800
+      ],
+      "temperature": 20,
+      "soft_weight": 0.9,
+      "hard_weight": 0.1,
+      "soft_loss": "KL(teacher_T || student_T) * T^2",
+      "transfer_set": "MNIST train (60,000), no jitter"
+    }
+  },
+  "models": {
+    "teacher": {
+      "test_errors": 121,
+      "paper_test_errors": 67,
+      "diff": 54,
+      "epochs": 12,
+      "wall_clock_s": 351.1,
+      "log_lines": {
+        "test_errors": "METRIC final_teacher_test_errors=121 step=1",
+        "wall_clock_s": "METRIC final_teacher_wall_s=351.1 step=1"
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 0.60605,
+          "test_errors": 404,
+          "elapsed_s": 14.6,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.60605 step=1",
+            "METRIC teacher_test_errors=404 step=1"
+          ]
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.29107,
+          "test_errors": 290,
+          "elapsed_s": 28.9,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.29107 step=2",
+            "METRIC teacher_test_errors=290 step=2"
+          ]
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.23672,
+          "test_errors": 237,
+          "elapsed_s": 53.6,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.23672 step=3",
+            "METRIC teacher_test_errors=237 step=3"
+          ]
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.20368,
+          "test_errors": 218,
+          "elapsed_s": 88.1,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.20368 step=4",
+            "METRIC teacher_test_errors=218 step=4"
+          ]
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.18238,
+          "test_errors": 184,
+          "elapsed_s": 125.2,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.18238 step=5",
+            "METRIC teacher_test_errors=184 step=5"
+          ]
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.16815,
+          "test_errors": 171,
+          "elapsed_s": 163.5,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.16815 step=6",
+            "METRIC teacher_test_errors=171 step=6"
+          ]
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.15367,
+          "test_errors": 161,
+          "elapsed_s": 199.2,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.15367 step=7",
+            "METRIC teacher_test_errors=161 step=7"
+          ]
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.14338,
+          "test_errors": 153,
+          "elapsed_s": 216.0,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.14338 step=8",
+            "METRIC teacher_test_errors=153 step=8"
+          ]
+        },
+        {
+          "epoch": 9,
+          "train_loss": 0.13184,
+          "test_errors": 140,
+          "elapsed_s": 237.0,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.13184 step=9",
+            "METRIC teacher_test_errors=140 step=9"
+          ]
+        },
+        {
+          "epoch": 10,
+          "train_loss": 0.12742,
+          "test_errors": 135,
+          "elapsed_s": 274.3,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.12742 step=10",
+            "METRIC teacher_test_errors=135 step=10"
+          ]
+        },
+        {
+          "epoch": 11,
+          "train_loss": 0.12509,
+          "test_errors": 126,
+          "elapsed_s": 314.0,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.12509 step=11",
+            "METRIC teacher_test_errors=126 step=11"
+          ]
+        },
+        {
+          "epoch": 12,
+          "train_loss": 0.11988,
+          "test_errors": 121,
+          "elapsed_s": 351.1,
+          "log_lines": [
+            "METRIC teacher_train_loss=0.11988 step=12",
+            "METRIC teacher_test_errors=121 step=12"
+          ]
+        }
+      ]
+    },
+    "student_hard": {
+      "test_errors": 150,
+      "paper_test_errors": 146,
+      "diff": 4,
+      "epochs": 8,
+      "wall_clock_s": 97.6,
+      "log_lines": {
+        "test_errors": "METRIC final_student_hard_test_errors=150 step=2",
+        "wall_clock_s": "METRIC final_student_hard_wall_s=97.6 step=2"
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 0.24412,
+          "test_errors": 337,
+          "elapsed_s": 12.6,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.24412 step=1",
+            "METRIC student_hard_test_errors=337 step=1"
+          ]
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.07667,
+          "test_errors": 198,
+          "elapsed_s": 24.7,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.07667 step=2",
+            "METRIC student_hard_test_errors=198 step=2"
+          ]
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.03927,
+          "test_errors": 225,
+          "elapsed_s": 36.8,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.03927 step=3",
+            "METRIC student_hard_test_errors=225 step=3"
+          ]
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.0188,
+          "test_errors": 192,
+          "elapsed_s": 48.9,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.0188 step=4",
+            "METRIC student_hard_test_errors=192 step=4"
+          ]
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.00875,
+          "test_errors": 156,
+          "elapsed_s": 60.8,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.00875 step=5",
+            "METRIC student_hard_test_errors=156 step=5"
+          ]
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.00313,
+          "test_errors": 146,
+          "elapsed_s": 73.5,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.00313 step=6",
+            "METRIC student_hard_test_errors=146 step=6"
+          ]
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.00158,
+          "test_errors": 151,
+          "elapsed_s": 85.3,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.00158 step=7",
+            "METRIC student_hard_test_errors=151 step=7"
+          ]
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.00119,
+          "test_errors": 150,
+          "elapsed_s": 97.6,
+          "log_lines": [
+            "METRIC student_hard_train_loss=0.00119 step=8",
+            "METRIC student_hard_test_errors=150 step=8"
+          ]
+        }
+      ]
+    },
+    "student_distilled": {
+      "test_errors": 161,
+      "paper_test_errors": 74,
+      "diff": 87,
+      "epochs": 8,
+      "wall_clock_s": 111.2,
+      "log_lines": {
+        "test_errors": "METRIC final_student_distilled_test_errors=161 step=3",
+        "wall_clock_s": "METRIC final_student_distilled_wall_s=111.2 step=3"
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 1.16663,
+          "test_errors": 247,
+          "elapsed_s": 12.7,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=1.16663 step=1",
+            "METRIC student_distilled_test_errors=247 step=1"
+          ]
+        },
+        {
+          "epoch": 2,
+          "train_loss": 0.19115,
+          "test_errors": 205,
+          "elapsed_s": 25.8,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.19115 step=2",
+            "METRIC student_distilled_test_errors=205 step=2"
+          ]
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.11936,
+          "test_errors": 184,
+          "elapsed_s": 39.4,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.11936 step=3",
+            "METRIC student_distilled_test_errors=184 step=3"
+          ]
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.08986,
+          "test_errors": 181,
+          "elapsed_s": 52.6,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.08986 step=4",
+            "METRIC student_distilled_test_errors=181 step=4"
+          ]
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.0702,
+          "test_errors": 164,
+          "elapsed_s": 65.7,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.0702 step=5",
+            "METRIC student_distilled_test_errors=164 step=5"
+          ]
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.05944,
+          "test_errors": 165,
+          "elapsed_s": 78.9,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.05944 step=6",
+            "METRIC student_distilled_test_errors=165 step=6"
+          ]
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.05177,
+          "test_errors": 159,
+          "elapsed_s": 92.1,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.05177 step=7",
+            "METRIC student_distilled_test_errors=159 step=7"
+          ]
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.04708,
+          "test_errors": 161,
+          "elapsed_s": 105.2,
+          "log_lines": [
+            "METRIC student_distilled_train_loss=0.04708 step=8",
+            "METRIC student_distilled_test_errors=161 step=8"
+          ]
+        }
+      ]
+    }
+  },
+  "distilled_beats_hard": false,
+  "total_wall_clock_s": 560.4,
+  "total_log_line": "METRIC total_wall_s=560.4 step=0",
+  "metric_log": [
+    "METRIC teacher_train_loss=0.60605 step=1",
+    "METRIC teacher_test_errors=404 step=1",
+    "METRIC teacher_train_loss=0.29107 step=2",
+    "METRIC teacher_test_errors=290 step=2",
+    "METRIC teacher_train_loss=0.23672 step=3",
+    "METRIC teacher_test_errors=237 step=3",
+    "METRIC teacher_train_loss=0.20368 step=4",
+    "METRIC teacher_test_errors=218 step=4",
+    "METRIC teacher_train_loss=0.18238 step=5",
+    "METRIC teacher_test_errors=184 step=5",
+    "METRIC teacher_train_loss=0.16815 step=6",
+    "METRIC teacher_test_errors=171 step=6",
+    "METRIC teacher_train_loss=0.15367 step=7",
+    "METRIC teacher_test_errors=161 step=7",
+    "METRIC teacher_train_loss=0.14338 step=8",
+    "METRIC teacher_test_errors=153 step=8",
+    "METRIC teacher_train_loss=0.13184 step=9",
+    "METRIC teacher_test_errors=140 step=9",
+    "METRIC teacher_train_loss=0.12742 step=10",
+    "METRIC teacher_test_errors=135 step=10",
+    "METRIC teacher_train_loss=0.12509 step=11",
+    "METRIC teacher_test_errors=126 step=11",
+    "METRIC teacher_train_loss=0.11988 step=12",
+    "METRIC teacher_test_errors=121 step=12",
+    "METRIC student_hard_train_loss=0.24412 step=1",
+    "METRIC student_hard_test_errors=337 step=1",
+    "METRIC student_hard_train_loss=0.07667 step=2",
+    "METRIC student_hard_test_errors=198 step=2",
+    "METRIC student_hard_train_loss=0.03927 step=3",
+    "METRIC student_hard_test_errors=225 step=3",
+    "METRIC student_hard_train_loss=0.0188 step=4",
+    "METRIC student_hard_test_errors=192 step=4",
+    "METRIC student_hard_train_loss=0.00875 step=5",
+    "METRIC student_hard_test_errors=156 step=5",
+    "METRIC student_hard_train_loss=0.00313 step=6",
+    "METRIC student_hard_test_errors=146 step=6",
+    "METRIC student_hard_train_loss=0.00158 step=7",
+    "METRIC student_hard_test_errors=151 step=7",
+    "METRIC student_hard_train_loss=0.00119 step=8",
+    "METRIC student_hard_test_errors=150 step=8",
+    "METRIC student_distilled_train_loss=1.16663 step=1",
+    "METRIC student_distilled_test_errors=247 step=1",
+    "METRIC student_distilled_train_loss=0.19115 step=2",
+    "METRIC student_distilled_test_errors=205 step=2",
+    "METRIC student_distilled_train_loss=0.11936 step=3",
+    "METRIC student_distilled_test_errors=184 step=3",
+    "METRIC student_distilled_train_loss=0.08986 step=4",
+    "METRIC student_distilled_test_errors=181 step=4",
+    "METRIC student_distilled_train_loss=0.0702 step=5",
+    "METRIC student_distilled_test_errors=164 step=5",
+    "METRIC student_distilled_train_loss=0.05944 step=6",
+    "METRIC student_distilled_test_errors=165 step=6",
+    "METRIC student_distilled_train_loss=0.05177 step=7",
+    "METRIC student_distilled_test_errors=159 step=7",
+    "METRIC student_distilled_train_loss=0.04708 step=8",
+    "METRIC student_distilled_test_errors=161 step=8",
+    "METRIC final_teacher_test_errors=121 step=1",
+    "METRIC final_teacher_wall_s=351.1 step=1",
+    "METRIC final_student_hard_test_errors=150 step=2",
+    "METRIC final_student_hard_wall_s=97.6 step=2",
+    "METRIC final_student_distilled_test_errors=161 step=3",
+    "METRIC final_student_distilled_wall_s=111.2 step=3",
+    "METRIC total_wall_s=560.4 step=0"
+  ]
+}
