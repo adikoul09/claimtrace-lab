@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildReport, diffText, latestNotes, parseClaims, readVerdicts, runStats, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
-import { reportMarkdown, TEXT } from "./markdown.ts";
+import { buildReport, claimTriage, diffText, latestNotes, parseClaims, readVerdicts, runStats, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
+import { reportMarkdown, TEXT, triageReasons, triageSummary } from "./markdown.ts";
 
 const claim = (id: string, value: unknown, extra: Record<string, unknown> = {}) => ({
   id,
@@ -527,4 +527,37 @@ test("splitClaimRows keeps graded and measured rows, and moves rows with no verd
   const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, d, "http://x");
   assert.match(md, /### Planned, not run yet \(2\)/);
   assert.ok(md.indexOf("ran:c9") === -1 && md.indexOf("[95](http://x/logs/ran#L40)") < md.indexOf("### Planned, not run yet"));
+});
+
+test("claimTriage counts runnable and not, top reasons first, and lists runnable claims first", () => {
+  const tag = (status: string, reason: string) => ({ runnable: { status, reason } });
+  const claims = parseClaims([
+    claim("c1", 1, tag("not_runnable", "no public data: speech data is not public")),
+    claim("c2", 2, tag("runnable", "MNIST is public and small")),
+    claim("c3", 3, tag("not_runnable", "dataset too big: JFT has 100000000 training examples")),
+    claim("c4", 4, tag("not_runnable", "no public data: JFT is not public")),
+    claim("c5", 5),
+    claim("c6", 6, tag("runnable", "MNIST is public and small")),
+  ]);
+  const t = claimTriage(claims);
+  assert.deepEqual([t.total, t.runnable, t.notRunnable, t.unsorted], [6, 2, 3, 1]);
+  assert.deepEqual(t.reasons, [
+    { reason: "no public data", count: 2 },
+    { reason: "dataset too big", count: 1 },
+  ]);
+  assert.deepEqual(t.ordered.map((c) => c.id), ["c2", "c6", "c1", "c4", "c3", "c5"]);
+  assert.equal(triageSummary(t), "2 can be checked on a laptop · 3 can't · 1 not sorted yet");
+  assert.equal(triageReasons(t), "2 no public data · 1 dataset too big");
+  const none = claimTriage(parseClaims([claim("c1", 1)]));
+  assert.deepEqual([triageSummary(none), triageReasons(none)], [null, null]);
+});
+
+test("the export lists all claims with the laptop summary", () => {
+  const claims = parseClaims([
+    claim("c1", 1, { runnable: { status: "not_runnable", reason: "no public data: x" } }),
+    claim("c2", 2, { runnable: { status: "runnable", reason: "MNIST is public and small" } }),
+  ]);
+  const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, buildReport({ claims, experiments: [], metrics: [] }), "http://x");
+  assert.match(md, /## All claims in the paper \(2\)\n\n1 can be checked on a laptop · 1 can't\n\n1 no public data/);
+  assert.ok(md.indexOf("- c2 ") < md.indexOf("- c1 "));
 });

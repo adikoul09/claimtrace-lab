@@ -1,7 +1,7 @@
 // The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
 // so the export matches the screen. Every number of ours links to its log line.
 import { formatDuration } from "../exp/experiments.ts";
-import { splitClaimRows, type Authenticity, type ReportData, type ReportRow, type RunStats } from "./report.ts";
+import { splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
 
 /** Wording shared by the screen and the export. */
 export const TEXT = {
@@ -46,6 +46,17 @@ export const authenticitySummary = (a: Authenticity) =>
       )}) from ${a.sources.map((s) => s.label).join(", ")}.`;
 /** "2 (1 seed)" */
 export const countText = (r: Authenticity["rows"][number]) => `${r.count}${r.seeds ? ` (${r.seeds})` : ""}`;
+
+/** "18 can be checked on a laptop · 55 can't" (null until the claims carry ANY-1's runnable tags). */
+export const triageSummary = (t: ClaimTriage) =>
+  t.runnable + t.notRunnable === 0
+    ? null
+    : [`${t.runnable} can be checked on a laptop`, `${t.notRunnable} can't`, t.unsorted ? `${t.unsorted} not sorted yet` : null]
+        .filter(Boolean)
+        .join(" · ");
+/** "36 no public data · 19 dataset too big" */
+export const triageReasons = (t: ClaimTriage) =>
+  t.reasons.length ? t.reasons.map((r) => `${r.count} ${r.reason}`).join(" · ") : null;
 
 export const memoryRows = (s: RunStats) => [
   [
@@ -169,10 +180,11 @@ export function reportMarkdown(
   if (d.memory?.current.lessonsApplied.length)
     out.push(d.memory.current.lessonsApplied.map((e) => `- Lesson applied: ${e.message}`).join("\n"));
 
-  if (hasPaper && d.untested.length) {
-    out.push(`## Other claims in the paper (${d.untested.length}, not run)`);
+  if (hasPaper && d.triage.total) {
+    out.push(`## All claims in the paper (${d.triage.total})`);
+    for (const line of [triageSummary(d.triage), triageReasons(d.triage)]) if (line) out.push(line);
     out.push(
-      d.untested
+      d.triage.ordered
         .map(
           (c) =>
             `- ${c.id} ${c.model} · ${c.metric}: ${c.value} ${c.unit} (p. ${c.page ?? "?"})${c.valid ? "" : " — failed code check"}` +

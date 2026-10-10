@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
-import { authenticitySummary, DIFF_TEXT, memoryRows, TEXT } from "./markdown";
+import { authenticitySummary, DIFF_TEXT, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
   splitClaimRows,
@@ -16,6 +16,7 @@ import {
   type Authenticity,
   type BranchEffect,
   type Claim,
+  type ClaimTriage,
   type GradedExp,
   type ReportData,
   type ReportRow,
@@ -169,9 +170,13 @@ export function ReportView({ projectId }: { projectId: string }) {
         <Collapsed title="Memory effect" hint={data.memory?.previous ? "vs the previous run" : "first run of this paper"}>
           <MemoryEffect memory={data.memory} />
         </Collapsed>
-        {hasPaper && data.untested.length > 0 && (
-          <Collapsed title="Other claims in the paper" hint={`${data.untested.length}, not run`}>
-            <UntestedClaims claims={data.untested} />
+        {hasPaper && data.triage.total > 0 && (
+          // Open by default once the claims are sorted (ANY-1): which ones a laptop can check is the point.
+          <Collapsed
+            title={`All claims in the paper (${data.triage.total})`}
+            open={data.triage.runnable + data.triage.notRunnable > 0}
+          >
+            <AllClaims triage={data.triage} />
           </Collapsed>
         )}
       </div>
@@ -541,9 +546,19 @@ function MemoryEffect({ memory }: { memory: ReportData["memory"] }) {
 }
 
 /** A closed section: its title and a one-line hint stay visible, the detail opens on tap. */
-function Collapsed({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Collapsed({
+  title,
+  hint,
+  open,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  open?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <details className="rounded-lg border border-neutral-200 dark:border-neutral-800">
+    <details open={open} className="rounded-lg border border-neutral-200 dark:border-neutral-800">
       <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 px-3 py-2">
         <span className="text-sm font-semibold">{title}</span>
         {hint && <span className="min-w-0 break-words text-xs text-neutral-500">{hint}</span>}
@@ -621,7 +636,21 @@ function Quote({ claim: c }: { claim: Claim }) {
   );
 }
 
-function UntestedClaims({ claims }: { claims: Claim[] }) {
+function AllClaims({ triage }: { triage: ClaimTriage }) {
+  const summary = triageSummary(triage);
+  const reasons = triageReasons(triage);
+  return (
+    <div>
+      {summary && <p className="text-sm font-medium">{summary}</p>}
+      {reasons && <p className="text-xs text-neutral-500">{reasons}</p>}
+      <div className="mt-2">
+        <ClaimList claims={triage.ordered} />
+      </div>
+    </div>
+  );
+}
+
+function ClaimList({ claims }: { claims: Claim[] }) {
   return (
     <div>
       <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">

@@ -358,6 +358,8 @@ export type ReportData = {
   authenticity: Authenticity;
   rows: ReportRow[];
   untested: Claim[];
+  /** Every claim in the paper, sorted by whether it can run on a laptop (ANY-1 tags). */
+  triage: ClaimTriage;
   graded: GradedExp[];
   /** configLogLine: the run's printed CONFIG line, where our values come from (config.why only). */
   settingsDiff: { experimentId: string; experimentLabel: string; rows: SettingsDiffRow[]; configLogLine: number | null } | null;
@@ -537,6 +539,7 @@ export function buildReport(input: ReportInput): ReportData {
     authenticity: authenticity([...latest.values()]),
     rows,
     untested: claims.filter((c) => !tested.has(c.id)),
+    triage: claimTriage(claims),
     graded,
     settingsDiff: settings,
     branches,
@@ -609,6 +612,41 @@ function authenticity(
   const sources = new Map(graded.map((g) => [g.exp.id, { id: g.exp.id, label: g.exp.label }]));
   const comparisons = graded.filter((g) => g.relative).length;
   return { rows, total: graded.length, claims: graded.length - comparisons, comparisons, sources: [...sources.values()] };
+}
+
+export type ClaimTriage = {
+  total: number;
+  runnable: number;
+  notRunnable: number;
+  unsorted: number; // no runnable tag yet
+  /** Why claims cannot run, by the reason's lead ("no public data", "dataset too big"), most common first. */
+  reasons: { reason: string; count: number }[];
+  /** Runnable first, then not runnable (by their reason's count), then unsorted; paper order within each. */
+  ordered: Claim[];
+};
+
+export function claimTriage(claims: Claim[]): ClaimTriage {
+  const lead = (c: Claim) => (c.runnable?.reason ?? "reason not given").split(":")[0].trim();
+  const blocked = claims.filter((c) => c.runnable && !c.runnable.runnable);
+  const counts = new Map<string, number>();
+  for (const c of blocked) counts.set(lead(c), (counts.get(lead(c)) ?? 0) + 1);
+  const reasons = [...counts]
+    .map(([reason, count]) => ({ reason, count }))
+    .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason));
+  const rank = new Map(reasons.map((r, i) => [r.reason, i]));
+  const runnable = claims.filter((c) => c.runnable?.runnable);
+  return {
+    total: claims.length,
+    runnable: runnable.length,
+    notRunnable: blocked.length,
+    unsorted: claims.filter((c) => !c.runnable).length,
+    reasons,
+    ordered: [
+      ...runnable,
+      ...blocked.map((c, i) => ({ c, i })).sort((a, b) => rank.get(lead(a.c))! - rank.get(lead(b.c))! || a.i - b.i).map((x) => x.c),
+      ...claims.filter((c) => !c.runnable),
+    ],
+  };
 }
 
 /** Claims vs ours: rows to show, and rows of runs that are only planned (no verdict and no logged value yet). */
