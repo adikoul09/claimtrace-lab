@@ -89,3 +89,28 @@ test("plainReason turns common failures into plain words and keeps unknown ones 
   assert.equal(plainReason("no public data: JFT is not public"), "No public data: JFT is not public.");
   assert.equal(plainReason(null), "The step failed without recording why.");
 });
+
+test("stages done without a task of their own say how they were inferred", () => {
+  const s = deriveStages({
+    projectStatus: "reference",
+    tasks: [t("run", "done"), t("design_experiment", "done"), t("write_code", "failed")],
+    failures: [],
+    claims: 15,
+    sortedClaims: 0,
+    experiments: [{ status: "done", scale: null, graded: true, branch: false }],
+  });
+  assert.deepEqual(
+    s.map((x) => `${x.label}:${x.inferred ?? "task"}`),
+    [
+      "Reading paper:results",
+      "Sorting claims:later",
+      "Designing:task",
+      "Writing code:later",
+      "Smoke test:later",
+      "Training:task",
+      "Grading:results",
+      "Report:results",
+    ],
+  );
+  assert.equal(deriveStages(empty)[0].inferred, null);
+});

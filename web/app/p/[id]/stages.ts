@@ -13,6 +13,8 @@ export type Stage = {
   detail: string | null;
   /** How a done stage was known when no task of it finished. */
   note: string | null;
+  /** Done without a finished task of its own: from stored results, or because a later stage finished. */
+  inferred: "results" | "later" | null;
 };
 
 export type StageInput = {
@@ -117,11 +119,11 @@ export function deriveStages(input: StageInput): Stage[] {
 
   const stages: Stage[] = STAGES.map((d) => {
     const mine = tasks.filter(d.match).sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-    const base = { id: d.id, label: d.label, reason: null, detail: null, note: null };
+    const base = { id: d.id, label: d.label, reason: null, detail: null, note: null, inferred: null };
     if (mine.some((t) => t.status === "done")) return { ...base, state: "done" };
     if (mine.some((t) => ACTIVE.has(t.status))) return { ...base, state: "running" };
     const evidence = d.evidence(input);
-    if (evidence) return { ...base, state: "done", note: evidence };
+    if (evidence) return { ...base, state: "done", note: evidence, inferred: "results" };
     const failed = mine.filter((t) => FAILED.has(t.status));
     if (failed.length) {
       const last = failed[0];
@@ -135,6 +137,13 @@ export function deriveStages(input: StageInput): Stage[] {
   // A later stage finished, so every earlier one was done (perhaps outside the task queue, or after a failed try).
   const lastDone = stages.map((s) => s.state).lastIndexOf("done");
   for (let i = 0; i < lastDone; i++)
-    if (stages[i].state !== "done") stages[i] = { ...stages[i], state: "done", reason: null, detail: null, note: "a later stage finished with its result" };
+    if (stages[i].state !== "done") stages[i] = {
+        ...stages[i],
+        state: "done",
+        reason: null,
+        detail: null,
+        note: "a later stage finished with its result",
+        inferred: "later",
+      };
   return stages;
 }
