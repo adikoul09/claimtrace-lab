@@ -89,3 +89,26 @@ export function formatDuration(s: number): string {
   if (s < 3600) return `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
   return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min`;
 }
+
+/** The experiment to open first: a running one, else the newest with metrics, else the newest. */
+export function pickDefault<T extends { id: string; status: string; created_at: string }>(
+  rows: T[],
+  metricCount: (id: string) => number,
+): T | undefined {
+  const newest = [...rows].sort((a, b) => ms(b.created_at) - ms(a.created_at));
+  return (
+    newest.find((e) => e.status === "running") ?? newest.find((e) => metricCount(e.id) > 0) ?? newest[0]
+  );
+}
+
+/** Run fn up to `tries` times, waiting delayMs × attempt between tries; rethrows the last error. */
+export async function retry<T>(fn: () => Promise<T>, tries = 3, delayMs = 1000): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (attempt >= tries) throw e;
+      await new Promise((r) => setTimeout(r, delayMs * attempt));
+    }
+  }
+}

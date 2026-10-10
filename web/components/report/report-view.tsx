@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Metric } from "@/lib/types";
+import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
 import { DIFF_TEXT, memoryRows, TEXT } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
@@ -59,13 +60,14 @@ function Table({ head, children, wide }: { head: React.ReactNode; children: Reac
 export function ReportView({ projectId }: { projectId: string }) {
   const [bundle, setBundle] = useState<ReportBundle | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0); // bumped by the Retry button
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const db = supabase();
     let cancelled = false;
     const load = () =>
-      loadReport(db, projectId)
+      retry(() => loadReport(db, projectId))
         .then((b) => {
           if (cancelled) return;
           setBundle(b);
@@ -95,11 +97,18 @@ export function ReportView({ projectId }: { projectId: string }) {
       clearTimeout(timer.current);
       db.removeChannel(channel);
     };
-  }, [projectId]);
+  }, [projectId, attempt]);
 
+  const retryButton = (
+    <button type="button" onClick={() => (setError(null), setAttempt((n) => n + 1))} className="underline">
+      Retry
+    </button>
+  );
   if (!bundle)
     return error ? (
-      <p className="text-sm text-red-600">Could not load the report: {error}</p>
+      <p className="text-sm text-red-600">
+        Could not load the report: {error} {retryButton}
+      </p>
     ) : (
       <Muted>Loading report…</Muted>
     );
@@ -107,7 +116,11 @@ export function ReportView({ projectId }: { projectId: string }) {
 
   return (
     <section aria-labelledby="report-heading" className="space-y-8">
-      {error && <p className="text-sm text-red-600">Could not refresh the report: {error}</p>}
+      {error && (
+        <p className="text-sm text-red-600">
+          Could not refresh the report: {error} {retryButton}
+        </p>
+      )}
       {isPrecomputed(project) && (
         <p className="rounded border border-amber-400 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
           {PRECOMPUTED_LABEL}: loaded from stored results, not a live run.
@@ -147,7 +160,82 @@ export function ReportView({ projectId }: { projectId: string }) {
   );
 }
 
+const OursValues = ({ r }: { r: ReportRow }) =>
+  r.ours.length === 0 ? (
+    <span className="text-xs text-neutral-500">{TEXT.notMeasured}</span>
+  ) : (
+    <>
+      {r.ours.map((p, i) => (
+        <span key={p.log_line}>
+          {i > 0 && ", "}
+          <LogLink exp={r.experimentId} line={p.log_line}>
+            {p.text}
+          </LogLink>
+        </span>
+      ))}
+    </>
+  );
+
+const Spread = ({ r }: { r: ReportRow }) => (
+  <>
+    {r.delta !== null && `Δ ${r.delta > 0 ? "+" : ""}${r.delta}`}
+    {r.delta !== null && r.margin !== null && " "}
+    {r.margin !== null && `± ${r.margin}`}
+  </>
+);
+
+const VerdictCell = ({ r }: { r: ReportRow }) =>
+  r.verdict ? (
+    <>
+      <Badge tone={verdictLabel(r.verdict.verdict).tone}>{r.verdict.label}</Badge>
+      {r.verdict.why && <p className="mt-1 break-words text-xs text-neutral-500">{r.verdict.why}</p>}
+    </>
+  ) : (
+    <span className="text-xs text-neutral-500">{TEXT.notGraded}</span>
+  );
+
+/** Phones get one card per claim; wider screens get the table. Same data and links in both. */
 function ClaimsTable({ rows }: { rows: ReportRow[] }) {
+  return (
+    <>
+      <ul className="divide-y divide-neutral-200 sm:hidden dark:divide-neutral-800">
+        {rows.map((r) => (
+          <li key={`${r.experimentId}:${r.claim.id}`} className="space-y-1.5 py-3 text-sm">
+            <div className="break-words font-medium">
+              {r.claim.model} <span className="font-normal text-neutral-500">· {r.claim.metric}</span>
+            </div>
+            <div className="break-words text-xs text-neutral-500">
+              <span className="font-mono">{r.claim.id}</span> · {r.claim.whose} · {r.experimentLabel}
+            </div>
+            <dl className="grid grid-cols-2 gap-2 tabular-nums">
+              <div>
+                <dt className="text-xs text-neutral-500">Paper</dt>
+                <dd>
+                  {r.claim.value} <span className="text-xs text-neutral-500">{r.claim.unit}</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-neutral-500">Ours</dt>
+                <dd>
+                  <OursValues r={r} /> <span className="text-xs text-neutral-500"><Spread r={r} /></span>
+                </dd>
+              </div>
+            </dl>
+            <div>
+              <VerdictCell r={r} />
+            </div>
+            <Quote claim={r.claim} />
+          </li>
+        ))}
+      </ul>
+      <div className="hidden sm:block">
+        <ClaimsGrid rows={rows} />
+      </div>
+    </>
+  );
+}
+
+function ClaimsGrid({ rows }: { rows: ReportRow[] }) {
   return (
     <Table
       head={
@@ -176,34 +264,13 @@ function ClaimsTable({ rows }: { rows: ReportRow[] }) {
             <div className="text-xs text-neutral-500">{r.claim.unit}</div>
           </td>
           <td className="py-2 pr-2 text-right tabular-nums">
-            {r.ours.length === 0 ? (
-              <span className="text-xs text-neutral-500">{TEXT.notMeasured}</span>
-            ) : (
-              <ul>
-                {r.ours.map((p) => (
-                  <li key={p.log_line}>
-                    <LogLink exp={r.experimentId} line={p.log_line}>
-                      {p.text}
-                    </LogLink>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <OursValues r={r} />
             <div className="whitespace-nowrap text-xs text-neutral-500">
-              {r.delta !== null && `Δ ${r.delta > 0 ? "+" : ""}${r.delta}`}
-              {r.delta !== null && r.margin !== null && " "}
-              {r.margin !== null && `± ${r.margin}`}
+              <Spread r={r} />
             </div>
           </td>
           <td className="py-2">
-            {r.verdict ? (
-              <>
-                <Badge tone={verdictLabel(r.verdict.verdict).tone}>{r.verdict.label}</Badge>
-                {r.verdict.why && <p className="mt-1 break-words text-xs text-neutral-500">{r.verdict.why}</p>}
-              </>
-            ) : (
-              <span className="text-xs text-neutral-500">{TEXT.notGraded}</span>
-            )}
+            <VerdictCell r={r} />
           </td>
         </tr>
       ))}

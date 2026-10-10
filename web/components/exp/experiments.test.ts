@@ -5,6 +5,8 @@ import {
   formatDuration,
   groupMetrics,
   latestTaskByExperiment,
+  pickDefault,
+  retry,
   runTime,
   upsertRows,
 } from "./experiments.ts";
@@ -114,4 +116,31 @@ test("formatDuration renders seconds, minutes and hours", () => {
   assert.equal(formatDuration(4.7), "4.7 s");
   assert.equal(formatDuration(449), "7 min 29 s");
   assert.equal(formatDuration(5119.3), "1 h 25 min");
+});
+
+test("pickDefault prefers a running experiment, then the newest with metrics, then the newest", () => {
+  const e = (id: string, status: string, created_at: string) => ({ id, status, created_at });
+  const rows = [
+    e("old", "done", "2026-10-10T09:00:00Z"),
+    e("mid", "done", "2026-10-10T10:00:00Z"),
+    e("new", "planned", "2026-10-10T11:00:00Z"),
+  ];
+  const counts = (id: string) => ({ old: 10, mid: 5, new: 0 })[id] ?? 0;
+  assert.equal(pickDefault(rows, counts)?.id, "mid");
+  assert.equal(pickDefault([...rows, e("run", "running", "2026-10-10T08:00:00Z")], counts)?.id, "run");
+  assert.equal(pickDefault(rows, () => 0)?.id, "new");
+  assert.equal(pickDefault([], counts), undefined);
+});
+
+test("retry returns the first success and gives up after the last failure", async () => {
+  let calls = 0;
+  const flaky = async () => {
+    calls += 1;
+    if (calls < 3) throw new Error(`fail ${calls}`);
+    return "ok";
+  };
+  assert.equal(await retry(flaky, 3, 0), "ok");
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(retry(flaky, 2, 0), /fail 2/);
 });
