@@ -537,8 +537,9 @@ class Controller:
                     self.stop_project(p, last, "stopped", "a researcher rejected its task"
                                       + (f": {last['decision_note']}" if last.get("decision_note") else ""))
             elif action == "failed":
-                attempts = [t for t in step_tasks if t["input"]["step"] == i]
-                last = progress.latest_per_step(attempts)[i]
+                every = [t for t in step_tasks if t["input"]["step"] == i]
+                last = progress.latest_per_step(every)[i]
+                attempts = progress.since_reset(every, self._reset_ts(p["id"], plan_task["id"], i))
                 kind, why = progress.failure_action(attempts, debugs)
                 if kind == "debug":
                     self.create_debug(p, plan_task, steps, i, last, debugs, now, step_tasks=step_tasks)
@@ -547,6 +548,37 @@ class Controller:
                                      step_tasks=step_tasks)
                 elif kind == "blocked":
                     self.stop_project(p, last, "blocked", why)
+
+    def _reset_ts(self, project_id: str, plan_task_id: str, step: int) -> Optional[str]:
+        """When step was last reset by a project_unblocked event (its attempts before that do not count)."""
+        rows = self.db.table("events").select("ts").eq("project_id", project_id).eq("type", "project_unblocked") \
+            .eq("data->>plan_task_id", plan_task_id).eq("data->>step", str(step)).order("ts", desc=True).limit(1) \
+            .execute().data
+        return rows[0]["ts"] if rows else None
+
+    def unblock(self, project_id: str, reason: str) -> dict:
+        """Resume a blocked project at the step it stopped on, with fresh attempts; done steps are kept. The running
+        controller creates the new attempt on its next tick (python -m lab.controller --unblock ID --reason ...)."""
+        p = self.db.table("projects").select("id,status").eq("id", project_id).execute().data
+        if not p:
+            raise SystemExit(f"no project {project_id}")
+        if p[0]["status"] != "blocked":
+            raise SystemExit(f"project {project_id} is {p[0]['status']}, not blocked: nothing to unblock")
+        state = self._plan_state(project_id)
+        if state is None:
+            raise SystemExit("the project has no finished plan")
+        plan_task, steps, step_tasks, _ = state
+        where = progress.blocked_step(step_tasks)
+        if where is None:
+            raise SystemExit("the project's latest step attempt did not fail: nothing to unblock")
+        step, capability = where
+        before = [t for t in step_tasks if t["input"]["step"] == step]
+        ev = emit(self.db, "project_unblocked", f"project resumed at step {step + 1} ({capability})", reason,
+                  project_id=project_id, task_id=plan_task["id"],
+                  data={"plan_task_id": plan_task["id"], "step": str(step), "capability": capability,
+                        "previous_attempts": len(before)})
+        self.db.table("projects").update({"status": "running"}).eq("id", project_id).execute()
+        return {"step": step, "capability": capability, "previous_attempts": len(before), "event_id": ev["id"]}
 
     def _plan_state(self, project_id: str):
         """(plan task, steps, step tasks, debug tasks) of the project's latest done plan, or None."""
@@ -861,13 +893,16 @@ class Controller:
         new = assign.step_floor(agent)
         if new is None:
             return False
-        old = (agent.get("budget") or {}).get("max_steps")
+        before = dict(agent.get("budget") or {})
+        old = before.get("max_steps")
         self.db.table("agents").update({"budget": new}).eq("id", agent["id"]).execute()
         agent["budget"] = new
-        emit(self.db, "agent_budget_raised", f"{agent['name']}: max_steps {old} → {new['max_steps']}",
+        emit(self.db, "agent_budget_raised",
+             f"{agent['name']}: max_steps {old} → {new.get('max_steps')}, max_tokens {before.get('max_tokens')} → "
+             f"{new.get('max_tokens')}",
              f"agents with {', '.join(c for c in agent.get('capabilities') or [] if c in assign.STEP_FLOORS)} get at "
-             f"least {new['max_steps']} steps (LAB_ENVBUILDER_STEPS); {old} ran out in live runs",
-             agent_id=agent["id"], data={"from": old, "to": new["max_steps"]})
+             f"least the floor budget (LAB_ENVBUILDER_STEPS, LAB_ENVBUILDER_TOKENS); the old budget ran out in live "
+             f"runs", agent_id=agent["id"], data={"from": before, "to": new})
         return True
 
     def apply_step_floors(self) -> list[str]:
