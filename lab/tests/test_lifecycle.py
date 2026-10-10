@@ -158,10 +158,9 @@ def test_refine_counts_per_project_and_role():
     assert counts == {("p1", "reader"): 3, ("p2", "reader"): 1, ("p1", "implementer"): 1}
 
 
-def test_a_role_is_capped_after_three_refines_in_a_project():
-    from lab.controller.rules import MAX_REFINES_PER_ROLE
-    assert MAX_REFINES_PER_ROLE == 3
-    counts = {("p1", "reader"): 3, ("p2", "reader"): 2}
+def test_a_role_is_capped_after_the_refine_cap_in_a_project():
+    from lab.controller.lifecycle import MAX_REFINES_PER_ROLE   # the value lifecycle uses (LAB_REFINE_CAP, default 1)
+    counts = {("p1", "reader"): MAX_REFINES_PER_ROLE, ("p2", "reader"): MAX_REFINES_PER_ROLE - 1}
     assert lifecycle.is_capped("p1", "reader-v4", counts)
     assert not lifecycle.is_capped("p2", "reader-v3", counts)
     assert not lifecycle.is_capped("p1", "implementer-v1", counts)

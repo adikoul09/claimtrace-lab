@@ -367,35 +367,117 @@ def reader_system(agent: dict) -> str:
                             else "")
 
 
+PART_BYTES = 7_000  # paper text per claims call: one answer for the whole excerpt overran the 4000-token output cap
+CLAIMS_PER_PART = 25  # a 44-cell per-row table in one part ran through the cap; 18 claims took 1702 tokens out
+CLAIMS_PART = ("\n\nThis call: return only the claims stated in THIS part of the paper's text (part {i} of {n}); the "
+               "other parts are read in separate calls. Return at most {cap} claims for this part: the headline "
+               "results first; from a long per-row breakdown table keep only its main rows. Keep each claim compact: "
+               "the quote at most 20 words (the shortest verbatim span that states the value) and its page number; "
+               "no other context.")
+
+
+def halves(part: str) -> list[str]:
+    """A part cut in two at the line nearest its middle byte (for a part whose claims answer overran the cap)."""
+    lines, total, run = part.split("\n"), len(part.encode("utf-8")), 0
+    for k, line in enumerate(lines[:-1], 1):
+        run += len(line.encode("utf-8")) + 1
+        if run >= total / 2:
+            return [p for p in ("\n".join(lines[:k]), "\n".join(lines[k:])) if p.strip()]
+    return [part]
+
+
+def overran(e: Exception) -> bool:
+    return "output cap" in str(e) and "ran out" in str(e)
+
+
+def split_parts(sel: str, limit: int = PART_BYTES) -> list[str]:
+    """The selected excerpt in parts of at most `limit` bytes, cut only between section chunks (each keeps its
+    [section: ...] header and page markers)."""
+    chunks = [c if i == 0 else "[section:" + c for i, c in enumerate(sel.split("\n\n[section:"))]
+    total = len(sel.encode("utf-8"))
+    n = max(1, -(-total // limit))  # the fewest parts at `limit`; then balanced, up to 15% over it
+    target = min(total / n * 1.15, limit * 1.15)
+    parts, cur = [], ""
+    for c in chunks:
+        if cur and len((cur + "\n\n" + c).encode("utf-8")) > target:
+            parts.append(cur)
+            cur = c
+        else:
+            cur = cur + "\n\n" + c if cur else c
+    return parts + ([cur] if cur else [])
+
+
+def _claim_key(c: dict) -> tuple:
+    try:
+        return round(float(c.get("value")), 6), c.get("page")
+    except (TypeError, ValueError):
+        return c.get("value"), c.get("page")
+
+
+def merge_claims(batches: list[list[dict]]) -> list[dict]:
+    """Claims from all parts in order; a claim with the same value and page as one already kept, whose quote contains
+    or is contained in the kept one's (whitespace ignored), is the same claim read twice."""
+    kept: list[tuple[tuple, str, dict]] = []
+    for c in (c for batch in batches for c in batch):
+        key, q = _claim_key(c), squash(c.get("quote") or "")
+        if not any(k == key and q and kq and (q in kq or kq in q) for k, kq, _ in kept):
+            kept.append((key, q, c))
+    return [c for _, _, c in kept]
+
+
 def extract(text: str, *, llm, agent: dict, title: str = "", arxiv_id: str = "", task_id=None,
             model: str = "smart") -> dict:
     """The model sees only the selected sections; quotes are checked against every page of the full text.
-    One call for the claims; when its answer already carries the settings they are used, else one compact settings
-    call (both parts in one requested answer overran the gateway's 4000-token output cap)."""
-    from lab.llm import Request
+    Claims: one compact call per part of the excerpt (PART_BYTES), merged and de-duplicated by code. Settings: taken
+    from the claims answer when the excerpt is one part and that answer carries them, else one compact call."""
+    from lab.llm import LLMError, Request
 
     sel, report = select_sections(text)
-    prompt = PROMPT.format(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS),
-                           text=sel)
+    base = dict(title=title or "(untitled)", arxiv_id=arxiv_id or "?", keys=", ".join(SETTING_KEYS))
     system = reader_system(agent)
-    out, tokens, resp = {}, 0, None
-    for part in ("claims", "settings"):
-        if part == "settings" and isinstance(out.get("settings"), list):
-            break  # the claims answer already has them: no second call
-        p = prompt + ("\n\nThis call: return the claims; the settings may follow in a separate call."
-                      if part == "claims" else COMPACT_SETTINGS)
+    parts = split_parts(sel)
+    tokens, resp, batches, settings = 0, None, [], None
+
+    def call(p, part):
+        nonlocal tokens, resp
         check_request_size(p, system)
         schema = {"type": "object", "properties": {part: EXTRACT_SCHEMA["properties"][part]}, "required": [part]}
         resp = llm.call(Request(agent=agent["name"], system=system, prompt=p, schema=schema,
                                 model=model, max_output=READER_MAX_OUTPUT), agent_id=agent.get("id"), task_id=task_id)
-        got = resp.output if isinstance(resp.output, dict) else {}
-        out[part] = got.get(part) or []
-        if part == "claims" and isinstance(got.get("settings"), list):
-            out["settings"] = got["settings"]
         tokens += resp.tokens_in + resp.tokens_out
+        return resp.output if isinstance(resp.output, dict) else {}
+
+    def claims(part_text, label):
+        return call(PROMPT.format(**base, text=part_text)
+                    + CLAIMS_PART.format(i=label, n=len(parts), cap=CLAIMS_PER_PART), "claims")
+
+    skipped, last_err = [], None
+    for i, part_text in enumerate(parts, 1):
+        try:
+            got = claims(part_text, i)
+        except LLMError as e:  # the answer ran through the output cap: read the part in two halves
+            if not overran(e):
+                raise
+            for label, half in zip(("first half", "second half"), halves(part_text)):
+                try:
+                    batches.append(claims(half, f"{i}, {label}").get("claims") or [])
+                except LLMError as e2:  # still over: skip this half, keep the other parts' claims
+                    if not overran(e2):
+                        raise
+                    last_err = e2
+                    skipped.append({"part": f"{i}, {label}", "bytes": len(half.encode("utf-8")), "error": str(e2)})
+            continue
+        batches.append(got.get("claims") or [])
+        if len(parts) == 1 and isinstance(got.get("settings"), list):
+            settings = got["settings"]  # one part and its answer already has them: no settings call
+    if not batches:
+        raise last_err
+    if settings is None:
+        settings = call(PROMPT.format(**base, text=sel) + COMPACT_SETTINGS, "settings").get("settings") or []
     pages = parse_pages(text)
-    return {"claims": check_claims(out["claims"], pages),
-            "settings": [check_setting(s, pages) for s in out.get("settings") or []],
+    report = {**report, "parts": len(parts), "part_bytes": [len(p.encode("utf-8")) for p in parts], "skipped": skipped}
+    return {"claims": check_claims(merge_claims(batches), pages),
+            "settings": [check_setting(s, pages) for s in settings],
             "tokens": tokens, "model": resp.model, "mode": resp.mode, "cache_key": resp.key, "sections": report}
 
 

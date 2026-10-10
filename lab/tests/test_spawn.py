@@ -143,7 +143,8 @@ def test_a_step_is_given_up_after_the_attempt_limit():
     assert kind == "blocked" and str(MAX_STEP_ATTEMPTS) in why
 
 
-def test_only_debug_tasks_for_the_latest_failure_count():
+def test_only_debug_tasks_for_the_latest_failure_count(monkeypatch):
+    monkeypatch.setattr(progress, "MAX_STEP_ATTEMPTS", 3)  # two attempts must still be under the limit here
     a = [att("r1", sig="E", ts="2026-10-10T10:00:00Z"), att("r2", sig="E", ts="2026-10-10T10:05:00Z")]
     assert progress.failure_action(a, [dbg("r1", "done")]) == ("debug", None)
 

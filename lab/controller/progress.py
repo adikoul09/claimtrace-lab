@@ -39,6 +39,8 @@ def failure_action(attempts: list[dict], debugs: list[dict]) -> tuple[str, Optio
     one answers). A crash (output.error_signature, extracted by code) gets a debug task before the retry
     (SPEC §7.2); any other failure is retried, and the assignment may spawn a new agent (SPEC §4.3b)."""
     attempts = sorted(attempts, key=lambda t: t.get("created_at") or "")
+    if not attempts:
+        return "retry", None  # nothing since the step was reset (project_unblocked): a fresh attempt
     if len(attempts) >= MAX_STEP_ATTEMPTS:
         return "blocked", f"the step failed {len(attempts)} times (limit {MAX_STEP_ATTEMPTS})"
     last = attempts[-1]
@@ -58,3 +60,16 @@ def failure_action(attempts: list[dict], debugs: list[dict]) -> tuple[str, Optio
     if len(ds) >= MAX_DEBUG_ATTEMPTS:
         return "blocked", f"debugging failed {len(ds)} times (limit {MAX_DEBUG_ATTEMPTS})"
     return "debug", None
+
+
+def since_reset(attempts: list[dict], reset_ts: Optional[str]) -> list[dict]:
+    """The attempts created after the step's last reset (a project_unblocked event), all of them without one."""
+    return [t for t in attempts if not reset_ts or (t.get("created_at") or "") > reset_ts]
+
+
+def blocked_step(step_tasks: list[dict]) -> Optional[tuple[int, str]]:
+    """(step, capability) of the latest step attempt if it failed: the step a blocked project stopped on."""
+    if not step_tasks:
+        return None
+    last = max(step_tasks, key=lambda t: t.get("created_at") or "")
+    return (int(last["input"]["step"]), last["capability"]) if last["status"] == "failed" else None
