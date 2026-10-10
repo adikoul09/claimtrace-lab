@@ -52,7 +52,7 @@ const TAB_TITLE: Record<string, string> = {
 // caller wraps this in <Suspense> (cacheComponents).
 function ProjectInbox() {
   const projectId = projectIdFromPath(usePathname());
-  const tab = TAB_TITLE[useSearchParams().get("tab") ?? ""] ?? "Live"; // unknown tabs show Live, like the page
+  const tab = TAB_TITLE[useSearchParams().get("tab") ?? ""] ?? "Report"; // the page opens on Report by default
 
   // "ClaimTrace Lab · Report": the tab lives in ?tab=, which static metadata cannot see. Next streams the metadata
   // <title> in after hydration, so re-apply whenever the head's title changes while this page is open.
