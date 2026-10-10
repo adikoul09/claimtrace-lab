@@ -1,0 +1,75 @@
+"use client";
+
+// Header live-data check (SPEC §10): when did the newest event and metric land?
+// Global on purpose: it proves the whole bus is alive, on every page.
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { formatAgo, latestTs } from "@/lib/live";
+
+async function newestTs(table: "events" | "metrics"): Promise<string | null> {
+  const { data } = await supabase()
+    .from(table)
+    .select("ts")
+    .order("ts", { ascending: false })
+    .limit(1);
+  return data?.[0]?.ts ?? null;
+}
+
+function Stamp({ label, ts, now }: { label: string; ts: string | null; now: number | null }) {
+  return (
+    <span className="whitespace-nowrap">
+      <span className="text-neutral-500">{label}: </span>
+      {ts ? (
+        <time dateTime={ts} title={new Date(ts).toISOString()} className="tabular-nums">
+          {new Date(ts).toLocaleTimeString()}
+          {now !== null && ` (${formatAgo(ts, now)})`}
+        </time>
+      ) : (
+        <span>never</span>
+      )}
+    </span>
+  );
+}
+
+export function LiveHeader() {
+  const [eventTs, setEventTs] = useState<string | null>(null);
+  const [metricTs, setMetricTs] = useState<string | null>(null);
+  // Clock starts after mount: reading the time during prerender is not allowed.
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    const db = supabase();
+    const tickNow = () => setNow(Date.now());
+    const first = setTimeout(tickNow, 0);
+    newestTs("events").then((ts) => setEventTs((cur) => latestTs(cur, ts)));
+    newestTs("metrics").then((ts) => setMetricTs((cur) => latestTs(cur, ts)));
+    const channel = db
+      .channel("header-latest")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "events" }, (p) =>
+        setEventTs((cur) => latestTs(cur, (p.new as { ts: string }).ts)),
+      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "metrics" }, (p) =>
+        setMetricTs((cur) => latestTs(cur, (p.new as { ts: string }).ts)),
+      )
+      .subscribe();
+    const tick = setInterval(tickNow, 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(tick);
+      db.removeChannel(channel);
+    };
+  }, []);
+
+  return (
+    <header className="border-b border-neutral-200 dark:border-neutral-800">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-xs">
+        <Link href="/" className="mr-auto text-sm font-semibold">
+          ClaimTrace Lab
+        </Link>
+        <Stamp label="latest event" ts={eventTs} now={now} />
+        <Stamp label="latest metric" ts={metricTs} now={now} />
+      </div>
+    </header>
+  );
+}
