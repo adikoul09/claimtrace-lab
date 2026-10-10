@@ -470,3 +470,19 @@ def test_compare_stores_the_settings_diff_with_tested_branch_effects(runs, scrip
     assert "temperature | paper: 20 | ours: temperature = 20 | same" in analyst.tables_text(g)
     assert analyst.number_check("Lowering the temperature from 20 to 5 moved the student by 16 errors.", g) == []
     assert analyst.number_check("A temperature of 8 would help.", g) == ["8"]
+
+
+def test_read_paper_on_the_worker_gets_a_real_llm_client(runs, monkeypatch):
+    """Live-run bug: the worker passes llm=None; read_paper called llm.call on None (AttributeError)."""
+    import lab.agents.paper as paper_mod
+    db = store()
+    db.rows["papers"][0]["claims"] = []
+    db.rows["agents"].append({**AGENTS[0], "id": "a-read_paper", "capabilities": ["read_paper"]})
+    made, seen = [], {}
+    monkeypatch.setattr(stages, "LLM", lambda db: made.append(db) or "llm-client")
+    def fake_read_paper(pid, arxiv, *, llm, **kw):
+        seen["llm"] = llm
+        return {"claims": [{"valid": True}], "settings": [], "tokens": 5}
+    monkeypatch.setattr(paper_mod, "read_paper", fake_read_paper)
+    out = stages.handle(db, task("read_paper", f"runs/{PID}"), executor="laptop-b")
+    assert out["outcome"] == "passed" and seen["llm"] == "llm-client" and made == [db]

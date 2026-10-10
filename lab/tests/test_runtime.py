@@ -274,3 +274,20 @@ def test_llm_failure_ends_the_run_with_a_reason(workdir, tmp_path):
     res = runtime.run_agent(agent_row(), "go", workdir, db=db, runs_root=workdir.parent, llm=client)
     assert res.status == "failed"
     assert "ReplayMiss" in events(db, "agent_failed")[0]["reason"]
+
+
+def test_agent_calls_use_the_fast_model_at_the_full_output_cap(workdir, monkeypatch):
+    """Live run: the gateway caps output (reasoning included) at 4000 tokens; worker agents use the fast model at
+    that cap, since the smart model spent it all reasoning."""
+    seen = []
+
+    def provider(req, model):
+        seen.append((model, req.max_output))
+        out = {"action": "finish", "answer": "ok", "reason": "done"}
+        return {"output": out, "text": json.dumps(out), "tokens_in": 10, "tokens_out": 5, "models": [model]}
+    monkeypatch.setitem(llm_mod.PROVIDERS, "fake", provider)
+    db = FakeDB()
+    res = runtime.run_agent(agent_row(), "say ok", workdir, db=db, llm=make_llm(workdir, db),
+                            runs_root=workdir.parent)
+    assert res.status == "finished" and seen == [("fake-fast", runtime.AGENT_MAX_OUTPUT)] and \
+        runtime.AGENT_MAX_OUTPUT == 4000
