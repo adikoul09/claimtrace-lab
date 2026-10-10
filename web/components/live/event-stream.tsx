@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { mergeEvents } from "@/lib/live";
 import type { Agent, Event } from "@/lib/types";
+import { REPLAY_PILL } from "./replay-badge";
+import { eventIsReplay } from "./replay";
 import { WhatIfForm } from "./whatif-form";
 
 const LIMIT = 200;
@@ -105,6 +107,11 @@ export function EventStream({ projectId }: { projectId: string }) {
                   {e.type}
                 </span>
                 {e.agent_id && <span>{agents[e.agent_id] ?? e.agent_id.slice(0, 8)}</span>}
+                {eventIsReplay(e.data) && (
+                  <span className={REPLAY_PILL} title="This step's LLM call was replayed from the cache of real calls">
+                    Replay
+                  </span>
+                )}
               </div>
               <p className="mt-1 break-words">{e.message}</p>
               <p className="mt-0.5 break-words text-neutral-600 dark:text-neutral-400">
