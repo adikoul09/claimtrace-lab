@@ -85,9 +85,13 @@ test("plainReason turns common failures into plain words and keeps unknown ones 
   assert.equal(plainReason("gemini call failed: ClientError: 429 RESOURCE_EXHAUSTED. quota"), "The AI service's usage limit was reached, so the agent could not answer.");
   assert.equal(plainReason("agent stopped: max_tokens reached: 7966 of 4000 tokens used"), "The agent used up its token allowance before it could answer.");
   assert.equal(plainReason("KeyError: slice(None, 2000, None)"), "A bug in the lab's own code stopped this step.");
+  assert.equal(plainReason("agent stopped: max_steps reached: 6 of 6 steps used"), "The agent used up its allowed number of steps before it finished.");
   assert.equal(plainReason("run timed out after 300 s"), "The step ran out of time.");
   assert.equal(plainReason("no public data: JFT is not public"), "No public data: JFT is not public.");
   assert.equal(plainReason(null), "The step failed without recording why.");
+  // An error that is only punctuation must not throw (it would hide the whole strip).
+  assert.equal(plainReason("..."), "The step failed without recording why.");
+  assert.equal(plainReason("."), "The step failed without recording why.");
 });
 
 test("stages done without a task of their own say how they were inferred", () => {
@@ -131,4 +135,10 @@ test("Training is not done when only the budget step finished; it runs until the
   assert.equal(training([t("budget", "done")]), "running");
   assert.equal(training([t("budget", "done"), t("run", "queued", { scale: "full" })]), "running");
   assert.equal(training([t("budget", "done"), t("run", "done", { scale: "full" })]), "done");
+});
+
+test("a stage whose open step waits for a researcher's approval says so instead of running", () => {
+  const s = deriveStages({ ...empty, tasks: [t("budget", "done"), t("run", "awaiting_approval", { scale: "full" })] });
+  assert.equal(s[5].state, "waiting");
+  assert.equal(deriveStages({ ...empty, tasks: [t("run", "awaiting_approval", { scale: "full" }), t("run", "running", { scale: "full" })] })[5].state, "running");
 });

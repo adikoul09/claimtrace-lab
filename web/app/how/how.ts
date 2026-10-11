@@ -2,7 +2,7 @@
 // a step is "live" once the database shows it worked at least once, otherwise "next".
 
 export type Evidence = {
-  projects: number; // projects created
+  projects: number; // real research runs (test projects excluded)
   readerDone: number; // finished read_paper / extract_claims tasks
   designerDone: number; // finished design_experiment tasks
   implementerDone: number; // finished write_code tasks
@@ -28,17 +28,22 @@ export const NO_EVIDENCE: Evidence = {
 
 export type HowStep = { id: string; title: string; text: string; live: boolean; proof: string | null };
 
-const times = (n: number) => (n === 1 ? "done once here" : `done ${n} times here`);
+// Counted over real research runs only: test projects (status or tag "test") are left out.
+const times = (n: number) => (n === 1 ? "done once in real runs" : `done ${n} times in real runs`);
 
-function step(id: string, title: string, text: string, count: number | null): HowStep {
+function step(id: string, title: string, text: string, count: number | null, proof = times): HowStep {
   // count null: no evidence source exists yet, so the step is "next" whatever the data says.
   const live = count !== null && count > 0;
-  return { id, title, text, live, proof: live ? times(count) : null };
+  return { id, title, text, live, proof: live ? proof(count) : null };
 }
+
+/** Test projects (status or tag "test") are not research runs and do not count on /how. */
+export const isTestProject = (p: { status: string; tags?: string[] | null }) =>
+  p.status === "test" || (p.tags ?? []).includes("test");
 
 export function howSteps(e: Evidence): HowStep[] {
   return [
-    step("paper", "Paper in", "You give the lab a paper from arXiv.", e.projects),
+    step("paper", "Paper in", "You give the lab a paper from arXiv.", e.projects, (n) => `real research runs: ${n}`),
     step(
       "reader",
       "Reader",

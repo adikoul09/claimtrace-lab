@@ -12,6 +12,7 @@ import {
   type ProjectRow,
   type ReportData,
   type TaskRow,
+  previousStop,
 } from "./report";
 
 export type ReportProject = ProjectRow & { tags: string[] };
@@ -76,7 +77,8 @@ export async function loadReport(db: SupabaseClient, projectId: string): Promise
       )
     : [];
 
-  // Memory effect: the newest earlier real project of the same paper is "run 1" (not test, reference or precomputed).
+  // Memory effect: "run 1" is the newest earlier finished real project of the same paper (not test, reference or
+  // precomputed); with none finished, the newest earlier one, labelled with where it stopped.
   let previous = null;
   if (project?.arxiv_id) {
     const prev = check(
@@ -87,9 +89,13 @@ export async function loadReport(db: SupabaseClient, projectId: string): Promise
         .not("status", "in", "(test,reference,precomputed)")
         .lt("created_at", project.created_at)
         .order("created_at", { ascending: false })
-        .limit(1),
+        .limit(50),
     ) as ProjectRow[];
-    if (prev[0]) previous = { project: prev[0], ...(await runRows(db, prev[0].id)) };
+    const pick = prev.find((p) => p.status === "done") ?? prev[0];
+    if (pick) {
+      const rows = await runRows(db, pick.id);
+      previous = { project: pick, ...rows, stop: previousStop(pick.status, rows.tasks) };
+    }
   }
 
   const data = buildReport({

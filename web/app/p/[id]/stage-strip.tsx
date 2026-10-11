@@ -56,6 +56,11 @@ const STYLE: Record<StageState, { box: string; icon: string; text: string }> = {
     icon: "●",
     text: "running",
   },
+  waiting: {
+    box: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
+    icon: "⏸",
+    text: "waiting for approval",
+  },
   failed: {
     box: "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300",
     icon: "✗",
@@ -114,6 +119,7 @@ export function StageStrip({ projectId }: { projectId: string }) {
               </span>
               <span className="min-w-0 leading-tight">
                 {s.label}
+                {s.state === "waiting" && <span className="block font-normal">Waiting for approval</span>}
                 <span className="sr-only">
                   : {st.text}
                   {s.inferred && ", inferred"}
