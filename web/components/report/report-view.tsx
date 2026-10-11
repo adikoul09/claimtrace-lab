@@ -11,6 +11,7 @@ import { loadReport, type ReportBundle } from "./load";
 import { authenticitySummary, DIFF_TEXT, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
+  smokeLabel,
   splitClaimRows,
   verdictLabel,
   type Authenticity,
@@ -221,7 +222,7 @@ const VerdictCell = ({ r }: { r: ReportRow }) =>
       )}
     </>
   ) : (
-    <span className="text-xs text-neutral-500">{TEXT.notGraded}</span>
+    <span className="text-xs text-neutral-500">{smokeLabel(r) ?? TEXT.notGraded}</span>
   );
 
 /** Graded and measured rows first; rows of runs that are only planned wait in a closed section below them. */

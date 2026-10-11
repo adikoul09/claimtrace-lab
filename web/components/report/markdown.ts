@@ -1,7 +1,7 @@
 // The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
 // so the export matches the screen. Every number of ours links to its log line.
 import { formatDuration } from "../exp/experiments.ts";
-import { splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
+import { smokeLabel, splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
 
 /** Wording shared by the screen and the export. */
 export const TEXT = {
@@ -12,8 +12,9 @@ export const TEXT = {
     "Verdicts are computed by code (the Analyst) against the margin declared before the run. Every number of ours links to the log line that printed it.",
   noPaper: "No paper has been read for this project yet.",
   noRows: "No run has targeted a claim yet. Rows appear when a reproduction maps its models to claims.",
-  planned: "Planned, not run yet",
-  plannedIntro: "Claims a planned run will test; they get a value and a verdict once it runs.",
+  planned: "Smoke checks and planned runs",
+  plannedIntro:
+    "Smoke checks are short runs that only prove the code works, so they are not graded; planned runs get a value and a verdict once they run.",
   noneGraded: "No claim has a value yet.",
   notGraded: "not graded yet",
   notMeasured: "not measured yet",
@@ -105,7 +106,7 @@ export function reportMarkdown(
         (r.ours.length ? r.ours.map((p) => log(r.experimentId, p.log_line, p.text)).join(", ") : TEXT.notMeasured) +
           (r.delta !== null ? ` (Δ ${r.delta > 0 ? "+" : ""}${r.delta})` : "") +
           (r.margin !== null ? ` ± ${r.margin}` : ""),
-        r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : TEXT.notGraded,
+        r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : (smokeLabel(r) ?? TEXT.notGraded),
       ]),
     );
 

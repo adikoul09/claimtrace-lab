@@ -314,6 +314,8 @@ export type ReportRow = {
   verdict: VerdictCard | null;
   /** One plain sentence on why a claim is only partially or not reproduced (claimWhy), else null. */
   explain: string | null;
+  /** Set when the row comes from a smoke run (config.scale "smoke"): its epoch count from config.cmd, if stated. */
+  smoke: { epochs: number | null } | null;
 };
 export type GradedExp = {
   experimentId: string;
@@ -492,6 +494,7 @@ export function buildReport(input: ReportInput): ReportData {
         ours,
         delta: v?.delta ?? null,
         verdict: v,
+        smoke: smokeOf(e),
         explain: v ? claimWhy({ ...v, margin: v.margin ?? e.margin }, claim, g, (id) => shortName(byId.get(id), id)) : null,
       });
     }
@@ -674,9 +677,23 @@ export function claimTriage(claims: Claim[]): ClaimTriage {
   };
 }
 
-/** Claims vs ours: rows to show, and rows of runs that are only planned (no verdict and no logged value yet). */
+function smokeOf(e: ExpRow): ReportRow["smoke"] {
+  if (!isObj(e.config) || e.config.scale !== "smoke") return null;
+  const m = typeof e.config.cmd === "string" ? /--epochs[ =](\d+)/.exec(e.config.cmd) : null;
+  return { epochs: m ? Number(m[1]) : null };
+}
+
+/** "Smoke check (1 epoch, not graded)" for an ungraded smoke-run row, else null. */
+export function smokeLabel(r: ReportRow): string | null {
+  if (!r.smoke || r.verdict) return null;
+  const n = r.smoke.epochs;
+  return `Smoke check (${n === null ? "" : `${n} epoch${n === 1 ? "" : "s"}, `}not graded)`;
+}
+
+/** Claims vs ours: graded and measured rows to show, and the rest: rows of runs that are only planned (no verdict,
+ *  no logged value yet) and ungraded smoke checks (a short run that only proves the code runs). */
 export function splitClaimRows(rows: ReportRow[]): { shown: ReportRow[]; planned: ReportRow[] } {
-  const planned = (r: ReportRow) => !r.verdict && r.ours.length === 0;
+  const planned = (r: ReportRow) => !r.verdict && (r.ours.length === 0 || r.smoke !== null);
   return { shown: rows.filter((r) => !planned(r)), planned: rows.filter(planned) };
 }
 

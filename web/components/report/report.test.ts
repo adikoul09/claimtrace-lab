@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildReport, claimTriage, diffText, latestNotes, parseClaims, previousStop, readVerdicts, runStats, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
+import { buildReport, claimTriage, diffText, latestNotes, parseClaims, previousStop, readVerdicts, runStats, smokeLabel, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
 import { reportMarkdown, TEXT, triageReasons, triageSummary } from "./markdown.ts";
 
 const claim = (id: string, value: unknown, extra: Record<string, unknown> = {}) => ({
@@ -525,8 +525,8 @@ test("splitClaimRows keeps graded and measured rows, and moves rows with no verd
   assert.deepEqual(shown.map((r) => `${r.experimentId}:${r.claim.id}`), ["v2:c7", "v2:c8", "v2:c9", "ran:c9"]);
   assert.deepEqual(planned.map((r) => `${r.experimentId}:${r.claim.id}`), ["plan:c7", "plan:c8"]);
   const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, d, "http://x");
-  assert.match(md, /### Planned, not run yet \(2\)/);
-  assert.ok(md.indexOf("ran:c9") === -1 && md.indexOf("[95](http://x/logs/ran#L40)") < md.indexOf("### Planned, not run yet"));
+  assert.match(md, /### Smoke checks and planned runs \(2\)/);
+  assert.ok(md.indexOf("ran:c9") === -1 && md.indexOf("[95](http://x/logs/ran#L40)") < md.indexOf("### Smoke checks and planned runs"));
 });
 
 test("claimTriage counts runnable and not, top reasons first, and lists runnable claims first", () => {
@@ -568,4 +568,28 @@ test("previousStop names where an unfinished earlier run stopped, and is null fo
   assert.equal(previousStop("blocked", [task("read_paper", "done"), task("design_experiment", "failed")]), "stopped at Designing");
   assert.equal(previousStop("running", [task("read_paper", "done"), task("write_code", "running")]), "still running, at Writing code");
   assert.equal(previousStop("done", [task("read_paper", "done")]), null);
+});
+
+test("ungraded smoke-run rows go with the planned rows, labelled as 1-epoch smoke checks", () => {
+  const d = buildReport({
+    claims: parseClaims(V2_CLAIMS),
+    experiments: [
+      exp("smoke", {
+        config: { scale: "smoke", cmd: "python train.py --data-dir ../../data --epochs 1 --subset 5000 --seed 0", claim_map: { teacher: "c7" } },
+        created_at: "2026-10-11T09:00:00Z",
+      }),
+      exp("v2", { verdicts: V2, created_at: "2026-10-11T10:00:00Z" }),
+      exp("plan", { config: { claim_map: { hard: "c8" } }, created_at: "2026-10-11T11:00:00Z" }),
+    ],
+    metrics: [metric("smoke", "final_teacher", 1418, 12)],
+  });
+  const { shown, planned } = splitClaimRows(d.rows);
+  assert.deepEqual(shown.map((r) => r.experimentId), ["v2", "v2", "v2"]);
+  assert.deepEqual(planned.map((r) => r.experimentId), ["smoke", "plan"]);
+  assert.equal(smokeLabel(planned[0]), "Smoke check (1 epoch, not graded)");
+  assert.equal(smokeLabel(planned[1]), null);
+  const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, d, "http://x");
+  assert.match(md, /### Smoke checks and planned runs \(2\)/);
+  assert.ok(md.indexOf("[1418](http://x/logs/smoke#L12)") > md.indexOf("### Smoke checks and planned runs"));
+  assert.match(md, /Smoke check \(1 epoch, not graded\)/);
 });
