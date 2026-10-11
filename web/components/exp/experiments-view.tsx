@@ -18,6 +18,7 @@ import {
 } from "./experiments";
 import { statusLabel } from "@/components/live/labels";
 import { configKeyLabel, metricLabel } from "./labels";
+import { FADE_IN, stagger } from "@/components/report/motion";
 import { MetricChart } from "./metric-chart";
 
 type Status = "connecting" | "live" | "error";
@@ -135,7 +136,7 @@ export function ExperimentsView({ projectId }: { projectId: string }) {
     experiments.find((e) => e.id === selected) ?? pickDefault(experiments, (id) => metricsByExp.get(id)?.length ?? 0);
 
   return (
-    <section aria-labelledby="exp-heading">
+    <section aria-labelledby="exp-heading" className="tabular-nums">
       <div className="mb-3 flex items-center gap-2">
         <h2 id="exp-heading" className="text-sm font-semibold">
           Experiments <span className="font-normal text-neutral-500">({experiments.length})</span>
@@ -205,8 +206,8 @@ function ExpTree({
 }) {
   return (
     <ul className="space-y-1 text-sm [&_ul]:mt-1 [&_ul]:ml-3 [&_ul]:border-l [&_ul]:border-neutral-200 [&_ul]:pl-2 dark:[&_ul]:border-neutral-800">
-      {nodes.map(({ exp: e, children }) => (
-        <li key={e.id}>
+      {nodes.map(({ exp: e, children }, i) => (
+        <li key={e.id} style={stagger(i)} className={FADE_IN}>
           <button
             type="button"
             onClick={() => onSelect(e.id)}
@@ -302,8 +303,10 @@ function ExpDetail({ exp: e, task, metrics }: { exp: Experiment; task: TaskRow |
         <>
           {curves.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2">
-              {curves.map((s) => (
-                <MetricChart key={s.name} series={s} experimentId={e.id} />
+              {curves.map((s, i) => (
+                <div key={s.name} style={stagger(i)} className={FADE_IN}>
+                  <MetricChart series={s} experimentId={e.id} />
+                </div>
               ))}
             </div>
           )}

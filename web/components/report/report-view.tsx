@@ -9,6 +9,7 @@ import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
 import { acrossSeeds, authenticitySummary, DIFF_TEXT, individualRuns, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
+import { FADE_IN, stagger } from "./motion";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
   smokeLabel,
@@ -118,7 +119,7 @@ export function ReportView({ projectId }: { projectId: string }) {
   const { data, hasPaper, project } = bundle;
 
   return (
-    <section aria-labelledby="report-heading" className="space-y-8">
+    <section aria-labelledby="report-heading" className="space-y-8 tabular-nums">
       {error && (
         <p className="text-sm text-red-600">
           Could not refresh the report: {error} {retryButton}
@@ -261,8 +262,8 @@ function ClaimsTable({ rows }: { rows: ReportRow[] }) {
   return (
     <>
       <ul className="divide-y divide-neutral-200 sm:hidden dark:divide-neutral-800">
-        {rows.map((r) => (
-          <li key={`${r.experimentId}:${r.claim.id}`} className="space-y-1.5 py-3 text-sm">
+        {rows.map((r, i) => (
+          <li key={`${r.experimentId}:${r.claim.id}`} style={stagger(i)} className={`space-y-1.5 py-3 text-sm ${FADE_IN}`}>
             <div className="break-words font-medium">
               {r.claim.model} <span className="font-normal text-neutral-500">· {r.claim.metric}</span>
             </div>
@@ -574,7 +575,7 @@ function Collapsed({
   children: React.ReactNode;
 }) {
   return (
-    <details open={open} className="rounded-lg border border-neutral-200 dark:border-neutral-800">
+    <details open={open} className={`rounded-lg border border-neutral-200 dark:border-neutral-800 ${FADE_IN}`}>
       <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 px-3 py-2">
         <span className="text-sm font-semibold">{title}</span>
         {hint && <span className="min-w-0 break-words text-xs text-neutral-500">{hint}</span>}
@@ -614,8 +615,8 @@ function Averages({ data }: { data: ReportData }) {
     <section aria-label={acrossSeeds(data)} className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
       <h3 className="text-sm font-semibold">{acrossSeeds(data)}</h3>
       <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
-        {data.averages.map((a) => (
-          <li key={a.id} className="space-y-1 py-2 text-sm">
+        {data.averages.map((a, i) => (
+          <li key={a.id} style={stagger(i)} className={`space-y-1 py-2 text-sm ${FADE_IN}`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="break-words font-medium">{a.title}</span>
               <Badge tone={verdictLabel(a.verdict).tone}>{a.label}</Badge>
@@ -632,9 +633,9 @@ function AuthenticityTiles({ a }: { a: Authenticity }) {
   return (
     <>
       {a.total > 0 && (
-        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-          {a.rows.map((r) => (
-            <li key={r.verdict} className="rounded-lg border border-neutral-200 p-2 dark:border-neutral-800">
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {a.rows.map((r, i) => (
+            <li key={r.verdict} style={stagger(i)} className={`rounded-lg border border-neutral-200 p-2 dark:border-neutral-800 ${FADE_IN}`}>
               <p className="text-2xl font-semibold tabular-nums">{r.count}</p>
               <Badge tone={r.tone}>{r.label}</Badge>
               {r.seeds && <p className="mt-1 text-xs text-neutral-500">({r.seeds})</p>}

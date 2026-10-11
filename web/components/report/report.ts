@@ -719,7 +719,7 @@ export function parseAverages(json: unknown, claims: Claim[]): SeedAverage[] {
   });
 }
 
-const HEADLINE = ["reproduced", "partially_reproduced", "not_reproduced"];
+const HEADLINE = ["reproduced", "partially_reproduced", "not_reproduced", "not_runnable"];
 
 function authenticity(
   graded: { verdict: string; seedNote: string | null; relative: boolean; exp: ExpRow }[],

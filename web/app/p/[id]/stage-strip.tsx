@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { retry } from "@/components/exp/experiments";
 import { supabase } from "@/lib/supabase";
+import { FADE_IN, stagger } from "@/components/report/motion";
 import { deriveStages, type Stage, type StageInput, type StageState } from "./stages";
 
 const RELOAD_MS = 1000;
@@ -52,12 +53,12 @@ const STYLE: Record<StageState, { box: string; icon: string; text: string }> = {
     text: "done",
   },
   running: {
-    box: "border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300",
+    box: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
     icon: "●",
     text: "running",
   },
   waiting: {
-    box: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
+    box: "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300",
     icon: "⏸",
     text: "waiting for approval",
   },
@@ -114,7 +115,8 @@ export function StageStrip({ projectId }: { projectId: string }) {
           const st = STYLE[s.state];
           const body = (
             <>
-              <span aria-hidden className="shrink-0">
+              {/* Running pulses gently (Tailwind's 2 s pulse), only when motion is allowed. */}
+              <span aria-hidden className={`shrink-0 ${s.state === "running" ? "motion-safe:animate-pulse" : ""}`}>
                 {st.icon}
               </span>
               <span className="min-w-0 leading-tight">
@@ -137,7 +139,7 @@ export function StageStrip({ projectId }: { projectId: string }) {
                 : "";
           const cls = `flex min-h-9 w-full items-center gap-1 rounded border px-1.5 py-1 text-left text-[11px] font-medium ${st.box} ${light}`;
           return (
-            <li key={s.id} title={`${i + 1}. ${s.label}: ${st.text}${how}`}>
+            <li key={s.id} style={stagger(i)} className={FADE_IN} title={`${i + 1}. ${s.label}: ${st.text}${how}`}>
               {s.state === "failed" ? (
                 <button
                   type="button"

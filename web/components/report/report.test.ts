@@ -343,6 +343,7 @@ test("authenticity counts each graded claim once, with the seed note the verdict
     ["Reproduced", 1, "1 seed"],
     ["Partially reproduced", 2, "1 seed"],
     ["Not reproduced", 0, null],
+    ["Not runnable", 0, null],
   ]);
   assert.deepEqual([d.authenticity.total, d.authenticity.claims, d.authenticity.comparisons], [3, 2, 1]);
   assert.deepEqual(d.authenticity.sources, [{ id: "v2", label: "exp v2" }]);
@@ -378,7 +379,7 @@ test("authenticity says how many of a verdict are single-seed when seeds differ,
   assert.deepEqual(tally(d)[0], ["Reproduced", 2, "1 with 1 seed"]);
   const none = buildReport({ claims: [], experiments: [exp("v")], metrics: [] });
   assert.equal(none.authenticity.total, 0);
-  assert.deepEqual(tally(none).map((r) => r[1]), [0, 0, 0]);
+  assert.deepEqual(tally(none).map((r) => r[1]), [0, 0, 0, 0], "four tiles, all zero before grading");
 });
 
 test("reportMarkdown opens with the claim authenticity counts", () => {
