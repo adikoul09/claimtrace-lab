@@ -9,6 +9,12 @@ Verdicts, per target claim (absolute):
 Relative claims (each `method` claim vs each `baseline` claim of the same metric): the same rule on the gap; the
 direction must hold for Reproduced or Partially reproduced. Fewer than 3 seeds: the label carries "(n seed)".
 
+Seeds (HoO-B): a claim is graded on the mean over the project's finished, non-what-if experiments that map it with the
+same config.cmd except --seed (the seed group); the row carries n, the sample SD and the values, and its label says
+"(n seeds)". A method-vs-baseline claim whose two claims are mapped in different experiments (e.g. c3 distilled and
+c2 hard-target) is graded across them on the two groups' means, for groups whose cmd differs only by --seed and
+--set hidden_units.*.
+
 Ported from baseline/el01-auditor/el01/grade/rules.py: the verdict vocabulary, margin = max(paper spread, floor) with
 its source, and label(). Changed for Round 1: one or few seeds, so the margin rule replaces the Welch/TOST intervals
 (no scipy); relations between claims replace the paired seed test.
@@ -23,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 import sys
 from pathlib import Path
 
@@ -49,6 +56,86 @@ def _num(x) -> float | int:
 def label(v: dict, seeds: int) -> str:
     s = v["verdict"] + (f" ({v['size_note']})" if v.get("size_note") else "")
     return s + (f" ({seeds} seed{'s' if seeds != 1 else ''})" if seeds < MIN_SEEDS_FOR_NO_NOTE else "")
+
+
+SEED_RE = re.compile(r"\s--seed\s+\d+")
+HIDDEN_RE = re.compile(r"\s--set\s+hidden_units\.\w+=\S+")
+
+
+def config_key(cfg: dict | None) -> str | None:
+    """The run's command without its --seed: experiments with the same key differ only by seed."""
+    cmd = (cfg or {}).get("cmd")
+    return " ".join(SEED_RE.sub("", " " + cmd).split()) if cmd else None
+
+
+def base_key(cfg: dict | None) -> str | None:
+    """config_key without --set hidden_units.*: the hard-target net of the same size is comparable."""
+    k = config_key(cfg)
+    return " ".join(HIDDEN_RE.sub("", " " + k).split()) if k else None
+
+
+def seed_group(exp: dict, exps: list[dict]) -> list[dict]:
+    """exp and the finished, non-what-if experiments with the same config except the seed (in the given order)."""
+    key = config_key(exp.get("config"))
+    if key is None:
+        return [exp]
+    return [e for e in exps if e["id"] == exp["id"] or (
+        e.get("status") == "done" and not (e.get("config") or {}).get("whatif")
+        and config_key(e.get("config")) == key)]
+
+
+def pool(values: list[float]) -> dict:
+    vals = [_num(v) for v in values]
+    return {"n": len(vals), "mean": _num(sum(vals) / len(vals)),
+            "sd": _num(statistics.stdev(vals)) if len(vals) > 1 else None, "values": vals}
+
+
+def _seeds_label(n: int) -> str:
+    return f"({n} seed{'s' if n != 1 else ''})"
+
+
+def annotate_seeds(g: dict, pooled: dict[str, dict]) -> None:
+    """Mark the claim rows graded on a seed mean: n, SD, values, and a label that always says "(n seeds)"."""
+    for r in g["claims"]:
+        p = pooled.get(r["claim_id"])
+        if not p or r.get("ours") is None:
+            continue
+        r.update(n_seeds=p["n"], sd=p["sd"], values=p["values"])
+        r["label"] = r["verdict"] + (f" ({r['size_note']})" if r.get("size_note") else "") + " " + \
+            _seeds_label(p["n"])
+
+
+def cross_relative(claims: list[dict], mine: dict[str, dict], other: dict[str, dict], margin) -> list[dict]:
+    """Method-vs-baseline claims whose two claims are pooled in different experiment groups (mine / other)."""
+    by_id = {c["id"]: c for c in claims}
+    both = {**other, **mine}
+    out = []
+    for m in (c for c in claims if c.get("whose") == "method" and c["id"] in both):
+        for b in (c for c in claims if c.get("whose") == "baseline" and c["id"] in both and _same_kind(c, m)):
+            if not ((m["id"] in mine and b["id"] in other) or (b["id"] in mine and m["id"] in other)):
+                continue
+            sign = 1 if m["direction"] == "lower_is_better" else -1
+            paper_gap = _num(sign * (b["value"] - m["value"]))
+            g = _num(sign * (both[b["id"]]["mean"] - both[m["id"]]["mean"]))
+            r = {"claim": f"{m['id']} beats {b['id']}", "method": m["id"], "baseline": b["id"], "paper_gap": paper_gap,
+                 "ours_gap": g, "margin": _num(margin), "size_note": None, "across": True,
+                 "n": {m["id"]: both[m["id"]]["n"], b["id"]: both[b["id"]]["n"]},
+                 "means": {m["id"]: both[m["id"]]["mean"], b["id"]: both[b["id"]]["mean"]},
+                 "sds": {m["id"]: both[m["id"]]["sd"], b["id"]: both[b["id"]]["sd"]}}
+            if g <= 0:
+                r["verdict"] = "Not reproduced"
+            elif abs(g - paper_gap) <= margin:
+                r["verdict"] = "Reproduced"
+            else:
+                r.update(verdict="Partially reproduced",
+                         size_note="gap smaller than reported" if g < paper_gap else "gap larger than reported")
+            r["label"] = r["verdict"] + (f" ({r['size_note']})" if r["size_note"] else "") + \
+                f" ({r['n'][m['id']]} vs {r['n'][b['id']]} seeds)"
+            r["note"] = (f"across experiments: {m['id']} mean {r['means'][m['id']]} over {r['n'][m['id']]} seeds, "
+                         f"{b['id']} mean {r['means'][b['id']]} over {r['n'][b['id']]} seeds; gap = baseline minus "
+                         f"method" + (f"; {r['size_note']}" if r["size_note"] else ""))
+            out.append(r)
+    return out
 
 
 def reference_values(golden: dict) -> dict:
@@ -175,15 +262,30 @@ def verdict_items(g: dict) -> list[dict]:
     claims are items '<method>_vs_<baseline>' with the gaps as ours/paper."""
     items = []
     for r in g["claims"]:
-        items.append({"claim_id": r["claim_id"], "verdict": r["verdict"].lower(), "ours": r["ours"],
-                      "paper": r["paper"], "margin": r["margin"], "note": _note(g["seeds"], r["why"]),
-                      "log_line": r["log_line"]})
+        n = r.get("n_seeds")
+        if n and n > 1:
+            note = (f"({n} seeds: mean {r['ours']} ± {r['sd']} over {', '.join(str(v) for v in r['values'])}) "
+                    f"{r['why']}")
+        else:
+            note = _note(n or g["seeds"], r["why"])
+        item = {"claim_id": r["claim_id"], "verdict": r["verdict"].lower(), "ours": r["ours"], "paper": r["paper"],
+                "margin": r["margin"], "note": note, "log_line": r["log_line"]}
+        if n:
+            item.update(n_seeds=n, sd=r.get("sd"))
+        items.append(item)
     for r in g["relative"]:
-        why = (f"gap = baseline minus method; {r['size_note']}" if r.get("size_note") else
-               "gap = baseline minus method")
-        items.append({"claim_id": f"{r['method']}_vs_{r['baseline']}", "verdict": r["verdict"].lower(),
-                      "ours": r.get("ours_gap"), "paper": r["paper_gap"], "margin": r["margin"],
-                      "note": _note(g["seeds"], why), "log_line": None})
+        if r.get("across"):
+            why = r["note"]
+        else:
+            why = (f"gap = baseline minus method; {r['size_note']}" if r.get("size_note") else
+                   "gap = baseline minus method")
+            why = _note(g["seeds"], why)
+        item = {"claim_id": f"{r['method']}_vs_{r['baseline']}", "verdict": r["verdict"].lower(),
+                "ours": r.get("ours_gap"), "paper": r["paper_gap"], "margin": r["margin"], "note": why,
+                "log_line": None}
+        if r.get("across"):
+            item.update(n_seeds=r["n"], means=r["means"], sds=r["sds"])
+        items.append(item)
     return items
 
 
@@ -331,8 +433,23 @@ def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict |
         .execute().data
     mine = [t for t in tasks if (t.get("input") or {}).get("experiment_id") == experiment_id]
     ran = exp.get("status") == "done" or any(t["status"] == "done" for t in mine)
-    g = grade(paper["claims"], claim_map, finals, margin, seeds=len(cfg.get("seeds") or [0]), ran=ran,
+    exps = db.table("experiments").select("id,status,config,parent_id").eq("project_id", exp["project_id"]) \
+        .execute().data
+    group = seed_group(exp, exps) if ran else [exp]
+    pooled = _pool_group(db, exp, group, claim_map, finals)
+    graded_finals = {name: {"value": pooled[cid]["mean"], "log_line": finals[name].get("log_line")}
+                     for name, cid in claim_map.items() if name in finals and cid in pooled}
+    seeds = min([p["n"] for p in pooled.values()] or [len(cfg.get("seeds") or [0])])
+    g = grade(paper["claims"], claim_map, {**finals, **graded_finals}, margin, seeds=seeds, ran=ran,
               reference=reference)
+    annotate_seeds(g, pooled)
+    g["seed_group"] = [e["id"] for e in group]
+    if ran and cfg.get("cmd"):
+        mapped = set(claim_map.values())
+        for key, members in _comparable_groups(exp, exps).items():
+            other = _pool_group(db, None, members, None, None, exclude=mapped)
+            if other:
+                g["relative"] += cross_relative(paper["claims"], pooled, other, margin)
     if margin_note:
         g["margin_note"] = f"margin not set on the experiment; graded with the floor: {margin_note}"
     g["log_path"] = exp.get("log_path")
@@ -353,6 +470,38 @@ def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict |
     return g
 
 
+def _pool_group(db, exp: dict | None, group: list[dict], claim_map: dict | None, finals: dict | None,
+                exclude: set = frozenset()) -> dict[str, dict]:
+    """claim id -> pool of the final values over the group's experiments that map that claim to the same model.
+    With exp/claim_map/finals: the graded experiment's own map and values (the CLI may override its map)."""
+    vals: dict[tuple[str, str], list] = {}
+    for e in group:
+        own = exp is not None and e["id"] == exp["id"]
+        cmap = claim_map if own else (e.get("config") or {}).get("claim_map") or {}
+        if claim_map is not None and not own:
+            cmap = {n: c for n, c in cmap.items() if claim_map.get(n) == c}
+        values = {n: f["value"] for n, f in (finals or {}).items()} if own else _finals_of(db, e["id"])
+        for name, cid in cmap.items():
+            if cid in exclude or values.get(name) is None:
+                continue
+            vals.setdefault((name, cid), []).append(values[name])
+    return {cid: pool(v) for (name, cid), v in vals.items()}
+
+
+def _comparable_groups(exp: dict, exps: list[dict]) -> dict[str, list[dict]]:
+    """Seed groups of finished, non-what-if experiments with the same base_key but another config_key."""
+    base, mine = base_key(exp.get("config")), config_key(exp.get("config"))
+    out: dict[str, list[dict]] = {}
+    for e in exps:
+        cfg = e.get("config") or {}
+        if e.get("status") != "done" or cfg.get("whatif") or not cfg.get("cmd"):
+            continue
+        k = config_key(cfg)
+        if k != mine and base_key(cfg) == base:
+            out.setdefault(k, []).append(e)
+    return out
+
+
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser(description="Grade an experiment against the paper's claims (SPEC §7.5)")
     ap.add_argument("--experiment-id", required=True)
@@ -363,6 +512,7 @@ def main(argv=None) -> None:
     cmap = dict(kv.split("=", 1) for kv in a.claim_map.split(",")) if a.claim_map else None
     ref = reference_values(json.loads(Path(a.reference).read_text(encoding="utf-8"))) if a.reference else None
     g = run(client(), a.experiment_id, cmap, ref, with_explanation=not a.no_explanation)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # paper quotes carry ligatures; cp1252 consoles fail
     print(tables_text(g))
     print("\nexplanation:", g["explanation"]["text"] or f"(none: {g['explanation']['problems']})")
 
