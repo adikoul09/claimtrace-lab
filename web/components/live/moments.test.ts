@@ -26,3 +26,23 @@ test("the filter starts on only for projects with more than 30 events", () => {
   assert.equal(keyMomentsByDefault(30), false);
   assert.equal(keyMomentsByDefault(31), true);
 });
+
+test("what-if moments count, with plain labels", () => {
+  const cases: [string, string, string][] = [
+    ["whatif_designed", "what-if: 3 one-change branches: …", "Branches proposed"],
+    ["branch_pruned", "what-if b1 (temperature=2) pruned", "Branch pruned"],
+    ["whatif_ranked", "ranked", "Branches ranked"],
+    ["whatif_finished", "what-if finished: …", "What-if finished"],
+    ["decision", "approved run", "Decision"],
+  ];
+  for (const [type, message, label] of cases) {
+    assert.equal(isKeyMoment({ type, message }), true, type);
+    if (type !== "decision") assert.equal(momentLabel({ type, message }), label, type);
+  }
+});
+
+test("a decision event is labelled by what the researcher chose", () => {
+  assert.equal(momentLabel({ type: "decision", message: "m", data: { decision: "approve" } }), "Approved");
+  assert.equal(momentLabel({ type: "decision", message: "m", data: { decision: "reject" } }), "Rejected");
+  assert.equal(momentLabel({ type: "decision", message: "m", data: { decision: "redirect" } }), "Redirected");
+});

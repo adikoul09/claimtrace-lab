@@ -15,7 +15,7 @@ import { RewardBreakdown, Scoreboard } from "./scoreboard";
 import { ORIGIN_STYLE, STATUS_STYLE } from "./styles";
 
 type Status = "connecting" | "live" | "error";
-type TaskRef = Pick<Task, "id" | "agent_id" | "capability">;
+type TaskRef = Pick<Task, "id" | "agent_id" | "capability" | "status">;
 
 const REWARD_EVENTS = ["reward", "reward_updated"];
 
@@ -56,7 +56,8 @@ export function TeamView() {
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (p) => {
         const t = p.new as Partial<TaskRef>;
-        if (t.id) addTasks([{ id: t.id, agent_id: t.agent_id ?? null, capability: t.capability ?? "" }]);
+        if (t.id)
+          addTasks([{ id: t.id, agent_id: t.agent_id ?? null, capability: t.capability ?? "", status: t.status ?? "queued" }]);
       })
       .on(
         "postgres_changes",
@@ -85,7 +86,7 @@ export function TeamView() {
           );
       });
     db.from("tasks")
-      .select("id,agent_id,capability")
+      .select("id,agent_id,capability,status")
       .then(({ data }) => addTasks((data ?? []) as TaskRef[]));
     db.from("events")
       .select("task_id,reason")
@@ -113,6 +114,11 @@ export function TeamView() {
     [tasks],
   );
   const names: Record<string, string> = Object.fromEntries(agents.map((a) => [a.id, agentLabel(a)]));
+  // Agents working on a task right now breathe (a slow glow; off under prefers-reduced-motion).
+  const busy = useMemo(
+    () => new Set(Object.values(tasks).filter((t) => t.status === "running" && t.agent_id).map((t) => t.agent_id!)),
+    [tasks],
+  );
   // Cards show each role's newest version; older versions fold under "History (N)", like the graph.
   const roles = useMemo(() => latestPerRole(sorted), [sorted]);
   const selected = agents.find((a) => a.id === selectedId) ?? null;
@@ -153,6 +159,7 @@ export function TeamView() {
           <div>
             <h3 className="mb-2 text-sm font-semibold">Lineage</h3>
             <LineageGraph
+              busy={busy}
               agents={sorted}
               edges={edges}
               rolling={rolling}
@@ -190,6 +197,7 @@ export function TeamView() {
                   selected={a.id === selectedId}
                   onSelect={select}
                   spawnedRoot={roles.spawnedRoot[a.id]}
+                  busy={busy.has(a.id)}
                 />
               </li>
             ))}
@@ -208,6 +216,7 @@ export function TeamView() {
                       rolling={rolling[a.id]}
                       selected={a.id === selectedId}
                       onSelect={select}
+                      faded
                     />
                   </li>
                 ))}
@@ -227,6 +236,8 @@ function AgentCard({
   selected,
   onSelect,
   spawnedRoot,
+  busy = false,
+  faded = false,
 }: {
   agent: Agent;
   names: Record<string, string>;
@@ -234,6 +245,8 @@ function AgentCard({
   selected: boolean;
   onSelect: (id: string) => void;
   spawnedRoot?: Agent; // set when this role was spawned, so its newest version keeps the badge and the reason
+  busy?: boolean; // running a task now: breathing glow
+  faded?: boolean; // an older version in History: faded and desaturated
 }) {
   const ref = (id: string | null) => (id ? names[id] ?? "a removed agent" : null);
   const parent = ref(a.parent_id);
@@ -244,7 +257,9 @@ function AgentCard({
       onClick={() => onSelect(a.id)}
       className={`h-full cursor-pointer rounded-lg border p-3 text-sm ${
         selected ? "border-sky-500" : "border-neutral-200 dark:border-neutral-800"
-      } ${a.status === "active" ? "" : "opacity-70"}`}
+      } ${a.status === "active" ? "" : "opacity-70"} ${faded || a.status !== "active" ? "grayscale" : ""} ${
+        faded ? "opacity-60" : ""
+      } ${busy ? "ct-breathe" : ""}`}
     >
       <header className="flex flex-wrap items-center gap-2">
         <h3 className="font-semibold" title={a.name}>

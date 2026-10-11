@@ -2,10 +2,26 @@
 // Budget hold and approval needed have no event type of their own; they are matched on what the controller writes.
 
 const BUDGET_HOLD = new Set(["budget_hold", "llm_daily_cap"]); // budget_hold: B's token guard (PR #12)
-const KEY_TYPES = new Set(["agent_spawned", "agent_refined", "agent_retired", "lesson_applied", ...BUDGET_HOLD]);
+// What-if steps (lab/agents/stages.py, lab/controller/loop.py) and the researcher's decisions (the web's decision event).
+const WHATIF: Record<string, string> = {
+  whatif_designed: "Branches proposed",
+  branch_pruned: "Branch pruned",
+  whatif_ranked: "Branches ranked",
+  whatif_finished: "What-if finished",
+};
+const DECISION: Record<string, string> = { approve: "Approved", reject: "Rejected", redirect: "Redirected" };
+const KEY_TYPES = new Set([
+  "agent_spawned",
+  "agent_refined",
+  "agent_retired",
+  "lesson_applied",
+  "decision",
+  ...BUDGET_HOLD,
+  ...Object.keys(WHATIF),
+]);
 const AWAITS_APPROVAL = "(awaits approval)"; // lab/controller/loop.py: the task_assigned message of a gated task
 
-type EventLike = { type: string; message: string };
+type EventLike = { type: string; message: string; data?: unknown };
 
 const needsApproval = (e: EventLike) => e.type === "task_assigned" && e.message.includes(AWAITS_APPROVAL);
 
@@ -17,6 +33,11 @@ export function isKeyMoment(e: EventLike): boolean {
 export function momentLabel(e: EventLike): string | null {
   if (needsApproval(e)) return "Approval needed";
   if (BUDGET_HOLD.has(e.type)) return "Budget hold"; // new AI work pauses at the daily token cap
+  if (WHATIF[e.type]) return WHATIF[e.type];
+  if (e.type === "decision") {
+    const d = e.data && typeof e.data === "object" ? (e.data as Record<string, unknown>).decision : null;
+    return (typeof d === "string" && DECISION[d]) || null;
+  }
   return null;
 }
 

@@ -25,6 +25,8 @@ export function EventStream({ projectId }: { projectId: string }) {
   // null = not chosen yet: on for busy projects (> 30 events), except when a link points at one event (#ev-…),
   // which might not be a key moment.
   const [keyChoice, setKeyChoice] = useState<boolean | null>(null);
+  // Events that arrived over Realtime (not the first load) slide in from the top.
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
   const jumped = useRef(false);
 
   // Rows arrive after the first fetch, so a #ev-<id> link (from a lesson's evidence) can't scroll on load; do it here.
@@ -47,7 +49,11 @@ export function EventStream({ projectId }: { projectId: string }) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "events", filter: `project_id=eq.${projectId}` },
-        (p) => setEvents((cur) => mergeEvents(cur, [p.new as Event], LIMIT)),
+        (p) => {
+          const e = p.new as Event;
+          setFresh((cur) => new Set(cur).add(e.id));
+          setEvents((cur) => mergeEvents(cur, [e], LIMIT));
+        },
       )
       .subscribe((s) => {
         if (s === "SUBSCRIBED") setStatus("live");
@@ -143,8 +149,10 @@ export function EventStream({ projectId }: { projectId: string }) {
               key={e.id}
               id={`ev-${e.id}`}
               className={`scroll-mt-4 py-2 text-sm data-[highlight]:bg-amber-50 dark:data-[highlight]:bg-amber-950/30 ${
+                fresh.has(e.id) ? "ct-enter" : ""
+              } ${
                 e.type === "agent_spawned"
-                  ? "border-l-4 border-amber-500 bg-amber-50/60 pl-2 dark:bg-amber-950/20"
+                  ? "border-l-4 border-purple-500 bg-purple-50/60 pl-2 dark:bg-purple-950/25"
                   : ""
               }`}
             >

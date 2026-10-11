@@ -30,6 +30,7 @@ test("statuses and codes read as plain words", () => {
 test("a task budget reads as CPU minutes and tokens, not raw keys", () => {
   assert.equal(budgetLabel({ max_cpu_s: 300, max_tokens: 20000 }), "up to 5 CPU-min · 20,000 tokens");
   assert.equal(budgetLabel({ max_cpu_s: 90 }), "up to 1.5 CPU-min");
+  assert.equal(budgetLabel({ max_cpu_s: 900, max_tokens: 0 }), "up to 15 CPU-min · no AI tokens");
   assert.equal(budgetLabel({ other: 1 }), "other 1");
   assert.equal(budgetLabel({}), null);
 });
