@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
-import { authenticitySummary, DIFF_TEXT, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
+import { acrossSeeds, authenticitySummary, DIFF_TEXT, individualRuns, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
   smokeLabel,
@@ -144,6 +144,7 @@ export function ReportView({ projectId }: { projectId: string }) {
           </a>
         </div>
         <AuthenticityTiles a={data.authenticity} />
+        {data.averages.length > 0 && <Averages data={data} />}
       </div>
 
       <div className="space-y-3">
@@ -154,7 +155,7 @@ export function ReportView({ projectId }: { projectId: string }) {
         ) : data.rows.length === 0 ? (
           <Muted>{TEXT.noRows}</Muted>
         ) : (
-          <ClaimRows rows={data.rows} />
+          <ClaimRows rows={data.rows} folded={data.averages.length > 0} />
         )}
         <Comparisons graded={data.graded} />
       </div>
@@ -226,11 +227,20 @@ const VerdictCell = ({ r }: { r: ReportRow }) =>
   );
 
 /** Graded and measured rows first; rows of runs that are only planned wait in a closed section below them. */
-function ClaimRows({ rows }: { rows: ReportRow[] }) {
+function ClaimRows({ rows, folded }: { rows: ReportRow[]; folded: boolean }) {
   const { shown, planned } = splitClaimRows(rows);
   return (
     <>
-      {shown.length ? <ClaimsTable rows={shown} /> : <Muted>{TEXT.noneGraded}</Muted>}
+      {!shown.length ? (
+        <Muted>{TEXT.noneGraded}</Muted>
+      ) : folded ? (
+        // The verdicts across seeds lead; each run's own rows wait in a closed section.
+        <Collapsed title={individualRuns(shown.length)}>
+          <ClaimsTable rows={shown} />
+        </Collapsed>
+      ) : (
+        <ClaimsTable rows={shown} />
+      )}
       {planned.length > 0 && (
         <details className="rounded-lg border border-neutral-200 dark:border-neutral-800">
           <summary className="flex min-h-11 cursor-pointer items-center px-3 py-2 text-sm font-semibold">
@@ -596,6 +606,25 @@ function Comparisons({ graded }: { graded: GradedExp[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function Averages({ data }: { data: ReportData }) {
+  return (
+    <section aria-label={acrossSeeds(data)} className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+      <h3 className="text-sm font-semibold">{acrossSeeds(data)}</h3>
+      <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
+        {data.averages.map((a) => (
+          <li key={a.id} className="space-y-1 py-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="break-words font-medium">{a.title}</span>
+              <Badge tone={verdictLabel(a.verdict).tone}>{a.label}</Badge>
+            </div>
+            <p className="break-words">{a.why}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

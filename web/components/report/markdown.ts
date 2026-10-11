@@ -64,6 +64,10 @@ export const triageReasons = (t: ClaimTriage) =>
 export const memoryHint = (m: ReportData["memory"]) =>
   !m?.previous ? TEXT.noMemory : m.previousStop ? `vs previous run (${m.previousStop})` : "vs previous run";
 
+/** "Across 3 seeds" (the largest seed count among the averaged verdicts). */
+export const acrossSeeds = (d: ReportData) => `Across ${Math.max(...d.averages.map((a) => a.seeds))} seeds`;
+export const individualRuns = (n: number) => `Individual runs (${n})`;
+
 export const memoryRows = (s: RunStats) => [
   [
     "Retries before the first successful run",
@@ -110,11 +114,15 @@ export function reportMarkdown(
       ]),
     );
 
+  if (d.averages.length)
+    out.push(`### ${acrossSeeds(d)}`, d.averages.map((a) => `- **${a.title}**: ${a.why}`).join("\n"));
+
   out.push("## Claims vs ours", TEXT.claimsIntro);
   if (!hasPaper) out.push(TEXT.noPaper);
   else if (!d.rows.length) out.push(TEXT.noRows);
   else {
     const { shown, planned } = splitClaimRows(d.rows);
+    if (d.averages.length && shown.length) out.push(`### ${individualRuns(shown.length)}`);
     out.push(shown.length ? claimsTable(shown) : TEXT.noneGraded);
     if (planned.length) out.push(`### ${TEXT.planned} (${planned.length})`, TEXT.plannedIntro, claimsTable(planned));
   }

@@ -361,7 +361,22 @@ export type Authenticity = {
   comparisons: number;
   sources: { id: string; label: string }[];
 };
+/** One verdict over several seeds (B1's averaged regrade): mean ± spread, a code verdict and a code-built sentence. */
+export type SeedAverage = {
+  id: string; // claim id, or "<method>_vs_<baseline>" for a comparison
+  title: string;
+  relative: boolean;
+  verdict: string; // normalised, as verdictLabel takes it
+  label: string;
+  mean: number;
+  spread: number | null;
+  seeds: number;
+  paper: number | null;
+  why: string;
+};
 export type ReportData = {
+  /** Verdicts across seeds; when present they come first and drive the headline counts. */
+  averages: SeedAverage[];
   authenticity: Authenticity;
   rows: ReportRow[];
   untested: Claim[];
@@ -446,6 +461,8 @@ export type ReportInput = {
   experiments: ExpRow[];
   metrics: MetricRow[];
   graded?: GradedEvent[];
+  /** B1's averaged regrade items, raw (parseAverages reads them). */
+  averages?: unknown;
   memory?: {
     project: ProjectRow;
     tasks: TaskRow[];
@@ -548,6 +565,16 @@ export function buildReport(input: ReportInput): ReportData {
     for (const r of g.relative) latest.set(`${r.method}_vs_${r.baseline}`, { ...r, relative: true, exp: e });
   }
 
+  // Averaged verdicts (over seeds) replace a claim's single-run verdict in the headline.
+  const averages = parseAverages(input.averages, claims);
+  for (const a of averages)
+    latest.set(a.id, {
+      verdict: a.verdict,
+      seedNote: a.seeds < 3 ? `${a.seeds} seed${a.seeds === 1 ? "" : "s"}` : null,
+      relative: a.relative,
+      exp: { id: "averaged", label: `the average over ${a.seeds} seeds` } as ExpRow,
+    });
+
   // Branch effects: each one-change branch against its parent, on every final_* metric both logged.
   const branches: BranchEffect[] = [];
   for (const e of sorted) {
@@ -575,6 +602,7 @@ export function buildReport(input: ReportInput): ReportData {
   const tested = new Set(rows.map((r) => r.claim.id));
   const mem = input.memory;
   return {
+    averages,
     authenticity: authenticity([...latest.values()]),
     rows,
     untested: claims.filter((c) => !tested.has(c.id)),
@@ -633,6 +661,62 @@ export function relativeWhy(r: RelativeVerdict): string | null {
   if (!WHY_VERDICTS.has(r.verdict) || r.ours_gap === null || r.paper_gap === null) return null;
   const size = r.sizeNote ? ` (${r.sizeNote})` : "";
   return `${verdictLabel(r.verdict).label}: our gap ${r.ours_gap} vs the paper's ${r.paper_gap}${size}.${seedTail(r.seedNote)}`;
+}
+
+// Field names of B1's averaged regrade items. One place to rewire when the real names arrive.
+const AVG_FIELDS = {
+  claim: ["claim_id", "claim", "id"],
+  verdict: ["verdict"],
+  mean: ["mean", "ours_mean", "ours"],
+  spread: ["spread", "std", "ours_std", "sd"],
+  seeds: ["seeds", "n_seeds", "n"],
+  paper: ["paper", "paper_value", "paper_gap"],
+  margin: ["margin"],
+  delta: ["delta", "gap"],
+  unit: ["unit"],
+  note: ["note", "size_note", "why"],
+};
+const pick = (o: Record<string, unknown>, keys: string[]) => keys.map((k) => o[k]).find((v) => v !== undefined && v !== null);
+
+/** B1's averaged items → SeedAverage[]. The sentence uses only the item's numbers (mean, spread, seeds, paper,
+ *  |delta|, margin); code only compares |delta| with the margin. Items without a verdict or a mean are skipped. */
+export function parseAverages(json: unknown, claims: Claim[]): SeedAverage[] {
+  const items = Array.isArray(json) ? json : isObj(json) && Array.isArray(json.claims) ? json.claims : [];
+  const byId = new Map(claims.map((c) => [c.id, c]));
+  return items.filter(isObj).flatMap((o): SeedAverage[] => {
+    const id = pick(o, AVG_FIELDS.claim);
+    const v = pick(o, AVG_FIELDS.verdict);
+    const mean = num(pick(o, AVG_FIELDS.mean));
+    if (typeof id !== "string" || typeof v !== "string" || mean === null) return [];
+    const seedsRaw = pick(o, AVG_FIELDS.seeds);
+    const seeds = Array.isArray(seedsRaw) ? seedsRaw.length : (num(seedsRaw) ?? 1);
+    const spread = num(pick(o, AVG_FIELDS.spread));
+    const paper = num(pick(o, AVG_FIELDS.paper));
+    const margin = num(pick(o, AVG_FIELDS.margin));
+    const delta = num(pick(o, AVG_FIELDS.delta));
+    const note = pick(o, AVG_FIELDS.note);
+    const verdict = norm(v);
+    const label = verdictLabel(verdict).label;
+    const pm = spread === null ? `${mean}` : `${mean} ± ${spread}`;
+    const over = `over ${seeds} seed${seeds === 1 ? "" : "s"}`;
+    const vs = /^(.+)_vs_(.+)$/.exec(id);
+    if (vs) {
+      const name = (c: string) => shortName(byId.get(c), c);
+      const tail = typeof note === "string" && note ? ` (${note})` : "";
+      return [{ id, title: `${name(vs[1])} beats ${name(vs[2])}`, relative: true, verdict, label, mean, spread, seeds, paper,
+        why: `${label}: our gap ${pm}${paper === null ? "" : ` vs the paper's ${paper}`} ${over}${tail}.` }];
+    }
+    const claim = byId.get(id);
+    const unit = (pick(o, AVG_FIELDS.unit) as string | undefined) ?? claim?.unit ?? "";
+    let gap = "";
+    if (delta !== null) {
+      const g = Math.abs(delta);
+      gap = margin === null ? ` (gap ${g})` : ` (gap ${g}, ${g > margin ? "over" : "within"} the margin of ${margin}${unit ? ` ${unit}` : ""})`;
+    }
+    const title = claim ? `${shortName(claim, id)} · ${claim.metric}` : id;
+    return [{ id, title, relative: false, verdict, label, mean, spread, seeds, paper,
+      why: `${label}: ours ${pm}${paper === null ? "" : ` vs paper ${paper}`} ${over}${gap}.` }];
+  });
 }
 
 const HEADLINE = ["reproduced", "partially_reproduced", "not_reproduced"];

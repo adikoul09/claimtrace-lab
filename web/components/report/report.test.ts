@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildReport, claimTriage, diffText, latestNotes, parseClaims, previousStop, readVerdicts, runStats, smokeLabel, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
+import { buildReport, claimTriage, diffText, latestNotes, parseAverages, parseClaims, previousStop, readVerdicts, runStats, smokeLabel, splitClaimRows, verdictLabel, type ExpRow } from "./report.ts";
 import { reportMarkdown, TEXT, triageReasons, triageSummary } from "./markdown.ts";
 
 const claim = (id: string, value: unknown, extra: Record<string, unknown> = {}) => ({
@@ -615,4 +615,53 @@ test("the settings diff comes from the latest main reproduction, not a follow-up
   assert.equal(d.settingsDiff?.experimentId, "main");
   assert.deepEqual(d.settingsDiff?.rows.map((r) => r.key), ["hidden_units", "epochs", "temperature", "optimizer"]);
   assert.equal(d.settingsDiff?.rows[1].ours, "7");
+});
+
+// Fixture for B1's averaged regrade (field names to be confirmed by B; AVG_FIELDS maps them).
+const AVERAGED = [
+  { claim_id: "c1", verdict: "partially reproduced", mean: 81.3, spread: 2.1, seeds: 3, paper: 67, margin: 10, delta: 14.3, unit: "errors" },
+  { claim_id: "c3", verdict: "reproduced", mean: 79.7, spread: 3.4, seeds: 3, paper: 74, margin: 10, delta: 5.7, unit: "errors" },
+  { claim_id: "c3_vs_c2", verdict: "reproduced", mean: 18.3, spread: 4, seeds: 3, paper: 72, margin: 10, note: "distilled beats hard-target in all 3 seeds" },
+];
+const AVG_CLAIMS = [
+  claim("c1", 67, { model: "Large neural net (1200 units/layer)" }),
+  claim("c2", 146, { model: "Small net (800 units/layer)" }),
+  claim("c3", 74, { model: "Distilled small net (800 units/layer)" }),
+];
+
+test("parseAverages reads mean ± spread over seeds and builds a plain why sentence from those numbers", () => {
+  const a = parseAverages(AVERAGED, parseClaims(AVG_CLAIMS));
+  assert.deepEqual(a.map((x) => [x.id, x.verdict, x.relative]), [
+    ["c1", "partially_reproduced", false],
+    ["c3", "reproduced", false],
+    ["c3_vs_c2", "reproduced", true],
+  ]);
+  assert.equal(a[0].title, "Large neural net · test errors");
+  assert.equal(
+    a[0].why,
+    "Partially reproduced: ours 81.3 ± 2.1 vs paper 67 over 3 seeds (gap 14.3, over the margin of 10 errors).",
+  );
+  assert.equal(a[1].why, "Reproduced: ours 79.7 ± 3.4 vs paper 74 over 3 seeds (gap 5.7, within the margin of 10 errors).");
+  assert.equal(a[2].title, "Distilled small net beats Small net");
+  assert.equal(a[2].why, "Reproduced: our gap 18.3 ± 4 vs the paper's 72 over 3 seeds (distilled beats hard-target in all 3 seeds).");
+  assert.deepEqual(parseAverages(null, []), []);
+});
+
+test("averaged verdicts drive the headline counts, and the per-seed rows fold under Individual runs", () => {
+  const d = buildReport({
+    claims: parseClaims(AVG_CLAIMS),
+    experiments: [exp("v2", { verdicts: [{ claim_id: "c1", verdict: "not reproduced", ours: 216, paper: 67, margin: 10, note: "(1 seed)", log_line: 4 }] })],
+    metrics: [],
+    averages: AVERAGED,
+  });
+  assert.deepEqual(d.authenticity.rows.slice(0, 3).map((r) => [r.label, r.count, r.seeds]), [
+    ["Reproduced", 2, null],
+    ["Partially reproduced", 1, null],
+    ["Not reproduced", 0, null],
+  ]);
+  assert.equal(d.averages.length, 3);
+  const md = reportMarkdown({ id: "p", title: "T", arxiv_id: null }, d, "http://x");
+  assert.ok(md.indexOf("### Across 3 seeds") > md.indexOf("## Claim authenticity"));
+  assert.ok(md.indexOf("### Across 3 seeds") < md.indexOf("## Claims vs ours"));
+  assert.match(md, /### Individual runs \(1\)/);
 });
