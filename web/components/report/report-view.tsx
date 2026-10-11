@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
-import { acrossSeeds, authenticitySummary, DIFF_TEXT, individualRuns, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
+import { acrossSeeds, authenticitySummary, DIFF_TEXT, individualRuns, SEED_INTRO, seedLines, seedTitle, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
 import { FADE_IN, stagger } from "./motion";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
@@ -22,6 +22,7 @@ import {
   type GradedExp,
   type ReportData,
   type ReportRow,
+  type SeedSummary,
   type Tone,
 } from "./report";
 
@@ -156,7 +157,10 @@ export function ReportView({ projectId }: { projectId: string }) {
         ) : data.rows.length === 0 ? (
           <Muted>{TEXT.noRows}</Muted>
         ) : (
-          <ClaimRows rows={data.rows} folded={data.averages.length > 0} />
+          <>
+            {data.seedSummary && <SeedBlock s={data.seedSummary} />}
+            <ClaimRows rows={data.rows} folded={data.averages.length > 0} />
+          </>
         )}
         <Comparisons graded={data.graded} />
       </div>
@@ -403,7 +407,14 @@ function WhyItDiffers({ data }: { data: ReportData }) {
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Settings diff</h3>
         <p className="text-xs text-neutral-500">{TEXT.settingsIntro}</p>
-        {data.settingsDiff ? <SettingsTable diff={data.settingsDiff} /> : <Muted>{TEXT.noSettings}</Muted>}
+        {data.settingsDiff ? (
+          <>
+            <p className="text-xs font-medium">{TEXT.settingsComputed}</p>
+            <SettingsTable diff={data.settingsDiff} />
+          </>
+        ) : (
+          <Muted>{TEXT.noSettings}</Muted>
+        )}
       </div>
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Branch effects</h3>
@@ -607,6 +618,24 @@ function Comparisons({ graded }: { graded: GradedExp[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Across seeds: computed from the graded rows below; no verdict of its own. */
+function SeedBlock({ s }: { s: SeedSummary }) {
+  return (
+    <section aria-label={seedTitle(s)} className={`space-y-1 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800 ${FADE_IN}`}>
+      <h3 className="text-sm font-semibold">{seedTitle(s)}</h3>
+      <p className="text-xs text-neutral-500">{SEED_INTRO}</p>
+      <ul className="space-y-0.5 text-sm">
+        {seedLines(s).map((l) => (
+          <li key={l} className="break-words">
+            {l}
+          </li>
+        ))}
+      </ul>
+      {s.note && <p className="text-sm font-medium">{s.note}</p>}
+    </section>
   );
 }
 

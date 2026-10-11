@@ -1,7 +1,7 @@
 // The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
 // so the export matches the screen. Every number of ours links to its log line.
 import { formatDuration } from "../exp/experiments.ts";
-import { smokeLabel, splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
+import { smokeLabel, splitClaimRows, type Authenticity, type ClaimTriage, type SeedSummary, type ReportData, type ReportRow, type RunStats } from "./report.ts";
 
 /** Wording shared by the screen and the export. */
 export const TEXT = {
@@ -18,6 +18,7 @@ export const TEXT = {
   noneGraded: "No claim has a value yet.",
   notGraded: "not graded yet",
   notMeasured: "not measured yet",
+  settingsComputed: "Computed by code from stored settings; rows code cannot compare like for like are left out.",
   settingsIntro: "Paper value vs ours for each setting, labelled scale (budget), omission (the paper does not say), difference or same.",
   noSettings: "Settings diff not computed yet.",
   branchesIntro: "Each what-if branch changes one setting; the effect is branch minus parent on each final value both runs logged.",
@@ -67,6 +68,21 @@ export const memoryHint = (m: ReportData["memory"]) =>
 /** "Across 3 seeds" (the largest seed count among the averaged verdicts). */
 export const acrossSeeds = (d: ReportData) => `Across ${Math.max(...d.averages.map((a) => a.seeds))} seeds`;
 export const individualRuns = (n: number) => `Individual runs (${n})`;
+
+/** "Across 3 seeds (summary of graded runs)"; "3–4 seeds" when the groups differ. */
+export const seedTitle = (s: SeedSummary) => {
+  const ns = s.groups.map((g) => g.n);
+  const [lo, hi] = [Math.min(...ns), Math.max(...ns)];
+  return `Across ${lo === hi ? lo : `${lo}–${hi}`} seeds (summary of graded runs)`;
+};
+/** One line per run setting: "15 epochs: large neural net 205.0 ± 3.5 (3 runs) · …" */
+export const seedLines = (s: SeedSummary) => {
+  const by = new Map<string, string[]>();
+  for (const g of s.groups)
+    by.set(g.label, [...(by.get(g.label) ?? []), `${g.name} ${g.mean.toFixed(1)} ± ${g.sd.toFixed(1)} (${g.n} runs)`]);
+  return [...by].map(([label, parts]) => `${label}: ${parts.join(" · ")}`);
+};
+export const SEED_INTRO = "Mean ± SD of our values over graded runs that differ only in their seed, computed by code from the rows below.";
 
 export const memoryRows = (s: RunStats) => [
   [
@@ -121,6 +137,10 @@ export function reportMarkdown(
   if (!hasPaper) out.push(TEXT.noPaper);
   else if (!d.rows.length) out.push(TEXT.noRows);
   else {
+    if (d.seedSummary) {
+      out.push(`### ${seedTitle(d.seedSummary)}`, SEED_INTRO, seedLines(d.seedSummary).map((l) => `- ${l}`).join("\n"));
+      if (d.seedSummary.note) out.push(d.seedSummary.note);
+    }
     const { shown, planned } = splitClaimRows(d.rows);
     if (d.averages.length && shown.length) out.push(`### ${individualRuns(shown.length)}`);
     out.push(shown.length ? claimsTable(shown) : TEXT.noneGraded);
@@ -148,6 +168,7 @@ export function reportMarkdown(
   }
 
   out.push("## Why it differs", "### Settings diff", TEXT.settingsIntro);
+  if (d.settingsDiff) out.push(TEXT.settingsComputed);
   if (!d.settingsDiff) out.push(TEXT.noSettings);
   else
     out.push(

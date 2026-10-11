@@ -666,3 +666,88 @@ test("averaged verdicts drive the headline counts, and the per-seed rows fold un
   assert.ok(md.indexOf("### Across 3 seeds") < md.indexOf("## Claims vs ours"));
   assert.match(md, /### Individual runs \(1\)/);
 });
+
+test("the settings diff keeps only like-for-like rows the design links to (hide what code cannot compare)", () => {
+  const rows = [
+    { key: "architecture", setting_id: "s1", applies_to: "teacher", paper: "two hidden layers", ours: 256, our_key: "hidden_units.teacher", label: "difference" },
+    { key: "hidden_units", setting_id: "s2", applies_to: "teacher", paper: "1200 units", ours: 256, our_key: "hidden_units.teacher", label: "difference" },
+    { key: "data_subset", setting_id: "s8", applies_to: "teacher", paper: "all 60,000", ours: 0, our_key: "data_subset", label: "scale reduction (budget)" },
+    { key: "regularisation", setting_id: "s31", applies_to: "student", paper: "matching soft targets", ours: 0, our_key: "dropout", label: "difference" },
+    { key: "regularisation", setting_id: "s9", applies_to: "teacher", paper: "dropout", ours: 0.2, our_key: "dropout", label: "difference" },
+    { key: "temperature", setting_id: "s35", applies_to: "student", paper: "20", ours: 20, our_key: "temperature", label: "same" },
+    { key: "epochs", setting_id: null, applies_to: "teacher", paper: null, ours: 7, our_key: "epochs.teacher", label: "paper omission" },
+    { key: "lr", setting_id: null, applies_to: "speech baseline", paper: null, ours: 0.001, our_key: "lr", label: "paper omission" },
+    { key: "optimizer", setting_id: null, applies_to: "teacher", paper: null, ours: "adam", our_key: "optimizer", label: "paper omission" },
+  ];
+  const d = buildReport({
+    claims: [],
+    experiments: [exp("main", { config: { why: { settings_diff: rows }, design: { setting_ids: ["s1", "s2", "s8", "s9", "s31", "s35"] } } })],
+    metrics: [],
+  });
+  assert.deepEqual(d.settingsDiff?.rows.map((r) => `${r.key}/${r.applies_to}`), [
+    "hidden_units/teacher",
+    "regularisation/teacher",
+    "temperature/student",
+    "epochs/teacher",
+  ]);
+});
+
+// Graded runs of the same command with different seeds (42fb4944's shape).
+const run = (id: string, cmd: string, items: [string, number][]) =>
+  exp(id, {
+    config: { cmd },
+    verdicts: items.map(([c, ours]) => ({ claim_id: c, verdict: "partially reproduced", ours, paper: 70, margin: 10, note: "(1 seed)", log_line: 1 })),
+  });
+const E15 = "python train.py --epochs 15 --subset 0 --seed";
+const SEED_CLAIMS = [
+  claim("c9", 58.9, { model: "speech baseline", whose: "baseline" }), // another baseline in the paper, not run here
+  claim("c1", 67, { model: "large neural net", whose: "method" }),
+  claim("c2", 146, { model: "smaller net without regularization", whose: "baseline" }),
+  claim("c3", 74, { model: "distilled smaller net", whose: "method" }),
+];
+
+test("seed summary: mean ± SD per claim over 3+ graded runs of the same command, computed from the rows", () => {
+  const d = buildReport({
+    claims: parseClaims(SEED_CLAIMS),
+    experiments: [
+      run("a0", `${E15} 0`, [["c1", 201], ["c3", 225]]),
+      run("a1", `${E15} 1`, [["c1", 207], ["c3", 230]]),
+      run("a2", `${E15} 2`, [["c1", 207], ["c3", 233]]),
+      run("h0", `${E15} 0 --set hidden_units.teacher=128`, [["c2", 210]]),
+      run("h1", `${E15} 1 --set hidden_units.teacher=128`, [["c2", 225]]),
+      run("h2", `${E15} 2 --set hidden_units.teacher=128`, [["c2", 270]]),
+      run("x0", "python train.py --epochs 7 --seed 0", [["c1", 216]]),
+      run("x1", "python train.py --epochs 7 --seed 1", [["c1", 220]]),
+    ],
+    metrics: [],
+  });
+  const s = d.seedSummary!;
+  assert.deepEqual(
+    s.groups.map((g) => [g.label, g.claimId, g.n, g.mean.toFixed(1), g.sd.toFixed(1)]),
+    [
+      ["15 epochs", "c1", 3, "205.0", "3.5"],
+      ["15 epochs", "c3", 3, "229.3", "4.0"],
+      ["15 epochs, hidden_units.teacher=128", "c2", 3, "235.0", "31.2"],
+    ],
+  );
+  assert.equal(s.note, "The difference between distilled smaller net and smaller net without regularization (5.7) is smaller than the smaller net without regularization seed spread (SD 31.2).");
+});
+
+test("seed summary is hidden when fewer than 3 seeds, and the note only appears when the numbers support it", () => {
+  const two = buildReport({
+    claims: parseClaims(SEED_CLAIMS),
+    experiments: [run("a0", `${E15} 0`, [["c1", 1]]), run("a1", `${E15} 1`, [["c1", 2]])],
+    metrics: [],
+  });
+  assert.equal(two.seedSummary, null);
+  const tight = buildReport({
+    claims: parseClaims(SEED_CLAIMS),
+    experiments: [
+      ...[0, 1, 2].map((i) => run(`d${i}`, `${E15} ${i}`, [["c3", 100 + i]])),
+      ...[0, 1, 2].map((i) => run(`h${i}`, `${E15} ${i} --set hidden_units.teacher=128`, [["c2", 200 + i]])),
+    ],
+    metrics: [],
+  });
+  assert.equal(tight.seedSummary?.groups.length, 2);
+  assert.equal(tight.seedSummary?.note, null, "a 100-error gap is not smaller than a 1-error spread");
+});

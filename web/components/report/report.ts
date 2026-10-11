@@ -101,6 +101,9 @@ export type SettingsDiffRow = {
   reason: string | null;
   /** The model the paper's value is for ("teacher"), null when it applies to all. */
   applies_to: string | null;
+  setting_id: string | null;
+  /** applies_to as stored (also "all"), to match unstated rows to the models the design uses. */
+  scope: string;
 };
 export type Grade = {
   cards: Map<string, VerdictCard>;
@@ -185,8 +188,88 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
         config_key: typeof r.our_key === "string" ? r.our_key : typeof r.config_key === "string" ? r.config_key : null,
         reason: typeof r.why === "string" ? r.why : typeof r.reason === "string" ? r.reason : null,
         applies_to: scope && scope.toLowerCase() !== "all" ? scope : null,
+        setting_id: typeof r.setting_id === "string" ? r.setting_id : null,
+        scope,
       },
     ];
+  });
+}
+
+const SEED = /\s*--seed[ =](\d+)/;
+const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+const sd = (xs: number[]) => Math.sqrt(xs.reduce((a, x) => a + (x - mean(xs)) ** 2, 0) / (xs.length - 1)); // sample SD
+const r1 = (x: number) => x.toFixed(1);
+
+/** Groups graded rows by claim and run command without its --seed; a group with 3+ distinct seeds gets mean ± SD.
+ *  A group where one seed was graded twice with different values is left out (it is not clear which counts).
+ *  The note compares the distilled claim with the baseline claim at the same epochs, only when the numbers say so. */
+export function seedSummary(rows: ReportRow[], experiments: ExpRow[], claims: Claim[]): SeedSummary | null {
+  const cmdOf = new Map(
+    experiments.map((e) => [e.id, isObj(e.config) && typeof e.config.cmd === "string" ? e.config.cmd : null]),
+  );
+  const groups = new Map<string, { claimId: string; cmd: string; bySeed: Map<string, number[]> }>();
+  for (const r of rows) {
+    const cmd = cmdOf.get(r.experimentId);
+    const seed = cmd ? SEED.exec(cmd)?.[1] : undefined;
+    if (!r.verdict || r.verdict.ours === null || !cmd || seed === undefined || r.smoke) continue;
+    const base = cmd.replace(SEED, "");
+    const k = `${r.claim.id}|${base}`;
+    const g = groups.get(k) ?? { claimId: r.claim.id, cmd: base, bySeed: new Map() };
+    g.bySeed.set(seed, [...(g.bySeed.get(seed) ?? []), r.verdict.ours]);
+    groups.set(k, g);
+  }
+  const byId = new Map(claims.map((c) => [c.id, c]));
+  const out: { g: SeedGroup; epochs: number | null }[] = [];
+  for (const g of groups.values()) {
+    if ([...g.bySeed.values()].some((v) => new Set(v).size > 1)) continue;
+    const xs = [...g.bySeed.values()].map((v) => v[0]);
+    if (xs.length < 3) continue;
+    const epochs = /--epochs[ =](\d+)/.exec(g.cmd)?.[1];
+    const sets = [...g.cmd.matchAll(/--set[ =](\S+)/g)].map((m) => m[1]);
+    const label = [epochs ? `${epochs} epochs` : "same settings", ...sets].join(", ");
+    const sg = { label, claimId: g.claimId, name: shortName(byId.get(g.claimId), g.claimId), n: xs.length, mean: mean(xs), sd: sd(xs) };
+    out.push({ g: sg, epochs: epochs ? Number(epochs) : null });
+  }
+  if (!out.length) return null;
+  out.sort((a, b) => (b.epochs ?? 0) - (a.epochs ?? 0) || a.g.label.localeCompare(b.g.label) || a.g.claimId.localeCompare(b.g.claimId));
+
+  // Distilled vs baseline, among the claims summarised here: exactly one baseline claim and one method claim
+  // named as distilled, else no note.
+  const here = claims.filter((c) => out.some((x) => x.g.claimId === c.id));
+  const baselines = here.filter((c) => c.whose === "baseline").map((c) => c.id);
+  const distilled = here.filter((c) => c.whose === "method" && /distil/i.test(c.model)).map((c) => c.id);
+  let note: string | null = null;
+  if (baselines.length === 1 && distilled.length === 1) {
+    for (const bx of out.filter((x) => x.g.claimId === baselines[0] && x.epochs !== null)) {
+      const dx = out.find((x) => x.g.claimId === distilled[0] && x.epochs === bx.epochs);
+      if (!dx) continue;
+      const [b, d] = [bx.g, dx.g];
+      const gap = Math.abs(d.mean - b.mean);
+      if (gap < b.sd)
+        note = `The difference between ${d.name} and ${b.name} (${r1(gap)}) is smaller than the ${b.name} seed spread (SD ${r1(b.sd)}).`;
+      break; // the most-trained pair only (groups are sorted by epochs, most first)
+    }
+  }
+  return { groups: out.map((x) => x.g), note };
+}
+
+// The settings a reader asks about. Only like-for-like rows are kept; what code cannot compare is left out.
+const FOCUS_KEYS = new Set(["hidden_units", "epochs", "lr", "temperature", "regularisation", "budget", "compute"]);
+
+/** With the design's setting ids known: stated rows the design links to, unstated rows (paper omission) for the
+ *  models those rows are about, only FOCUS_KEYS, and a regularisation row only when the paper names the same thing
+ *  as our setting (e.g. dropout). Without setting ids the rows are returned as they are. */
+export function focusSettings(rows: SettingsDiffRow[], ids: string[] | null): SettingsDiffRow[] {
+  if (!ids) return rows;
+  const linked = rows.filter((r) => r.setting_id && ids.includes(r.setting_id));
+  const models = new Set(linked.map((r) => r.scope));
+  const sameThing = (r: SettingsDiffRow) =>
+    (r.config_key ?? "").split(/[._]/).some((w) => w.length > 2 && (r.paper ?? "").toLowerCase().includes(w.toLowerCase()));
+  return rows.filter((r) => {
+    if (!FOCUS_KEYS.has(r.key)) return false;
+    if (r.paper === null) return r.label === "omission" && models.has(r.scope);
+    if (!r.setting_id || !ids.includes(r.setting_id)) return false;
+    return r.key !== "regularisation" || sameThing(r);
   });
 }
 
@@ -374,7 +457,12 @@ export type SeedAverage = {
   paper: number | null;
   why: string;
 };
+/** Mean ± SD of our values over graded runs of the same command that differ only in --seed (3+ seeds). */
+export type SeedGroup = { label: string; claimId: string; name: string; n: number; mean: number; sd: number };
+export type SeedSummary = { groups: SeedGroup[]; note: string | null };
+
 export type ReportData = {
+  seedSummary: SeedSummary | null;
   /** Verdicts across seeds; when present they come first and drive the headline counts. */
   averages: SeedAverage[];
   authenticity: Authenticity;
@@ -543,7 +631,9 @@ export function buildReport(input: ReportInput): ReportData {
     // The main reproduction's diff wins over a follow-up branch's (which changes a setting on purpose).
     const why = isObj(e.config) && isObj(e.config.why) ? e.config.why : null;
     const whyRows = settingsDiff(why?.settings_diff);
-    const diffRows = whyRows.length ? whyRows : g.settingsDiff;
+    const design = isObj(e.config) && isObj(e.config.design) ? e.config.design : null;
+    const ids = Array.isArray(design?.setting_ids) ? design.setting_ids.filter((x): x is string => typeof x === "string") : null;
+    const diffRows = focusSettings(whyRows.length ? whyRows : g.settingsDiff, ids);
     const branch = !!e.parent_id || (isObj(e.config) && !!e.config.whatif);
     if (diffRows.length && (!branch || !settingsFromMain))
       settings = {
@@ -603,6 +693,7 @@ export function buildReport(input: ReportInput): ReportData {
   const mem = input.memory;
   return {
     averages,
+    seedSummary: seedSummary(rows, sorted, claims),
     authenticity: authenticity([...latest.values()]),
     rows,
     untested: claims.filter((c) => !tested.has(c.id)),
