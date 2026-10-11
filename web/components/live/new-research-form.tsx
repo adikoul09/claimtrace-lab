@@ -15,7 +15,7 @@ export function NewResearchForm() {
   const [error, setError] = useState<string | null>(null);
 
   if (authed === false)
-    return <PasscodeForm onDone={() => setAuthed(true)} why="Needed to start new research." />;
+    return <PasscodeForm onDone={() => setAuthed(true)} why="Optional · only needed to start new research. Browsing is open to everyone." />;
 
   const field =
     "min-h-11 w-full rounded border border-neutral-300 bg-transparent px-3 text-base dark:border-neutral-700";

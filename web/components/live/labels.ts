@@ -65,9 +65,9 @@ export function budgetLabel(b: Record<string, unknown>): string | null {
 // Home list: what a visitor should see first (the reference run, live runs, precomputed audits) vs. everything else.
 const OTHER = new Set(["test", "plan_failed", "blocked", "stopped"]);
 
-/** Splits projects into the main list (reference run first) and "Other runs" (test and failed), else keeping order. */
+/** Main list (finished live runs first, then the reference run) and "Other runs" (test and failed), else in order. */
 export function groupProjects<P extends { status: string }>(projects: P[]): { main: P[]; other: P[] } {
-  const rank = (p: P) => (p.status === "reference" ? 0 : 1);
+  const rank = (p: P) => (p.status === "done" ? 0 : p.status === "reference" ? 1 : 2);
   return {
     main: projects.filter((p) => !OTHER.has(p.status)).sort((a, b) => rank(a) - rank(b)),
     other: projects.filter((p) => OTHER.has(p.status)),

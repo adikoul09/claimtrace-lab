@@ -5,9 +5,10 @@ import { projectBadge } from "./project-badge.ts";
 test("precomputed and reference projects get a badge on the home list", () => {
   assert.equal(projectBadge("precomputed")?.label, "Precomputed");
   assert.equal(projectBadge("reference")?.label, "Reference run");
+  assert.equal(projectBadge("done")?.label, "Live run");
 });
 
-test("live project statuses get no badge", () => {
-  for (const s of ["new", "planning", "running", "done", "blocked", "stopped", "plan_failed", "test"])
+test("in-progress, failed and test projects get no badge", () => {
+  for (const s of ["new", "planning", "running", "blocked", "stopped", "plan_failed", "test"])
     assert.equal(projectBadge(s), null);
 });
