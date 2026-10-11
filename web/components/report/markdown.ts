@@ -1,7 +1,7 @@
 // The Report as Markdown (SPEC §10, §12). Built from the same ReportData the screen renders, with the same words,
 // so the export matches the screen. Every number of ours links to its log line.
 import { formatDuration } from "../exp/experiments.ts";
-import { splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
+import { smokeLabel, splitClaimRows, type Authenticity, type ClaimTriage, type ReportData, type ReportRow, type RunStats } from "./report.ts";
 
 /** Wording shared by the screen and the export. */
 export const TEXT = {
@@ -12,8 +12,9 @@ export const TEXT = {
     "Verdicts are computed by code (the Analyst) against the margin declared before the run. Every number of ours links to the log line that printed it.",
   noPaper: "No paper has been read for this project yet.",
   noRows: "No run has targeted a claim yet. Rows appear when a reproduction maps its models to claims.",
-  planned: "Planned, not run yet",
-  plannedIntro: "Claims a planned run will test; they get a value and a verdict once it runs.",
+  planned: "Smoke checks and planned runs",
+  plannedIntro:
+    "Smoke checks are short runs that only prove the code works, so they are not graded; planned runs get a value and a verdict once they run.",
   noneGraded: "No claim has a value yet.",
   notGraded: "not graded yet",
   notMeasured: "not measured yet",
@@ -22,7 +23,8 @@ export const TEXT = {
   branchesIntro: "Each what-if branch changes one setting; the effect is branch minus parent on each final value both runs logged.",
   noBranches: "No what-if branches yet.",
   memoryIntro: "Run 2 of the same paper against run 1: retries before the first successful run, time to the first result, and LLM tokens.",
-  noMemory: "This is the first run of this paper; the memory effect needs a second run.",
+  noMemory: "No finished earlier run to compare yet.",
+  unfinishedPrevious: "Compared with the last earlier run instead, which did not finish.",
   explanationHidden: "Explanation not shown",
   precomputed: "Precomputed — Round 0 audit",
 };
@@ -57,6 +59,10 @@ export const triageSummary = (t: ClaimTriage) =>
 /** "36 no public data · 19 dataset too big" */
 export const triageReasons = (t: ClaimTriage) =>
   t.reasons.length ? t.reasons.map((r) => `${r.count} ${r.reason}`).join(" · ") : null;
+
+/** "vs previous run", "vs previous run (stopped at Designing)", or that there is none. */
+export const memoryHint = (m: ReportData["memory"]) =>
+  !m?.previous ? TEXT.noMemory : m.previousStop ? `vs previous run (${m.previousStop})` : "vs previous run";
 
 export const memoryRows = (s: RunStats) => [
   [
@@ -100,7 +106,7 @@ export function reportMarkdown(
         (r.ours.length ? r.ours.map((p) => log(r.experimentId, p.log_line, p.text)).join(", ") : TEXT.notMeasured) +
           (r.delta !== null ? ` (Δ ${r.delta > 0 ? "+" : ""}${r.delta})` : "") +
           (r.margin !== null ? ` ± ${r.margin}` : ""),
-        r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : TEXT.notGraded,
+        r.verdict ? (r.explain ?? r.verdict.label + (r.verdict.why ? `: ${r.verdict.why}` : "")) : (smokeLabel(r) ?? TEXT.notGraded),
       ]),
     );
 
@@ -173,6 +179,7 @@ export function reportMarkdown(
   out.push("## Memory effect", TEXT.memoryIntro);
   if (!d.memory?.previous) out.push(TEXT.noMemory);
   else {
+    if (d.memory.previousStop) out.push(`${TEXT.noMemory} ${TEXT.unfinishedPrevious} (${d.memory.previousStop})`);
     const cur = memoryRows(d.memory.current);
     const prev = memoryRows(d.memory.previous);
     out.push(table(["", "This run", `Previous run (${d.memory.previous.title})`], cur.map(([k, v], i) => [k, v, prev[i][1]])));

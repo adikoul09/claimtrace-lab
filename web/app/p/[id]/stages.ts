@@ -4,7 +4,7 @@
 
 import { capabilityLabel } from "../../../components/live/labels.ts";
 
-export type StageState = "done" | "running" | "failed" | "not started";
+export type StageState = "done" | "running" | "waiting" | "failed" | "not started";
 export type Stage = {
   id: string;
   label: string;
@@ -105,6 +105,7 @@ const FAILED = new Set(["failed", "rejected"]);
 const RULES: [RegExp, string][] = [
   [/429|resource_exhausted|quota|rate.?limit/i, "The AI service's usage limit was reached, so the agent could not answer."],
   [/max_tokens|token.{0,20}(cap|limit|allowance)|output cap/i, "The agent used up its token allowance before it could answer."],
+  [/max_steps/i, "The agent used up its allowed number of steps before it finished."],
   [/timed? ?out|timeout/i, "The step ran out of time."],
   [/no space left|out of memory|memoryerror|killed/i, "The machine ran out of memory or disk."],
   [/code check/i, "The written code failed its automatic check."],
@@ -118,6 +119,7 @@ export function plainReason(raw: string | null | undefined): string {
   for (const [re, plain] of RULES) if (re.test(text)) return plain;
   // Unknown: the first clause, capitalised and short (stage reasons like "no public data: …" are already plain).
   const first = text.split(/(?<=[.!?])\s|\n/)[0].slice(0, 140).replace(/[.\s]+$/, "");
+  if (!first) return "The step failed without recording why.";
   return `${first[0].toUpperCase()}${first.slice(1)}.`;
 }
 
@@ -134,7 +136,10 @@ export function deriveStages(input: StageInput): Stage[] {
     for (const t of mine) steps.set(t.capability, [...(steps.get(t.capability) ?? []), t]);
     const stepDone = (ts: typeof mine) => ts.some((t) => t.status === "done");
     const open = [...steps.values()].filter((ts) => !stepDone(ts));
-    if (mine.some((t) => ACTIVE.has(t.status) && !stepDone(steps.get(t.capability)!))) return { ...base, state: "running" };
+    const active = mine.filter((t) => ACTIVE.has(t.status) && !stepDone(steps.get(t.capability)!));
+    // Only waiting for a researcher's approval (e.g. the full run): say so rather than "running".
+    if (active.length && active.every((t) => t.status === "awaiting_approval")) return { ...base, state: "waiting" };
+    if (active.length) return { ...base, state: "running" };
     const finished = mine.some((t) => t.status === "done" && (d.finishes?.(t) ?? true));
     if (!open.length && finished) return { ...base, state: "done" };
     const evidence = d.evidence(input);
@@ -154,7 +159,7 @@ export function deriveStages(input: StageInput): Stage[] {
   // A later stage finished, so every earlier one was done (perhaps outside the task queue, or after a failed try).
   const lastDone = stages.map((s) => s.state).lastIndexOf("done");
   for (let i = 0; i < lastDone; i++)
-    if (stages[i].state !== "done" && stages[i].state !== "running") stages[i] = {
+    if (stages[i].state === "failed" || stages[i].state === "not started") stages[i] = {
         ...stages[i],
         state: "done",
         reason: null,

@@ -8,9 +8,10 @@ import { supabase } from "@/lib/supabase";
 import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
-import { authenticitySummary, DIFF_TEXT, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
+import { authenticitySummary, DIFF_TEXT, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
+  smokeLabel,
   splitClaimRows,
   verdictLabel,
   type Authenticity,
@@ -167,7 +168,7 @@ export function ReportView({ projectId }: { projectId: string }) {
         <Collapsed title="Why it differs" hint={whyHint(data)}>
           <WhyItDiffers data={data} />
         </Collapsed>
-        <Collapsed title="Memory effect" hint={data.memory?.previous ? "vs the previous run" : "first run of this paper"}>
+        <Collapsed title="Memory effect" hint={memoryHint(data.memory)}>
           <MemoryEffect memory={data.memory} />
         </Collapsed>
         {hasPaper && data.triage.total > 0 && (
@@ -221,7 +222,7 @@ const VerdictCell = ({ r }: { r: ReportRow }) =>
       )}
     </>
   ) : (
-    <span className="text-xs text-neutral-500">{TEXT.notGraded}</span>
+    <span className="text-xs text-neutral-500">{smokeLabel(r) ?? TEXT.notGraded}</span>
   );
 
 /** Graded and measured rows first; rows of runs that are only planned wait in a closed section below them. */
@@ -511,6 +512,11 @@ function MemoryEffect({ memory }: { memory: ReportData["memory"] }) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-neutral-500">{TEXT.memoryIntro}</p>
+      {memory?.previousStop && (
+        <Muted>
+          {TEXT.noMemory} {TEXT.unfinishedPrevious} ({memory.previousStop})
+        </Muted>
+      )}
       {!memory || !prev ? (
         <Muted>{TEXT.noMemory}</Muted>
       ) : (
