@@ -10,9 +10,10 @@ Relative claims (each `method` claim vs each `baseline` claim of the same metric
 direction must hold for Reproduced or Partially reproduced. Fewer than 3 seeds: the label carries "(n seed)".
 
 Seeds (HoO-B): a claim is graded on the mean over the project's finished, non-what-if experiments that map it with the
-same config.cmd except --seed (the seed group); the row carries n, the sample SD and the values, and its label says
-"(n seeds)". A method-vs-baseline claim whose two claims are mapped in different experiments (e.g. c3 distilled and
-c2 hard-target) is graded across them, for groups whose cmd differs only by --seed and --set hidden_units.*: on the
+same config.cmd except --seed (the seed group). The verdict item keeps this run's own value in `ours` and carries
+the group result in `mean`, `n_seeds` and `sd` (the verdict is decided on the mean); its label says "(n seeds)".
+A method-vs-baseline claim whose two claims are mapped in different experiments (e.g. c3 distilled and c2
+hard-target) is graded across them, for groups whose cmd differs only by --seed and --set hidden_units.*: on the
 seeds both groups ran (paired gaps, baseline minus method), the direction counts only if the mean gap exceeds
 max(margin, SD of the paired gaps), else "Not reproduced (direction inside the noise)"; with fewer than 2 common seeds,
 on the difference of the two group means.
@@ -117,13 +118,16 @@ def _seeds_label(n: int) -> str:
     return f"({n} seed{'s' if n != 1 else ''})"
 
 
-def annotate_seeds(g: dict, pooled: dict[str, dict]) -> None:
-    """Mark the claim rows graded on a seed mean: n, SD, values, and a label that always says "(n seeds)"."""
+def annotate_seeds(g: dict, pooled: dict[str, dict], own: dict[str, float] | None = None) -> None:
+    """Mark the claim rows graded on a seed mean: `mean`, n, SD, values, and a label that always says "(n seeds)".
+    own: claim id -> this run's value, which goes back into `ours` (the grade itself used the mean)."""
     for r in g["claims"]:
         p = pooled.get(r["claim_id"])
         if not p or r.get("ours") is None:
             continue
-        r.update(n_seeds=p["n"], sd=p["sd"], values=p["values"])
+        r.update(mean=p["mean"], n_seeds=p["n"], sd=p["sd"], values=p["values"])
+        if own and own.get(r["claim_id"]) is not None:
+            r["ours"] = _num(own[r["claim_id"]])
         r["label"] = r["verdict"] + (f" ({r['size_note']})" if r.get("size_note") else "") + " " + \
             _seeds_label(p["n"])
 
@@ -298,14 +302,14 @@ def verdict_items(g: dict) -> list[dict]:
     for r in g["claims"]:
         n = r.get("n_seeds")
         if n and n > 1:
-            note = (f"({n} seeds: mean {r['ours']} ± {r['sd']} over {', '.join(str(v) for v in r['values'])}) "
+            note = (f"({n} seeds: mean {r['mean']} ± {r['sd']} over {', '.join(str(v) for v in r['values'])}) "
                     f"{r['why']}")
         else:
             note = _note(n or g["seeds"], r["why"])
         item = {"claim_id": r["claim_id"], "verdict": r["verdict"].lower(), "ours": r["ours"], "paper": r["paper"],
                 "margin": r["margin"], "note": note, "log_line": r["log_line"]}
         if n:
-            item.update(n_seeds=n, sd=r.get("sd"))
+            item.update(mean=r.get("mean"), n_seeds=n, sd=r.get("sd"))
         if r.get("why_differs"):
             item["why_differs"] = r["why_differs"]
         items.append(item)
@@ -320,7 +324,9 @@ def verdict_items(g: dict) -> list[dict]:
                 "ours": r.get("ours_gap"), "paper": r["paper_gap"], "margin": r["margin"], "note": why,
                 "log_line": None}
         if r.get("across"):
-            item.update(n_seeds=r["n"], means=r["means"], sds=r["sds"], paired=r.get("paired"))
+            pr = r.get("paired")
+            item.update(n_seeds=r["n"], means=r["means"], sds=r["sds"], paired=pr, mean=r.get("ours_gap"),
+                        seeds=pr["seeds"] if pr else None, sd=pr["sd_gap"] if pr else None)
         items.append(item)
     return items
 
@@ -480,7 +486,7 @@ def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict |
     seeds = min([p["n"] for p in pooled.values()] or [len(cfg.get("seeds") or [0])])
     g = grade(paper["claims"], claim_map, {**finals, **graded_finals}, margin, seeds=seeds, ran=ran,
               reference=reference)
-    annotate_seeds(g, pooled)
+    annotate_seeds(g, pooled, own={cid: finals[name]["value"] for name, cid in claim_map.items() if name in finals})
     g["seed_group"] = [e["id"] for e in group]
     if ran and cfg.get("cmd"):
         mapped = set(claim_map.values())

@@ -107,3 +107,27 @@ def test_fewer_than_two_common_seeds_falls_back_to_the_group_means():
 def test_seed_of_a_command():
     assert analyst.seed_of({"cmd": "python train.py --epochs 15 --seed 2"}) == 2
     assert analyst.seed_of({"cmd": "python train.py"}) is None
+
+
+# ---- option 1: a run keeps its own value in `ours`; the group result is in mean / n_seeds / sd ----------------------
+
+def test_each_run_keeps_its_own_value_and_the_group_mean_is_separate():
+    g = analyst.grade(CLAIMS, DIST, {"teacher_mlp_compact": {"value": 205, "log_line": 94},
+                                     "distilled_student_mlp": {"value": 229.3333, "log_line": 95}}, 10, seeds=3)
+    analyst.annotate_seeds(g, {"c1": analyst.pool([208, 206, 201]), "c3": analyst.pool([233, 230, 225])},
+                           own={"c1": 206, "c3": 230})
+    item = next(i for i in analyst.verdict_items(g) if i["claim_id"] == "c3")
+    assert item["ours"] == 230                                  # this run (seed 1)
+    assert item["mean"] == pytest.approx(229.3333, abs=1e-3) and item["n_seeds"] == 3
+    assert item["sd"] == pytest.approx(4.0415, abs=1e-3)
+    assert item["verdict"] == "partially reproduced"             # decided on the mean
+
+
+def test_a_cross_item_carries_its_mean_and_paired_seeds_for_the_ui():
+    c3 = analyst.pool([233, 230, 225], seeds=[0, 1, 2])
+    c2 = analyst.pool([261, 244, 200], seeds=[0, 1, 2])
+    g = {"claims": [], "seeds": 3, "relative": analyst.cross_relative(CLAIMS, {"c3": c3}, {"c2": c2}, margin=10)}
+    item = analyst.verdict_items(g)[0]
+    assert item["claim_id"] == "c3_vs_c2" and item["mean"] == pytest.approx(5.6667, abs=1e-3)
+    assert item["seeds"] == [0, 1, 2] and item["sd"] == pytest.approx(27.4651, abs=1e-3)
+    assert item["paired"]["beyond_noise"] is False
