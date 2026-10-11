@@ -1,6 +1,8 @@
 // Pure logic behind the write routes (SPEC §9, §12): the DEMO_PASSCODE cookie, approval decisions and 👍/👎.
 // The routes only load the task, call these, and write what they return.
 
+import { capabilityLabel } from "../../components/live/labels.ts";
+
 export const DEMO_COOKIE = "ct_demo";
 const NOTE_MAX = 1000;
 
@@ -200,4 +202,27 @@ export function planWhatIf(
       input: { question: q },
     },
   };
+}
+
+// --- display ---------------------------------------------------------------------------------------------------------
+
+// The controller titles an extend run "what-if b2: temperature=2 (full)" (lab/controller/whatif.py extend_input).
+const EXTEND_TITLE = /^what-if \S+: ([^=]+)=(.+) \(full\)$/;
+
+/** A plain title for an approval card: "Extend the temperature = 2 branch to a full run" for a what-if extend. */
+export function approvalTitle(t: { capability: string; input: unknown }): string {
+  const input = t.input && typeof t.input === "object" ? (t.input as Record<string, unknown>) : {};
+  const title = typeof input.title === "string" ? input.title.trim() : "";
+  const m = EXTEND_TITLE.exec(title);
+  if (m) return `Extend the ${m[1].trim()} = ${m[2].trim()} branch to a full run`;
+  return title || capabilityLabel(t.capability);
+}
+
+/** What a just-decided card says, following the task's status as it moves on. */
+export function decidedLabel(decision: string, status: string): string {
+  if (decision === "reject") return "Rejected";
+  if (decision === "redirect") return "Redirected with your note";
+  if (status === "done") return "Approved · finished";
+  if (status === "failed") return "Approved · the run failed";
+  return "Approved · running";
 }

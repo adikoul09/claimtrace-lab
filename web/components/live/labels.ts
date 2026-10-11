@@ -56,7 +56,8 @@ export function budgetLabel(b: Record<string, unknown>): string | null {
   const parts: string[] = [];
   for (const [k, v] of Object.entries(b)) {
     if (k === "max_cpu_s" && typeof v === "number") parts.push(`up to ${+(v / 60).toFixed(1)} CPU-min`);
-    else if (k === "max_tokens" && typeof v === "number") parts.push(`${v.toLocaleString("en-US")} tokens`);
+    else if (k === "max_tokens" && typeof v === "number")
+      parts.push(v === 0 ? "no AI tokens" : `${v.toLocaleString("en-US")} tokens`);
     else parts.push(`${humanize(k).toLowerCase()} ${String(v)}`);
   }
   return parts.length ? parts.join(" · ") : null;

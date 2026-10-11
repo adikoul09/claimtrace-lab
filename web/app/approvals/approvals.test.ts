@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   demoToken,
   checkDemoToken,
+  approvalTitle,
+  decidedLabel,
   parseArxivId,
   planDecision,
   planFeedback,
@@ -147,4 +149,26 @@ test("planWhatIf refuses an empty or over-long question", () => {
   assert.equal(planWhatIf("p1", { question: "  " }).ok, false);
   assert.equal(planWhatIf("p1", { question: "x".repeat(501) }).ok, false);
   assert.equal(planWhatIf("p1", {}).ok, false);
+});
+
+test("approvalTitle names an extend run plainly; other tasks use their title or capability", () => {
+  assert.equal(
+    approvalTitle({ capability: "run", input: { title: "what-if b2: temperature=2 (full)", extend_of: "r1" } }),
+    "Extend the temperature = 2 branch to a full run",
+  );
+  assert.equal(
+    approvalTitle({ capability: "run", input: { title: 'what-if b3: lr=0.01 (full)', extend_of: "r1" } }),
+    "Extend the lr = 0.01 branch to a full run",
+  );
+  assert.equal(approvalTitle({ capability: "run", input: { title: "Run the full reproduction" } }), "Run the full reproduction");
+  assert.equal(approvalTitle({ capability: "write_code", input: {} }), "Write code");
+});
+
+test("decidedLabel says what happened after a decision, following the task's status", () => {
+  assert.equal(decidedLabel("approve", "queued"), "Approved · running");
+  assert.equal(decidedLabel("approve", "running"), "Approved · running");
+  assert.equal(decidedLabel("approve", "done"), "Approved · finished");
+  assert.equal(decidedLabel("approve", "failed"), "Approved · the run failed");
+  assert.equal(decidedLabel("reject", "rejected"), "Rejected");
+  assert.equal(decidedLabel("redirect", "rejected"), "Redirected with your note");
 });

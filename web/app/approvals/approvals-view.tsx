@@ -2,10 +2,11 @@
 
 // Mobile-first approvals queue (SPEC §9): approve, reject or redirect tasks awaiting approval,
 // and 👍/👎 on recently finished tasks. Reads use the anon key; writes go through the passcode-gated routes.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Agent, Event, Json, Project, Reward, Task } from "@/lib/types";
 import { PasscodeForm, post, useAuthed } from "@/components/live/write";
+import { approvalTitle, decidedLabel } from "./approvals";
 import { agentLabel, budgetLabel, capabilityLabel, statusLabel } from "@/components/live/labels";
 
 type Row = Pick<
@@ -30,8 +31,16 @@ export function ApprovalsView() {
   const [feedback, setFeedback] = useState<Record<string, string>>({});
   const [rewards, setRewards] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
+  // Cards decided on this page stay in place ("Approved · running") and follow their task's status.
+  const [decided, setDecided] = useState<{ task: Row; decision: string; status: string }[]>([]);
+  const decidedIds = useRef<string[]>([]);
 
   const load = useCallback(async () => {
+    if (decidedIds.current.length) {
+      const { data } = await supabase().from("tasks").select("id,status").in("id", decidedIds.current);
+      const now = Object.fromEntries(((data ?? []) as Pick<Task, "id" | "status">[]).map((r) => [r.id, r.status]));
+      setDecided((cur) => cur.map((d) => ({ ...d, status: now[d.task.id] ?? d.status })));
+    }
     const db = supabase();
     const [a, f, h] = await Promise.all([
       db.from("tasks").select(FIELDS).eq("status", "awaiting_approval").order("created_at"),
@@ -127,22 +136,49 @@ export function ApprovalsView() {
         <h2 id="awaiting-heading" className="mb-2 text-sm font-semibold">
           Awaiting approval <span className="font-normal text-neutral-500">({awaiting.length})</span>
         </h2>
-        {awaiting.length === 0 ? (
-          <p className="text-sm text-neutral-500">Nothing waits for a decision.</p>
-        ) : (
-          <ul className="space-y-3">
-            {awaiting.map((t) => (
-              <li key={t.id}>
-                <ApprovalCard
-                  task={t}
-                  agent={t.agent_id ? names[t.agent_id] : undefined}
-                  project={t.project_id ? projects[t.project_id] : undefined}
-                  reason={reasons[t.id]}
-                  canAct={!!authed}
-                  onDone={load}
-                />
+        {decided.length > 0 && (
+          <ul className="mb-3 space-y-2" aria-live="polite">
+            {decided.map((d) => (
+              <li
+                key={d.task.id}
+                className={`rounded-lg border p-3 text-sm ${
+                  d.decision === "approve"
+                    ? "border-green-500 bg-green-50 dark:bg-green-950/30"
+                    : "border-neutral-300 dark:border-neutral-700"
+                }`}
+              >
+                <p className="font-semibold">{approvalTitle(d.task)}</p>
+                <p className="mt-0.5 text-base font-medium">{decidedLabel(d.decision, d.status)}</p>
               </li>
             ))}
+          </ul>
+        )}
+        {awaiting.length === 0 ? (
+          decided.length === 0 && <p className="text-sm text-neutral-500">Nothing waits for a decision.</p>
+        ) : (
+          <ul className="space-y-3">
+            {awaiting.map((t) => {
+              const ownReason = obj(t.input).reason; // an extend run carries the ranker's reason
+              return (
+                <li key={t.id}>
+                  <ApprovalCard
+                    task={t}
+                    agent={t.agent_id ? names[t.agent_id] : undefined}
+                    project={t.project_id ? projects[t.project_id] : undefined}
+                    reason={typeof ownReason === "string" && ownReason ? ownReason : reasons[t.id]}
+                    canAct={!!authed}
+                    onDone={(decision) => {
+                      decidedIds.current = [...decidedIds.current, t.id];
+                      setDecided((cur) => [
+                        { task: t, decision, status: decision === "approve" ? "queued" : "rejected" },
+                        ...cur,
+                      ]);
+                      load();
+                    }}
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -209,7 +245,7 @@ function ApprovalCard({
   project?: string;
   reason?: string;
   canAct: boolean;
-  onDone: () => void;
+  onDone: (decision: "approve" | "reject" | "redirect") => void;
 }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -223,7 +259,7 @@ function ApprovalCard({
     setError(null);
     try {
       await post(`/api/tasks/${t.id}/decision`, { decision, note: note || undefined });
-      onDone();
+      onDone(decision);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -234,7 +270,7 @@ function ApprovalCard({
   return (
     <article className="rounded-lg border border-amber-300 p-3 text-sm dark:border-amber-800">
       <header className="flex flex-wrap items-baseline gap-x-2">
-        <h3 className="font-semibold">{capabilityLabel(t.capability)}</h3>
+        <h3 className="text-base font-semibold">{approvalTitle(t)}</h3>
         {agent && <span className="text-xs text-neutral-500">by {agent}</span>}
       </header>
       {project && <p className="mt-0.5 break-words text-xs text-neutral-500">{project}</p>}
@@ -274,7 +310,7 @@ function ApprovalCard({
           type="button"
           onClick={() => decide("approve")}
           disabled={!canAct || busy}
-          className="min-h-11 rounded bg-green-600 font-medium text-white disabled:opacity-50"
+          className="min-h-12 rounded bg-green-600 text-base font-semibold text-white disabled:opacity-50"
         >
           Approve
         </button>
@@ -282,7 +318,7 @@ function ApprovalCard({
           type="button"
           onClick={() => decide("reject")}
           disabled={!canAct || busy}
-          className="min-h-11 rounded border border-red-400 font-medium text-red-700 disabled:opacity-50 dark:text-red-400"
+          className="min-h-12 rounded border border-red-400 text-base font-semibold text-red-700 disabled:opacity-50 dark:text-red-400"
         >
           Reject
         </button>
@@ -290,7 +326,7 @@ function ApprovalCard({
           type="button"
           onClick={() => decide("redirect")}
           disabled={!canAct || busy || !note.trim()}
-          className="min-h-11 rounded border border-neutral-400 font-medium disabled:opacity-50"
+          className="min-h-12 rounded border border-neutral-400 text-base font-semibold disabled:opacity-50"
         >
           Redirect
         </button>

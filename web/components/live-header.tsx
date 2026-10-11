@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatAgo, latestTs } from "@/lib/live";
+import { ApprovalStrip } from "@/components/live/approval-strip";
 import { ExecutorDots } from "@/components/live/executor-dots";
 import { InboxToast } from "@/components/inbox/inbox-toast";
 import { InboxStrip } from "@/components/inbox/inbox-strip";
@@ -124,6 +125,7 @@ export function LiveHeader() {
         <Stamp label="latest metric" ts={metricTs} now={now} />
       </div>
       <Suspense fallback={null}>
+        <ApprovalStrip />
         <ProjectInbox />
       </Suspense>
     </header>
