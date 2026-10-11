@@ -43,6 +43,7 @@ export function Scoreboard({
             selectedId={selectedId}
             onSelect={onSelect}
             caption="Older agent versions, ranked by rolling reward"
+            faded
           />
         </details>
       )}
@@ -56,15 +57,17 @@ function ScoreTable({
   selectedId,
   onSelect,
   caption,
+  faded = false,
 }: {
   rows: ReturnType<typeof scoreboard<Agent, Reward>>;
   spawnedRoot: Record<string, Agent | undefined>;
   selectedId: string | null;
   onSelect: (id: string) => void;
   caption: string;
+  faded?: boolean; // older versions: faded and desaturated
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className={`overflow-x-auto ${faded ? "opacity-60 grayscale" : ""}`}>
       <table className="w-full text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="text-xs text-neutral-500">

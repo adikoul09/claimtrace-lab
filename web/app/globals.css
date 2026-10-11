@@ -12,8 +12,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #111316; /* deep charcoal, not pure black */
     --foreground: #ededed;
+    /* Secondary text (neutral-500) on #111316 was 3.9:1; this keeps it above 4.5:1 (WCAG AA). */
+    --color-neutral-500: #8c8c8c;
   }
 }
 
@@ -21,4 +23,80 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums; /* numbers line up everywhere */
+}
+
+/* Hairline borders on high-density screens (1px on standard ones). */
+@media (min-resolution: 2dppx) {
+  .border,
+  .border-b,
+  .border-t {
+    border-width: 0;
+  }
+  .border {
+    border-width: 0.5px;
+  }
+  .border-b {
+    border-bottom-width: 0.5px;
+  }
+  .border-t {
+    border-top-width: 0.5px;
+  }
+}
+
+/* --- motion (all of it off under prefers-reduced-motion) ---------------------------------------------------- */
+
+/* An agent working on a task: a slow, low-amplitude glow. */
+@keyframes ct-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(168 85 247 / 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(168 85 247 / 0.22);
+  }
+}
+.ct-breathe {
+  animation: ct-breathe 2s ease-in-out infinite;
+}
+
+/* A new Live event slides and fades in from the top. */
+@keyframes ct-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ct-enter {
+  animation: ct-enter 200ms ease-out both;
+}
+
+/* Badges arrive with a small spring overshoot. */
+@keyframes ct-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.ct-pop {
+  animation: ct-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-breathe,
+  .ct-enter,
+  .ct-pop {
+    animation: none;
+  }
 }

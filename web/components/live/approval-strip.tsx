@@ -41,8 +41,9 @@ export function ApprovalStrip() {
   return (
     <div className="mx-auto max-w-5xl px-4">
       <Link
+        key={waiting} // pops in again when the count changes
         href="/approvals"
-        className="mb-2 flex min-h-11 items-center gap-2 rounded-md border border-amber-400 bg-amber-50 px-3 text-sm text-amber-900 hover:underline dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+        className="ct-pop mb-2 flex min-h-11 items-center gap-2 rounded-md border border-amber-400 bg-amber-50 px-3 text-sm text-amber-900 hover:underline dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
       >
         <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-amber-500" aria-hidden />
         <span className="min-w-0 truncate">

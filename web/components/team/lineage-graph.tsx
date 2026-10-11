@@ -32,19 +32,20 @@ type AgentNodeData = {
   refined: number; // refinements in this agent's chain (0 = none)
   expanded: boolean;
   isHead: boolean;
+  busy: boolean; // running a task now
   spawned: Agent | null; // the chain's spawned root, for the badge and its reason
   onToggle: () => void;
 };
 type AgentNode = Node<AgentNodeData, "agent">;
 
 function AgentNodeView({
-  data: { agent: a, rolling, selected, refined, expanded, isHead, spawned, onToggle },
+  data: { agent: a, rolling, selected, refined, expanded, isHead, busy, spawned, onToggle },
 }: NodeProps<AgentNode>) {
   return (
     <div
       className={`w-40 rounded-md border bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-neutral-900 ${
         selected ? "border-sky-500 ring-2 ring-sky-500/40" : "border-neutral-300 dark:border-neutral-700"
-      } ${a.status === "active" ? "" : "opacity-70"}`}
+      } ${a.status === "active" ? "" : "opacity-70 grayscale"} ${busy ? "ct-breathe" : ""}`}
     >
       <Handle type="target" position={Position.Top} className="!opacity-0" />
       <div className="truncate font-semibold" title={`${agentLabel(a)} (${a.name})`}>
@@ -90,12 +91,14 @@ function AgentNodeView({
 const nodeTypes = { agent: AgentNodeView };
 
 export function LineageGraph({
+  busy,
   agents,
   edges,
   rolling,
   selectedId,
   onSelect,
 }: {
+  busy: Set<string>;
   agents: Agent[];
   edges: LineageEdge[];
   rolling: Record<string, number | null>;
@@ -132,6 +135,7 @@ export function LineageGraph({
           refined: chain.members.length - 1,
           expanded: open === chain.id,
           isHead: a.id === chain.head,
+          busy: busy.has(a.id),
           spawned: root.origin === "spawned" ? root : null,
           onToggle: () => setOpen((cur) => (cur === chain.id ? null : chain.id)),
         },
@@ -141,7 +145,7 @@ export function LineageGraph({
     });
     const rows = Math.max(1, ...Object.values(pos).map((p) => p.row + 1));
     return { nodes, rows };
-  }, [agents, graph, cols, rolling, selectedId, open]);
+  }, [agents, graph, cols, rolling, selectedId, open, busy]);
 
   const flowEdges = useMemo<Edge[]>(
     () =>
@@ -245,7 +249,9 @@ function ChainHistory({
               type="button"
               onClick={() => onSelect(a.id)}
               aria-pressed={a.id === selectedId}
-              className={`w-full py-2 text-left text-sm ${a.id === selectedId ? "bg-sky-50 dark:bg-sky-950/30" : ""}`}
+              className={`w-full py-2 text-left text-sm ${a.id === selectedId ? "bg-sky-50 dark:bg-sky-950/30" : ""} ${
+                a.status === "active" ? "" : "opacity-60 grayscale"
+              }`}
             >
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="font-medium">version {a.version}</span>

@@ -109,7 +109,8 @@ export function InboxBadge({ projectId }: { projectId: string }) {
   if (n === 0) return null;
   return (
     <span
-      className="ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-sky-600 px-1.5 text-[10px] font-semibold leading-5 text-white"
+      key={n} // re-mount, so the pop plays again when the count changes
+      className="ct-pop ml-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-sky-600 px-1.5 text-[10px] font-semibold leading-5 text-white"
       aria-label={`${n} unread email${n === 1 ? "" : "s"}`}
     >
       {n > 99 ? "99+" : n}
