@@ -34,7 +34,7 @@ test("a task budget reads as CPU minutes and tokens, not raw keys", () => {
   assert.equal(budgetLabel({}), null);
 });
 
-test("home list: the reference run first, then live and precomputed; test and failed ones under Other runs", () => {
+test("home list: finished live runs first, the reference run second; test and failed ones under Other runs", () => {
   const p = (id: string, status: string) => ({ id, status });
   const { main, other } = groupProjects([
     p("t", "test"),
@@ -48,7 +48,7 @@ test("home list: the reference run first, then live and precomputed; test and fa
   ]);
   assert.deepEqual(
     main.map((x) => x.id),
-    ["ref", "r", "pre", "d"],
+    ["d", "ref", "r", "pre"],
   );
   assert.deepEqual(
     other.map((x) => x.id),

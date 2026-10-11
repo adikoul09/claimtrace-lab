@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 import { NewResearchForm } from "@/components/live/new-research-form";
 import { projectBadge } from "@/components/live/project-badge";
+import { runSummary } from "@/components/live/run-summary";
 import { groupProjects, projectStatusLabel, projectTitle, type PaperTitles } from "@/components/live/labels";
 
 export const metadata: Metadata = {
@@ -18,13 +19,13 @@ export default function Home() {
       <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
         Checks whether a paper&apos;s claims hold up by re-running them, with an AI agent team that improves itself.
       </p>
-      <div className="mb-6">
-        <NewResearchForm />
-      </div>
       <h1 className="mb-4 text-lg font-semibold">Projects</h1>
       <Suspense fallback={<p className="text-sm text-neutral-500">Loading…</p>}>
         <ProjectList />
       </Suspense>
+      <div className="mt-8">
+        <NewResearchForm />
+      </div>
     </>
   );
 }
@@ -35,6 +36,14 @@ async function ProjectList() {
     db.from("projects").select("id,title,arxiv_id,status,created_at").order("created_at", { ascending: false }),
     db.from("papers").select("project_id,arxiv_id,title"),
   ]);
+  // Finished live runs get a one-line verdict summary, counted from their experiments (same rule as the Report).
+  const doneIds = ((data ?? []) as { id: string; status: string }[]).filter((p) => p.status === "done").map((p) => p.id);
+  const { data: exps } = doneIds.length
+    ? await db.from("experiments").select("id,project_id,created_at,parent_id,config,verdicts").in("project_id", doneIds)
+    : { data: [] };
+  type Exp = Parameters<typeof runSummary>[0][number] & { project_id: string };
+  const summaries: Record<string, string> = {};
+  for (const id of doneIds) summaries[id] = runSummary(((exps ?? []) as Exp[]).filter((e) => e.project_id === id));
   const titles: PaperTitles = { byProject: {}, byArxiv: {} };
   for (const r of (papers ?? []) as { project_id: string; arxiv_id: string; title: string | null }[]) {
     if (!r.title) continue;
@@ -52,7 +61,7 @@ async function ProjectList() {
       {main.length === 0 ? (
         <p className="text-sm text-neutral-500">No live, reference or precomputed projects yet.</p>
       ) : (
-        <ProjectRows projects={main} titles={titles} />
+        <ProjectRows projects={main} titles={titles} summaries={summaries} />
       )}
       {other.length > 0 && (
         <details className="mt-4">
@@ -60,7 +69,7 @@ async function ProjectList() {
             Other runs ({other.length})
             <span className="ml-1 font-normal text-neutral-500">tests and stopped runs</span>
           </summary>
-          <ProjectRows projects={other} titles={titles} />
+          <ProjectRows projects={other} titles={titles} summaries={summaries} />
         </details>
       )}
     </>
@@ -70,9 +79,11 @@ async function ProjectList() {
 function ProjectRows({
   projects,
   titles,
+  summaries,
 }: {
   projects: Pick<Project, "id" | "title" | "arxiv_id" | "status">[];
   titles: PaperTitles;
+  summaries: Record<string, string>;
 }) {
   return (
     <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -89,6 +100,9 @@ function ProjectRows({
                   </span>
                 )}
               </span>
+              {summaries[p.id] && (
+                <span className="block text-sm text-neutral-700 dark:text-neutral-300">{summaries[p.id]}</span>
+              )}
               <span className="text-xs text-neutral-500">
                 {[p.arxiv_id && `arXiv ${p.arxiv_id}`, !badge && projectStatusLabel(p.status)]
                   .filter(Boolean)
