@@ -306,6 +306,8 @@ def verdict_items(g: dict) -> list[dict]:
                 "margin": r["margin"], "note": note, "log_line": r["log_line"]}
         if n:
             item.update(n_seeds=n, sd=r.get("sd"))
+        if r.get("why_differs"):
+            item["why_differs"] = r["why_differs"]
         items.append(item)
     for r in g["relative"]:
         if r.get("across"):
@@ -383,7 +385,9 @@ def why_tables(db, exp: dict, settings: list[dict], read=None) -> dict:
         return {"settings_diff": [], "error": str(e) if isinstance(e, StepError) else f"log: {type(e).__name__}"}
     budget = cfg.get("budget") or {k: cfg[k] for k in ("epochs", "subset", "seeds") if cfg.get(k) is not None}
     su = (cfg.get("design") or {}).get("settings_used")
-    rows = why.settings_diff(settings, config, budget, set(su) if su is not None else None)
+    paper = db.table("papers").select("claims").eq("project_id", exp["project_id"]).execute().data
+    rows = why.experiment_diff(settings, (paper[0].get("claims") or []) if paper else [], cfg.get("claim_map") or {},
+                               config, budget, set(su) if su is not None else None, exp.get("budget_reason"))
     exps = db.table("experiments").select("*").eq("project_id", exp["project_id"]).execute().data
     parent_finals, branches = _finals_of(db, exp["id"]), []
     for e in exps:
@@ -404,7 +408,7 @@ def why_tables(db, exp: dict, settings: list[dict], read=None) -> dict:
     labels: dict[str, int] = {}
     for r in rows:
         labels[r["label"]] = labels.get(r["label"], 0) + 1
-    return {"settings_diff": rows, "config_log_line": line, "labels": labels}
+    return {"settings_diff": rows, "config_log_line": line, "labels": labels, "our_config": config, "budget": budget}
 
 
 EXPLAIN_GOAL = ("Explain in plain language, in 3 to 6 sentences, what these verdicts mean for the paper's claims and "
@@ -490,6 +494,8 @@ def run(db, experiment_id: str, claim_map: dict | None = None, reference: dict |
     if not cfg.get("whatif"):  # a branch is explained through its parent's table
         g["why"] = why_tables(db, exp, paper.get("settings") or [], read=log_reader)
         db.table("experiments").update({"config": {**cfg, "why": g["why"]}}).eq("id", experiment_id).execute()
+        from lab.agents.why import attach_why_differs
+        attach_why_differs(g, paper["claims"], paper.get("settings") or [])  # verdicts[i].why_differs
     g["explanation"] = (explain(db, g, experiment_id, exp["project_id"], llm=llm, agent=agent, task_id=task_id)
                         if with_explanation else
                         {"text": None, "accepted": False, "problems": ["not requested"]})

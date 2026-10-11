@@ -49,6 +49,98 @@ def test_a_stated_scale_setting_cut_by_the_budget_is_a_scale_reduction():
     assert (r["label"], r["ours"]) == ("scale reduction (budget)", 12)
 
 
+def test_subset_zero_is_the_full_training_set_not_a_budget_cut():
+    """Live 42fb4944: --subset 0 (all data) was labelled 'scale reduction (budget)' against 'all 60,000 cases'."""
+    stated = [{"key": "data_subset", "applies_to": "teacher", "value": "all 60,000 training cases", "page": 3,
+               "quote": "trained on all 60,000 training cases", "valid": True},
+              {"key": "data_subset", "applies_to": "speech", "value": "3% of the data", "page": 7,
+               "quote": "with only 3% of the data", "valid": True}]
+    rows = why.settings_diff(stated, {"data_subset": 0}, BUDGET)
+    assert [r["label"] for r in rows] == ["same", "difference"]
+    assert all("full training set" in r["why"] for r in rows)
+
+
+# ---- why ours differs, per claim (shown under the verdict) ---------------------------------------------------------
+
+PAPER = [  # the shape the Reader stores: several experiments of one paper, each setting scoped by applies_to
+    {"key": "hidden_units", "applies_to": "MNIST large teacher", "value": "1200 rectified linear units per layer",
+     "page": 3, "quote": "two hidden layers of 1200 rectified linear hidden units", "valid": True},
+    {"key": "regularisation", "applies_to": "MNIST large teacher", "value": "dropout and weight-constraints",
+     "page": 3, "quote": "strongly regularized using dropout and weight-constraints", "valid": True},
+    {"key": "augmentation", "applies_to": "MNIST large teacher", "value": "jittered by up to two pixels", "page": 3,
+     "quote": "the input images were jittered by up to two pixels", "valid": True},
+    {"key": "data_subset", "applies_to": "MNIST large teacher", "value": "all 60,000 training cases", "page": 3,
+     "quote": "trained on all 60,000 training cases", "valid": True},
+    {"key": "hidden_units", "applies_to": "MNIST small student", "value": "800 rectified linear units per layer",
+     "page": 4, "quote": "two hidden layers of 800 rectified linear hidden units", "valid": True},
+    {"key": "regularisation", "applies_to": "MNIST small student", "value": "none", "page": 4,
+     "quote": "and no regularization", "valid": True},
+    {"key": "hidden_units", "applies_to": "MNIST distilled student", "value": "800 rectified linear units per layer",
+     "page": 4, "quote": "two hidden layers of 800 rectified linear hidden units", "valid": True},
+    {"key": "temperature", "applies_to": "MNIST distilled student", "value": "20", "page": 4,
+     "quote": "at a temperature of 20", "valid": True},
+    {"key": "hidden_units", "applies_to": "speech baseline", "value": "2560 rectified linear units per layer",
+     "page": 4, "quote": "each containing 2560 rectified linear units", "valid": True},
+    {"key": "lr", "applies_to": "all", "value": None, "quote": None, "page": None, "valid": True},
+]
+SECTION = "3 Preliminary experiments on MNIST"
+CLAIMS = [{"id": "c1", "model": "large neural net", "table_or_section": SECTION, "unit": "errors"},
+          {"id": "c2", "model": "smaller net without regularization", "table_or_section": SECTION, "unit": "errors"},
+          {"id": "c3", "model": "distilled smaller net", "table_or_section": SECTION, "unit": "errors"}]
+CONFIG = {"hidden_units": {"teacher": 256, "student": 128}, "epochs": {"teacher": 7, "student": 7},
+          "lr": {"teacher": 0.001, "student": 0.001}, "temperature": 20.0, "dropout": 0.0, "weight_decay": 0.0,
+          "augmentation": "none", "data_subset": 0, "seeds": [0]}
+RUN_BUDGET = {"epochs": 7, "subset": 0, "seeds": [0]}
+
+
+def test_each_claim_is_compared_with_the_settings_of_its_own_model():
+    """Code matches a claim's model and section to the settings' applies_to; other experiments' settings stay out."""
+    sel = {c["id"]: [PAPER[int(s[1:]) - 1]["applies_to"] for s in why.claim_settings(c, PAPER)] for c in CLAIMS}
+    assert set(sel["c1"]) == {"MNIST large teacher"}
+    assert set(sel["c2"]) == {"MNIST small student"}
+    assert set(sel["c3"]) == {"MNIST distilled student"}
+
+
+def test_why_ours_differs_lists_the_setup_differences_from_stored_data_only():
+    g = {"claims": [{"claim_id": "c1", "model": "teacher_mlp_compact", "paper": 67, "ours": 216, "delta": 149},
+                    {"claim_id": "c3", "model": "distilled_student_mlp", "paper": 74, "ours": 255, "delta": 181},
+                    {"claim_id": "c9", "model": "x", "paper": 1, "ours": None, "delta": None}],
+         "why": {"our_config": CONFIG, "budget": RUN_BUDGET}}
+    why.attach_why_differs(g, CLAIMS + [{"id": "c9", "model": "x"}], PAPER)
+    c1, c3, c9 = (r["why_differs"] for r in g["claims"])
+    keys = {(r["key"], r["our_key"]) for r in c1["reasons"]}
+    assert {("hidden_units", "hidden_units.teacher"), ("regularisation", "dropout"),
+            ("augmentation", "augmentation")} <= keys                         # 1200 vs 256, dropout off, no jitter
+    assert ("data_subset", "data_subset") in {(r["key"], r["our_key"]) for r in c1["same"]}
+    assert "Ours 216 vs paper 67 (+149 errors)" in c1["summary"]
+    assert "1200 rectified linear units per layer" in c1["summary"] and "hidden_units.teacher = 256" in c1["summary"]
+    assert "7 epochs" in c1["summary"] and "1 seed" in c1["summary"] and "does not state" in c1["summary"]
+    assert "2560" not in c1["summary"] + c3["summary"]                         # the speech model's setting stays out
+    assert ("hidden_units", "hidden_units.student") in {(r["key"], r["our_key"]) for r in c3["reasons"]}
+    assert "temperature" in {r["key"] for r in c3["same"]}                     # 20 in both
+    assert c9 is None                                                          # not runnable: nothing to explain
+
+
+def test_experiment_diff_adds_each_claims_model_settings_and_the_compute_budget():
+    """config.why.settings_diff (read by the site): the design named only some settings; the paper's other stated
+    settings for each graded claim's model (teacher dropout, input jitter) are compared too, scoped to our model's
+    CONFIG keys, each row naming the claims it explains, plus one compute-budget row from the stored facts."""
+    claims = [{**CLAIMS[0], "runnable": {"facts": {"hardware": "GPUs", "compute": "a few days"}}}, CLAIMS[2]]
+    rows = why.experiment_diff(PAPER, claims, {"teacher_mlp_compact": "c1", "distilled_student_mlp": "c3"}, CONFIG,
+                               RUN_BUDGET, used={"s1", "s8"}, budget_reason="7 epochs x 2 models; cap 10 min")
+    by = {(r["key"], r["setting_id"]): r for r in rows}
+    jitter = by[("augmentation", "s3")]
+    assert (jitter["label"], jitter["our_key"], jitter["claim_ids"]) == ("difference", "augmentation", ["c1"])
+    assert by[("regularisation", "s2")]["label"] == "difference"                 # dropout and weight-constraints: off
+    assert by[("hidden_units", "s7")]["our_key"] == "hidden_units.student"       # distilled student: 800 vs 128
+    assert by[("temperature", "s8")]["label"] == "same" and by[("temperature", "s8")]["claim_ids"] == ["c3"]
+    assert by[("hidden_units", "s1")]["applies_to"] == "MNIST large teacher"     # the paper's words are kept
+    assert not any(r["setting_id"] in ("s5", "s6", "s9") for r in rows)          # small net, speech: not graded here
+    compute = by[("compute_budget", None)]
+    assert compute["paper"] == "GPUs; a few days" and compute["ours"] == "7 epochs x 2 models; cap 10 min"
+    assert compute["label"] == "scale reduction (budget)" and compute["claim_ids"] == ["c1"]
+
+
 def test_only_the_designs_settings_are_compared_when_it_names_them():
     rows = why.settings_diff(SETTINGS, OURS, BUDGET, used={"s1", "s2", "s3"})
     assert {r["key"] for r in rows} == {"hidden_units", "temperature", "regularisation", "lr", "epochs", "batch"}

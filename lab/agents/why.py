@@ -16,6 +16,7 @@ papers.settings (Reader, quotes checked by code). Settings are numbered s1, s2, 
 design names the ones that apply (design.settings_used), only those are compared, plus every unstated one."""
 from __future__ import annotations
 
+import json
 import re
 
 from lab.agents.paper import numbers
@@ -129,6 +130,10 @@ def settings_diff(settings: list[dict], config: dict, budget: dict | None, used:
             row = {**base, "our_key": k, "ours": v, "our_numbers": ours_n}
             if not stated:
                 row.update(label="paper omission", why="the paper does not state it; this is our choice")
+            elif key == "data_subset" and v == 0 and not isinstance(v, bool):  # --subset 0 is the full training set
+                full = any(w in str(paper_value).lower() for w in ("all", "full", "entire", "whole"))
+                row.update(label="same" if full else "difference",
+                           why="our run used the full training set (subset 0 = all)")
             elif key in SCALE_KEYS and base["paper_numbers"] and ours_n and min(ours_n) < min(base["paper_numbers"]):
                 row.update(label="scale reduction (budget)",
                            why=f"the budget step chose {v} to fit the project's CPU cap")
@@ -149,6 +154,142 @@ def settings_diff(settings: list[dict], config: dict, budget: dict | None, used:
         best = min(candidates, key=lambda r: order[r["label"]])
         rows.append({**best, "also": [r["our_key"] for r in candidates if r is not best]})
     return rows
+
+
+# ---- why ours differs, per claim (shown under the verdict) ---------------------------------------------------------
+# The design names the settings it used; a claim's explanation compares every setting the paper states for that
+# claim's own model (e.g. the teacher's dropout and input jitter), matched by code: the words of the claim's model and
+# section against each setting's applies_to. The paper's text, our CONFIG line and the budget are the only sources.
+
+_STOP = {"the", "and", "for", "with", "without", "net", "nets", "model", "models", "neural", "network", "networks",
+         "experiment", "experiments", "preliminary", "results", "result", "section", "table", "using", "all"}
+
+
+def _words(text) -> set[str]:
+    return {t for t in re.findall(r"[a-z]+", str(text or "").lower()) if len(t) > 2 and t not in _STOP}
+
+
+def _match(a: str, b: str) -> float:
+    if a == b:
+        return 1.0
+    short, long_ = sorted((a, b), key=len)
+    return 0.9 if len(short) >= 4 and long_.startswith(short) else 0.0  # small ~ smaller
+
+
+def claim_settings(claim: dict, settings: list[dict]) -> list[str]:
+    """Ids (s1, s2, ...) of the valid stated settings for this claim's model: the best word match between the claim's
+    model + section and the setting's applies_to, plus settings stated for everything (applies_to 'all')."""
+    mine = _words(claim.get("model")) | _words(claim.get("table_or_section"))
+    scored, general = [], []
+    for i, s in enumerate(settings, 1):
+        if s.get("value") is None or not s.get("valid", True):
+            continue
+        theirs = _words(s.get("applies_to"))
+        if not theirs:
+            general.append(f"s{i}")
+            continue
+        scored.append((sum(max((_match(t, m) for m in mine), default=0.0) for t in theirs), f"s{i}"))
+    best = max((sc for sc, _ in scored), default=0.0)
+    return [sid for sc, sid in scored if best >= 1.0 and sc == best] + general
+
+
+def _model_value(flat: dict, key: str, model: str):
+    """Our value of `key` for one model: epochs.teacher for teacher_mlp_compact, else the plain key."""
+    tokens = set(str(model).lower().replace("-", "_").split("_"))
+    keys = [k for k in flat if _segments(k)[0] == key]
+    for k in keys:
+        if tokens & set(_segments(k)[1:]):
+            return flat[k]
+    return flat.get(key, flat[keys[0]] if keys else None)
+
+
+def why_differs(row: dict, claim: dict, settings: list[dict], our_config: dict, budget: dict) -> dict | None:
+    """Code-made 'why ours differs' for one graded claim row (analyst.grade): the stated paper settings of the claim's
+    model that differ from our run, those that are the same, and our training length; None when nothing ran."""
+    if row.get("ours") is None:
+        return None
+    ids = claim_settings(claim, settings)
+    scoped = [{**s, "applies_to": row.get("model")} if f"s{i}" in ids else s for i, s in enumerate(settings, 1)]
+    rows = [r for r in settings_diff(scoped, our_config, budget, used=set(ids)) if r["setting_id"] in ids]
+    keep = ("setting_id", "key", "applies_to", "paper", "quote", "page", "our_key", "ours", "label", "why")
+    reasons, same, seen = [], [], set()
+    for r in rows:
+        r = {k: r.get(k) for k in keep}
+        r["applies_to"] = settings[int(r["setting_id"][1:]) - 1].get("applies_to")
+        if r["label"] == "same":
+            same.append(r)
+        elif r["label"] in ("difference", "scale reduction (budget)") and str(r["paper"]) not in seen:
+            seen.add(str(r["paper"]))
+            reasons.append(r)
+    epochs = _model_value(flatten(our_config or {}), "epochs", row.get("model")) or (budget or {}).get("epochs")
+    seeds = len((budget or {}).get("seeds") or (our_config or {}).get("seeds") or [0])
+    delta, unit = row.get("delta"), claim.get("unit") or ""
+    text = [f"Ours {_num(row['ours'])} vs paper {_num(row['paper'])}"
+            + (f" ({'+' if delta > 0 else ''}{_num(delta)} {unit})".replace(" )", ")") if delta is not None else "")
+            + "."]
+    if reasons:
+        text.append("Setup differences: " + "; ".join(
+            f"{r['key']}: paper {r['paper']}" + (f" (p. {r['page']})" if r["page"] else "") + ", ours "
+            + (f"{r['our_key']} = {json.dumps(r['ours'], ensure_ascii=False)}" if r["our_key"] else "not set")
+            for r in reasons) + ".")
+    else:
+        text.append("No stated setup difference found for this model.")
+    text.append(f"Training: ours {_num(epochs) if epochs is not None else '?'} epochs, {seeds} seed"
+                + ("s" if seeds != 1 else "")
+                + ("" if any(r["key"] == "epochs" for r in rows) else "; the paper does not state its training length")
+                + ".")
+    if same:
+        text.append("Same as the paper: " + ", ".join(f"{r['key']} ({r['paper']})" for r in same) + ".")
+    return {"summary": " ".join(text), "reasons": reasons, "same": same, "epochs": epochs, "seeds": seeds,
+            "settings": ids, "source": "code: papers.settings vs the run's CONFIG line and budget; no LLM"}
+
+
+def experiment_diff(settings: list[dict], claims: list[dict], claim_map: dict, config: dict, budget: dict,
+                    used: set | None = None, budget_reason: str | None = None) -> list[dict]:
+    """experiments.config.why.settings_diff: settings_diff over the design's settings plus every stated setting of
+    each graded claim's model (claim_settings), each matched to that model's CONFIG keys (teacher_mlp_compact ->
+    *.teacher) and naming the claims it explains (claim_ids); then one compute_budget row: the compute the paper's
+    claims state (Reader facts) vs our budget."""
+    by_id = {c["id"]: c for c in claims}
+    claims_of, models_of = {}, {}
+    for model, cid in (claim_map or {}).items():
+        for sid in claim_settings(by_id.get(cid, {}), settings) if cid in by_id else []:
+            claims_of.setdefault(sid, []).append(cid)
+            models_of.setdefault(sid, set()).add(model)
+    scoped = [{**s, "applies_to": next(iter(models_of[f"s{i}"]))} if len(models_of.get(f"s{i}", ())) == 1 else s
+              for i, s in enumerate(settings, 1)]
+    rows = settings_diff(scoped, config, budget, (set(used) | set(claims_of)) if used is not None else None)
+    for r in rows:
+        r["applies_to"] = settings[int(r["setting_id"][1:]) - 1].get("applies_to")
+        r["claim_ids"] = claims_of.get(r["setting_id"], [])
+    stated, cids = [], []
+    for cid in (claim_map or {}).values():
+        facts = ((by_id.get(cid) or {}).get("runnable") or {}).get("facts") or {}
+        said = [str(facts[k]) for k in ("hardware", "compute") if facts.get(k)] + \
+            ([f"{facts['gpu_hours']} GPU-hours"] if facts.get("gpu_hours") else [])
+        if said:
+            cids.append(cid)
+            stated += [x for x in said if x not in stated]
+    ours = budget_reason or (f"{budget.get('epochs')} epochs" if (budget or {}).get("epochs") else None)
+    rows.append({"key": "compute_budget", "setting_id": None, "applies_to": "all", "paper": "; ".join(stated) or None,
+                 "quote": None, "page": None, "paper_numbers": [], "our_key": "budget", "ours": ours,
+                 "our_numbers": [_num(n) for n in numbers(str(ours or ""))],
+                 "label": "scale reduction (budget)" if stated else "paper omission",
+                 "why": ("the paper's compute as the Reader found it, vs the budget step's plan for the project's CPU "
+                         "cap" if stated else "the paper does not state its compute; ours is the budget step's plan"),
+                 "also": [], "claim_ids": cids})
+    return rows
+
+
+def attach_why_differs(g: dict, claims: list[dict], settings: list[dict]) -> None:
+    """Sets g['claims'][i]['why_differs'] (analyst.grade rows) from g['why'] (our_config, budget)."""
+    w = g.get("why") or {}
+    if w.get("our_config") is None:
+        return
+    by_id = {c["id"]: c for c in claims}
+    for r in g["claims"]:
+        r["why_differs"] = why_differs(r, by_id.get(r["claim_id"], {}), settings, w["our_config"],
+                                       w.get("budget") or {})
 
 
 def attach_effects(rows: list[dict], branches: list[dict]) -> list[dict]:
