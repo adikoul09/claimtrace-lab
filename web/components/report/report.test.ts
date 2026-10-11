@@ -751,3 +751,20 @@ test("seed summary is hidden when fewer than 3 seeds, and the note only appears 
   assert.equal(tight.seedSummary?.groups.length, 2);
   assert.equal(tight.seedSummary?.note, null, "a 100-error gap is not smaller than a 1-error spread");
 });
+
+test("a smoke what-if branch is compared with the parent's smoke run, never with the full run", () => {
+  const wf = (key: string, value: number) => ({ scale: "smoke", whatif: { task_id: "w1", key, value } });
+  const base = {
+    claims: [],
+    experiments: [
+      exp("full", { config: { scale: "full" }, created_at: "2026-10-11T10:00:00Z" }),
+      exp("smoke", { config: { scale: "smoke" }, created_at: "2026-10-11T09:00:00Z" }),
+      exp("b1", { parent_id: "full", changed_key: "temperature", config: wf("temperature", 1), created_at: "2026-10-11T11:00:00Z" }),
+    ],
+    metrics: [metric("full", "final_teacher", 216, 40), metric("smoke", "final_teacher", 1418, 10), metric("b1", "final_teacher", 1300, 10)],
+  };
+  const d = buildReport({ ...base, whatifBaselines: { w1: "smoke" } });
+  assert.deepEqual(d.branches.map((b) => [b.parentId, b.parent?.text, b.branch?.text, b.effect]), [["smoke", "1418", "1300", "-118"]]);
+  const unknown = buildReport(base);
+  assert.deepEqual(unknown.branches.map((b) => [b.parentId, b.effect, b.unmatched]), [["full", null, true]]);
+});

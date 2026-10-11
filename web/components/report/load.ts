@@ -48,14 +48,23 @@ async function runRows(db: SupabaseClient, projectId: string) {
 }
 
 export async function loadReport(db: SupabaseClient, projectId: string): Promise<ReportBundle> {
-  const [p, paper, exps, run, gradedEvents] = await Promise.all([
+  const [p, paper, exps, run, gradedEvents, whatifs] = await Promise.all([
     db.from("projects").select("id,title,arxiv_id,created_at,status,tags").eq("id", projectId).maybeSingle(),
     db.from("papers").select("claims").eq("project_id", projectId).maybeSingle(),
     db.from("experiments").select(EXP_COLS).eq("project_id", projectId),
     runRows(db, projectId),
     // Grading detail (the explanation and its number check) is in the graded event's data (CONTRACTS.md §5).
     db.from("events").select("ts,data").eq("project_id", projectId).eq("type", "graded"),
+    // CONTRACTS §5b: design_whatif names the parent's smoke run, the like-for-like baseline for smoke branches.
+    db
+      .from("tasks")
+      .select("id,smoke:output->>parent_smoke_experiment_id")
+      .eq("project_id", projectId)
+      .eq("capability", "design_whatif"),
   ]);
+  const whatifBaselines = Object.fromEntries(
+    (check(whatifs) as { id: string; smoke: string | null }[]).flatMap((t) => (t.smoke ? [[t.id, t.smoke]] : [])),
+  );
   const graded: GradedEvent[] = (check(gradedEvents) as { ts: string; data: Record<string, unknown> | null }[]).flatMap(
     (e) =>
       typeof e.data?.experiment_id === "string"
@@ -103,6 +112,7 @@ export async function loadReport(db: SupabaseClient, projectId: string): Promise
     experiments,
     metrics,
     graded,
+    whatifBaselines,
     memory: project ? { project, ...run, previous } : undefined,
   });
   return { project, hasPaper: paperRow !== null, data };

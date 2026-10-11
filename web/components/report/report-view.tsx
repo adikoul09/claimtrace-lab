@@ -9,6 +9,7 @@ import type { Metric } from "@/lib/types";
 import { retry } from "../exp/experiments";
 import { loadReport, type ReportBundle } from "./load";
 import { acrossSeeds, authenticitySummary, DIFF_TEXT, individualRuns, SEED_INTRO, seedLines, seedTitle, memoryHint, memoryRows, TEXT, triageReasons, triageSummary } from "./markdown";
+import { metricLabel } from "../exp/labels";
 import { FADE_IN, stagger } from "./motion";
 import { isPrecomputed, PRECOMPUTED_LABEL } from "./precomputed";
 import {
@@ -499,7 +500,9 @@ function BranchTable({ rows }: { rows: BranchEffect[] }) {
             <span className="font-mono text-xs">Δ {b.key}</span>
             <div className="break-words text-xs text-neutral-500">{b.branchLabel}</div>
           </td>
-          <td className="break-all py-2 pr-2 font-mono text-xs">{b.metric || "—"}</td>
+          <td className="break-words py-2 pr-2 text-xs" title={b.metric}>
+            {b.metric ? metricLabel(b.metric) : "—"}
+          </td>
           <td className="py-2 pr-2 text-right tabular-nums">
             {b.parent ? (
               <LogLink exp={b.parentId} line={b.parent.log_line}>
@@ -518,7 +521,9 @@ function BranchTable({ rows }: { rows: BranchEffect[] }) {
               "—"
             )}
           </td>
-          <td className="py-2 pr-2 text-right font-medium tabular-nums">{b.effect ?? "—"}</td>
+          <td className="py-2 pr-2 text-right font-medium tabular-nums">
+            {b.unmatched ? <span className="text-xs font-normal text-neutral-500">{TEXT.unmatchedBranch}</span> : (b.effect ?? "—")}
+          </td>
           <td className="py-2 text-xs">
             {b.status}
             {b.prunedReason && <div className="break-words text-neutral-500">{b.prunedReason}</div>}

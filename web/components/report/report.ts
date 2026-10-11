@@ -421,6 +421,8 @@ export type BranchEffect = {
   parentLabel: string;
   status: string;
   prunedReason: string | null;
+  /** The branch ran at another scale than its parent and no like-for-like baseline is known: no numbers shown. */
+  unmatched: boolean;
   metric: string;
   parent: Point | null;
   branch: Point | null;
@@ -549,6 +551,8 @@ export type ReportInput = {
   experiments: ExpRow[];
   metrics: MetricRow[];
   graded?: GradedEvent[];
+  /** design_whatif task id → its parent_smoke_experiment_id (the baseline for smoke branches). */
+  whatifBaselines?: Record<string, string>;
   /** B1's averaged regrade items, raw (parseAverages reads them). */
   averages?: unknown;
   memory?: {
@@ -668,8 +672,16 @@ export function buildReport(input: ReportInput): ReportData {
   // Branch effects: each one-change branch against its parent, on every final_* metric both logged.
   const branches: BranchEffect[] = [];
   for (const e of sorted) {
-    const parent = e.parent_id ? expById.get(e.parent_id) : undefined;
-    if (!parent || !e.changed_key) continue;
+    const declared = e.parent_id ? expById.get(e.parent_id) : undefined;
+    if (!declared || !e.changed_key) continue;
+    // Compare like with like: a smoke branch against the parent's smoke run (design_whatif's
+    // parent_smoke_experiment_id), never against the full run. With no such baseline the numbers are not shown.
+    const scaleOf = (x: ExpRow) => (isObj(x.config) && typeof x.config.scale === "string" ? x.config.scale : null);
+    const wf = isObj(e.config) && isObj(e.config.whatif) ? e.config.whatif : null;
+    const smokeBase = typeof wf?.task_id === "string" ? input.whatifBaselines?.[wf.task_id] : undefined;
+    const sameScale = scaleOf(e) === scaleOf(declared) || scaleOf(e) === null || scaleOf(declared) === null;
+    const parent = sameScale ? declared : smokeBase ? (expById.get(smokeBase) ?? declared) : declared;
+    const unmatched = !sameScale && parent === declared;
     const names = [...new Set(metrics.filter((m) => m.experiment_id === parent.id).map((m) => m.name))]
       .filter((n) => n.startsWith("final_") && !n.endsWith("_wall_s") && n !== "final_total_wall_s");
     const base = {
@@ -680,13 +692,15 @@ export function buildReport(input: ReportInput): ReportData {
       parentLabel: parent.label,
       status: e.status,
       prunedReason: e.pruned_reason,
+      unmatched,
     };
-    if (!names.length) branches.push({ ...base, metric: "", parent: null, branch: null, effect: null });
-    for (const n of names) {
-      const p = lastPoint(metrics, parent.id, n);
-      const b = lastPoint(metrics, e.id, n);
-      branches.push({ ...base, metric: n, parent: p, branch: b, effect: p && b ? diffText(p, b) : null });
-    }
+    if (!names.length || unmatched) branches.push({ ...base, metric: "", parent: null, branch: null, effect: null });
+    else
+      for (const n of names) {
+        const p = lastPoint(metrics, parent.id, n);
+        const b = lastPoint(metrics, e.id, n);
+        branches.push({ ...base, metric: n, parent: p, branch: b, effect: p && b ? diffText(p, b) : null });
+      }
   }
 
   const tested = new Set(rows.map((r) => r.claim.id));
