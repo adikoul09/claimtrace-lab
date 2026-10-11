@@ -480,8 +480,8 @@ test("buildReport reads the settings diff from config.why (CONTRACTS §5b), with
   assert.deepEqual(
     d.settingsDiff?.rows.map((r) => [r.key, r.label, r.paper, r.ours, r.config_key, r.reason, r.applies_to]),
     [
-      ["epochs", "scale", "3000 epochs", "5", "epochs", "the budget step chose 5 to fit the project's CPU cap", null],
       ["architecture", "difference", "2 hidden layers of 1200", "[1200,1200]", "teacher.hidden", "different numbers", "teacher"],
+      ["epochs", "scale", "3000 epochs", "5", "epochs", "the budget step chose 5 to fit the project's CPU cap", null],
     ],
   );
 });
@@ -592,4 +592,27 @@ test("ungraded smoke-run rows go with the planned rows, labelled as 1-epoch smok
   assert.match(md, /### Smoke checks and planned runs \(2\)/);
   assert.ok(md.indexOf("[1418](http://x/logs/smoke#L12)") > md.indexOf("### Smoke checks and planned runs"));
   assert.match(md, /Smoke check \(1 epoch, not graded\)/);
+});
+
+test("the settings diff comes from the latest main reproduction, not a follow-up branch, with differences first", () => {
+  const why = (ours: number) => ({
+    config_log_line: 1,
+    settings_diff: [
+      { key: "optimizer", paper: null, ours: "adam", label: "paper omission", why: "our choice" },
+      { key: "epochs", paper: "3000 epochs", ours, label: "scale reduction (budget)", why: "budget" },
+      { key: "temperature", paper: "20", ours: 20, label: "same", why: "same" },
+      { key: "hidden_units", paper: "1200 units", ours: 256, label: "difference", why: "different numbers" },
+    ],
+  });
+  const d = buildReport({
+    claims: [],
+    experiments: [
+      exp("main", { config: { why: why(7) }, created_at: "2026-10-11T10:00:00Z" }),
+      exp("follow", { parent_id: "main", config: { why: why(15) }, created_at: "2026-10-11T11:00:00Z" }),
+    ],
+    metrics: [],
+  });
+  assert.equal(d.settingsDiff?.experimentId, "main");
+  assert.deepEqual(d.settingsDiff?.rows.map((r) => r.key), ["hidden_units", "epochs", "temperature", "optimizer"]);
+  assert.equal(d.settingsDiff?.rows[1].ours, "7");
 });

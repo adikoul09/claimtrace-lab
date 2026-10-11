@@ -190,6 +190,10 @@ function settingsDiff(json: unknown): SettingsDiffRow[] {
   });
 }
 
+// Differences first, then budget cuts, then matches, then what the paper does not say (stable within each).
+const LABEL_ORDER: (DiffLabel | null)[] = ["difference", "scale", "same", "omission", null];
+const labelRank = (r: SettingsDiffRow) => LABEL_ORDER.indexOf(r.label);
+
 /** experiments.verdicts → Grade. The contract (docs/CONTRACTS.md §5) is a list, one item per claim, relative claims as
  *  "<method>_vs_<baseline>" items whose ours/paper are gaps. Still read as fallbacks: the Analyst's object
  *  {claims: [...], relative, explanation, ...} and the old {claim_id: verdict | {verdict, note}} dict. */
@@ -461,6 +465,7 @@ export function buildReport(input: ReportInput): ReportData {
   const rows: ReportRow[] = [];
   const graded: GradedExp[] = [];
   let settings: ReportData["settingsDiff"] = null;
+  let settingsFromMain = false;
 
   for (const e of sorted) {
     const g = readVerdicts(e.verdicts);
@@ -518,12 +523,19 @@ export function buildReport(input: ReportInput): ReportData {
       });
     }
     // CONTRACTS §5b: experiments.config.why.settings_diff; the older verdicts.settings_diff only when that is empty.
+    // The main reproduction's diff wins over a follow-up branch's (which changes a setting on purpose).
     const why = isObj(e.config) && isObj(e.config.why) ? e.config.why : null;
     const whyRows = settingsDiff(why?.settings_diff);
-    if (whyRows.length)
-      settings = { experimentId: e.id, experimentLabel: e.label, rows: whyRows, configLogLine: num(why?.config_log_line) };
-    else if (g.settingsDiff.length)
-      settings = { experimentId: e.id, experimentLabel: e.label, rows: g.settingsDiff, configLogLine: null };
+    const diffRows = whyRows.length ? whyRows : g.settingsDiff;
+    const branch = !!e.parent_id || (isObj(e.config) && !!e.config.whatif);
+    if (diffRows.length && (!branch || !settingsFromMain))
+      settings = {
+        experimentId: e.id,
+        experimentLabel: e.label,
+        rows: [...diffRows].sort((a, b) => labelRank(a) - labelRank(b)),
+        configLogLine: whyRows.length ? num(why?.config_log_line) : null,
+      };
+    if (diffRows.length && !branch) settingsFromMain = true;
   }
 
   // Authenticity: each claim's verdict from the latest reproduction experiment that graded it. What-if branches

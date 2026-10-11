@@ -165,7 +165,7 @@ export function ReportView({ projectId }: { projectId: string }) {
             <Graded g={g} />
           </Collapsed>
         ))}
-        <Collapsed title="Why it differs" hint={whyHint(data)}>
+        <Collapsed title="Why it differs" hint={whyHint(data)} open={!!data.settingsDiff?.rows.length}>
           <WhyItDiffers data={data} />
         </Collapsed>
         <Collapsed title="Memory effect" hint={memoryHint(data.memory)}>
