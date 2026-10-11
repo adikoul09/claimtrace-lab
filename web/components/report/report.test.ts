@@ -767,4 +767,15 @@ test("a smoke what-if branch is compared with the parent's smoke run, never with
   assert.deepEqual(d.branches.map((b) => [b.parentId, b.parent?.text, b.branch?.text, b.effect]), [["smoke", "1418", "1300", "-118"]]);
   const unknown = buildReport(base);
   assert.deepEqual(unknown.branches.map((b) => [b.parentId, b.effect, b.unmatched]), [["full", null, true]]);
+  // A full-size branch whose parent is a smoke run never switches to the smoke baseline: not compared.
+  const fullOnSmoke = buildReport({
+    claims: [],
+    experiments: [
+      exp("smoke", { config: { scale: "smoke" } }),
+      exp("f1", { parent_id: "smoke", changed_key: "temperature", config: { scale: "full", whatif: { task_id: "w1", key: "temperature", value: 1 } } }),
+    ],
+    metrics: [metric("smoke", "final_teacher", 1418, 10), metric("f1", "final_teacher", 216, 40)],
+    whatifBaselines: { w1: "smoke" },
+  });
+  assert.deepEqual(fullOnSmoke.branches.map((b) => [b.parentId, b.effect, b.unmatched]), [["smoke", null, true]]);
 });

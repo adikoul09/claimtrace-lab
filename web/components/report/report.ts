@@ -680,7 +680,8 @@ export function buildReport(input: ReportInput): ReportData {
     const wf = isObj(e.config) && isObj(e.config.whatif) ? e.config.whatif : null;
     const smokeBase = typeof wf?.task_id === "string" ? input.whatifBaselines?.[wf.task_id] : undefined;
     const sameScale = scaleOf(e) === scaleOf(declared) || scaleOf(e) === null || scaleOf(declared) === null;
-    const parent = sameScale ? declared : smokeBase ? (expById.get(smokeBase) ?? declared) : declared;
+    // Only a smoke branch switches to the smoke baseline; a full branch keeps its declared parent.
+    const parent = sameScale || scaleOf(e) !== "smoke" ? declared : smokeBase ? (expById.get(smokeBase) ?? declared) : declared;
     const unmatched = !sameScale && parent === declared;
     const names = [...new Set(metrics.filter((m) => m.experiment_id === parent.id).map((m) => m.name))]
       .filter((n) => n.startsWith("final_") && !n.endsWith("_wall_s") && n !== "final_total_wall_s");
