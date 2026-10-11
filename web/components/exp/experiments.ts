@@ -114,3 +114,19 @@ export async function retry<T>(fn: () => Promise<T>, tries = 3, delayMs = 1000):
     }
   }
 }
+
+const DECISIONS: Record<string, string> = { extend: "Extended to a full run", kept: "Kept", pruned: "Pruned" };
+
+/** A what-if branch as people read it (CONTRACTS §5b config.whatif): the question, the one change, and the
+ *  ranking's decision with its code-written reason (null until the ranking ran). Null for other experiments. */
+export function whatifOf(config: unknown): { question: string | null; change: string; decision: string | null; reason: string | null } | null {
+  const w = (config as { whatif?: Record<string, unknown> } | null)?.whatif;
+  if (!w || typeof w !== "object" || typeof w.key !== "string") return null;
+  const v = (x: unknown) => (typeof x === "object" ? JSON.stringify(x) : String(x));
+  return {
+    question: typeof w.question === "string" ? w.question : null,
+    change: w.parent_value !== undefined ? `${w.key} ${v(w.parent_value)} → ${v(w.value)}` : `${w.key} = ${v(w.value)}`,
+    decision: typeof w.decision === "string" ? (DECISIONS[w.decision] ?? w.decision) : null,
+    reason: typeof w.reason === "string" ? w.reason : null,
+  };
+}

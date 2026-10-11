@@ -14,6 +14,7 @@ import {
   retry,
   runTime,
   upsertRows,
+  whatifOf,
   type TreeNode,
 } from "./experiments";
 import { statusLabel } from "@/components/live/labels";
@@ -222,6 +223,12 @@ function ExpTree({
             <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
               <span className={`rounded px-1.5 py-0.5 font-medium ${statusStyle(e.status)}`}>{statusLabel(e.status)}</span>
               {e.changed_key && <span title={e.changed_key}>changes {configKeyLabel(e.changed_key)}</span>}
+              {(() => {
+                const d = whatifOf(e.config)?.decision;
+                return d && e.status !== "pruned" ? (
+                  <span className="rounded border border-neutral-300 px-1.5 py-0.5 dark:border-neutral-700">{d}</span>
+                ) : null;
+              })()}
               <span className="tabular-nums">{counts(e.id)} metrics</span>
             </span>
           </button>
@@ -248,12 +255,34 @@ function ExpDetail({ exp: e, task, metrics }: { exp: Experiment; task: TaskRow |
           <dd>{e.executor ?? "not assigned"}</dd>
           <dt className="text-neutral-500">Budget</dt>
           <dd className="break-words">{e.budget_reason ?? <span className="text-neutral-500">no budget reason recorded</span>}</dd>
-          {e.changed_key && (
-            <>
-              <dt className="text-neutral-500">Changes</dt>
-              <dd title={e.changed_key}>{configKeyLabel(e.changed_key)}</dd>
-            </>
-          )}
+          {(() => {
+            // A what-if branch: its question, the one change, and the ranking's decision with its reason.
+            const w = whatifOf(e.config);
+            if (!w)
+              return e.changed_key ? (
+                <>
+                  <dt className="text-neutral-500">Changes</dt>
+                  <dd title={e.changed_key}>{configKeyLabel(e.changed_key)}</dd>
+                </>
+              ) : null;
+            return (
+              <>
+                {w.question && (
+                  <>
+                    <dt className="text-neutral-500">What-if</dt>
+                    <dd className="break-words">{w.question}</dd>
+                  </>
+                )}
+                <dt className="text-neutral-500">Changes</dt>
+                <dd className="break-words">{w.change}</dd>
+                <dt className="text-neutral-500">Decision</dt>
+                <dd className="break-words">
+                  {w.decision ?? <span className="text-neutral-500">not ranked yet</span>}
+                  {w.reason && <span className="text-neutral-500">: {w.reason}</span>}
+                </dd>
+              </>
+            );
+          })()}
           {e.margin !== null && (
             <>
               <dt className="text-neutral-500">Margin</dt>

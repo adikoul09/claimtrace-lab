@@ -9,6 +9,7 @@ import {
   retry,
   runTime,
   upsertRows,
+  whatifOf,
 } from "./experiments.ts";
 
 const exp = (id: string, parent_id: string | null = null, created_at = "2026-10-10T10:00:00Z") => ({
@@ -148,4 +149,19 @@ test("retry returns the first success and gives up after the last failure", asyn
   assert.equal(calls, 3);
   calls = 0;
   await assert.rejects(retry(flaky, 2, 0), /fail 2/);
+});
+
+test("whatifOf reads a branch's question, change and the ranking's decision with its reason", () => {
+  const w = whatifOf({
+    whatif: { key: "temperature", value: 0.5, parent_value: 20, question: "What if the temperature changes?", decision: "extend", reason: "largest effect: x -793 (79.3× noise 10)" },
+  });
+  assert.deepEqual(w, {
+    question: "What if the temperature changes?",
+    change: "temperature 20 → 0.5",
+    decision: "Extended to a full run",
+    reason: "largest effect: x -793 (79.3× noise 10)",
+  });
+  assert.equal(whatifOf({ whatif: { key: "lr", value: 0.1 } })?.decision, null);
+  assert.equal(whatifOf({ whatif: { key: "lr", value: 0.1, decision: "pruned" } })?.decision, "Pruned");
+  assert.equal(whatifOf({ scale: "full" }), null);
 });
