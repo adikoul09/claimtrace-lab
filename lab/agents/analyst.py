@@ -12,8 +12,10 @@ direction must hold for Reproduced or Partially reproduced. Fewer than 3 seeds: 
 Seeds (HoO-B): a claim is graded on the mean over the project's finished, non-what-if experiments that map it with the
 same config.cmd except --seed (the seed group); the row carries n, the sample SD and the values, and its label says
 "(n seeds)". A method-vs-baseline claim whose two claims are mapped in different experiments (e.g. c3 distilled and
-c2 hard-target) is graded across them on the two groups' means, for groups whose cmd differs only by --seed and
---set hidden_units.*.
+c2 hard-target) is graded across them, for groups whose cmd differs only by --seed and --set hidden_units.*: on the
+seeds both groups ran (paired gaps, baseline minus method), the direction counts only if the mean gap exceeds
+max(margin, SD of the paired gaps), else "Not reproduced (direction inside the noise)"; with fewer than 2 common seeds,
+on the difference of the two group means.
 
 Ported from baseline/el01-auditor/el01/grade/rules.py: the verdict vocabulary, margin = max(paper spread, floor) with
 its source, and label(). Changed for Round 1: one or few seeds, so the margin rule replaces the Welch/TOST intervals
@@ -59,6 +61,7 @@ def label(v: dict, seeds: int) -> str:
 
 
 SEED_RE = re.compile(r"\s--seed\s+\d+")
+SEED_VALUE_RE = re.compile(r"--seed\s+(\d+)")
 HIDDEN_RE = re.compile(r"\s--set\s+hidden_units\.\w+=\S+")
 
 
@@ -84,10 +87,30 @@ def seed_group(exp: dict, exps: list[dict]) -> list[dict]:
         and config_key(e.get("config")) == key)]
 
 
-def pool(values: list[float]) -> dict:
+def seed_of(cfg: dict | None) -> int | None:
+    m = SEED_VALUE_RE.search((cfg or {}).get("cmd") or "")
+    return int(m.group(1)) if m else None
+
+
+def pool(values: list[float], seeds: list | None = None) -> dict:
     vals = [_num(v) for v in values]
-    return {"n": len(vals), "mean": _num(sum(vals) / len(vals)),
-            "sd": _num(statistics.stdev(vals)) if len(vals) > 1 else None, "values": vals}
+    out = {"n": len(vals), "mean": _num(sum(vals) / len(vals)),
+           "sd": _num(statistics.stdev(vals)) if len(vals) > 1 else None, "values": vals}
+    if seeds is not None and len(seeds) == len(vals) and None not in seeds:
+        out["by_seed"] = dict(zip(seeds, vals))
+    return out
+
+
+def paired_gaps(m: dict, b: dict, sign: int, margin) -> dict | None:
+    """Gaps (baseline minus method, in the better direction) on the seeds both pools ran; None under 2 such seeds."""
+    common = sorted(set(m.get("by_seed") or {}) & set(b.get("by_seed") or {}))
+    if len(common) < 2:
+        return None
+    gaps = [_num(sign * (b["by_seed"][s] - m["by_seed"][s])) for s in common]
+    mean, sd = _num(sum(gaps) / len(gaps)), _num(statistics.stdev(gaps))
+    threshold = _num(max(float(margin), sd))
+    return {"seeds": common, "gaps": gaps, "mean_gap": mean, "sd_gap": sd, "threshold": threshold,
+            "beyond_noise": mean > threshold}
 
 
 def _seeds_label(n: int) -> str:
@@ -116,24 +139,35 @@ def cross_relative(claims: list[dict], mine: dict[str, dict], other: dict[str, d
                 continue
             sign = 1 if m["direction"] == "lower_is_better" else -1
             paper_gap = _num(sign * (b["value"] - m["value"]))
-            g = _num(sign * (both[b["id"]]["mean"] - both[m["id"]]["mean"]))
+            paired = paired_gaps(both[m["id"]], both[b["id"]], sign, margin)
+            g = paired["mean_gap"] if paired else _num(sign * (both[b["id"]]["mean"] - both[m["id"]]["mean"]))
             r = {"claim": f"{m['id']} beats {b['id']}", "method": m["id"], "baseline": b["id"], "paper_gap": paper_gap,
-                 "ours_gap": g, "margin": _num(margin), "size_note": None, "across": True,
+                 "ours_gap": g, "margin": _num(margin), "size_note": None, "across": True, "paired": paired,
                  "n": {m["id"]: both[m["id"]]["n"], b["id"]: both[b["id"]]["n"]},
                  "means": {m["id"]: both[m["id"]]["mean"], b["id"]: both[b["id"]]["mean"]},
                  "sds": {m["id"]: both[m["id"]]["sd"], b["id"]: both[b["id"]]["sd"]}}
+            noise = None
             if g <= 0:
                 r["verdict"] = "Not reproduced"
+            elif paired and not paired["beyond_noise"]:
+                r["verdict"] = "Not reproduced"
+                noise = (f"direction inside the noise: mean paired gap {g} <= max(margin {_num(margin)}, SD of the "
+                         f"paired gaps {paired['sd_gap']})")
             elif abs(g - paper_gap) <= margin:
                 r["verdict"] = "Reproduced"
             else:
                 r.update(verdict="Partially reproduced",
                          size_note="gap smaller than reported" if g < paper_gap else "gap larger than reported")
+            pair_txt = (f"paired on seeds {', '.join(str(x) for x in paired['seeds'])}: gaps "
+                        f"{', '.join(str(x) for x in paired['gaps'])}, mean {paired['mean_gap']} ± {paired['sd_gap']}"
+                        if paired else "group means (fewer than 2 common seeds)")
             r["label"] = r["verdict"] + (f" ({r['size_note']})" if r["size_note"] else "") + \
-                f" ({r['n'][m['id']]} vs {r['n'][b['id']]} seeds)"
+                (f" ({len(paired['seeds'])} paired seeds)" if paired else
+                 f" ({r['n'][m['id']]} vs {r['n'][b['id']]} seeds)")
             r["note"] = (f"across experiments: {m['id']} mean {r['means'][m['id']]} over {r['n'][m['id']]} seeds, "
-                         f"{b['id']} mean {r['means'][b['id']]} over {r['n'][b['id']]} seeds; gap = baseline minus "
-                         f"method" + (f"; {r['size_note']}" if r["size_note"] else ""))
+                         f"{b['id']} mean {r['means'][b['id']]} over {r['n'][b['id']]} seeds; {pair_txt}; gap = "
+                         f"baseline minus method" + (f"; {noise}" if noise else "")
+                         + (f"; {r['size_note']}" if r["size_note"] else ""))
             out.append(r)
     return out
 
@@ -284,7 +318,7 @@ def verdict_items(g: dict) -> list[dict]:
                 "ours": r.get("ours_gap"), "paper": r["paper_gap"], "margin": r["margin"], "note": why,
                 "log_line": None}
         if r.get("across"):
-            item.update(n_seeds=r["n"], means=r["means"], sds=r["sds"])
+            item.update(n_seeds=r["n"], means=r["means"], sds=r["sds"], paired=r.get("paired"))
         items.append(item)
     return items
 
@@ -475,6 +509,7 @@ def _pool_group(db, exp: dict | None, group: list[dict], claim_map: dict | None,
     """claim id -> pool of the final values over the group's experiments that map that claim to the same model.
     With exp/claim_map/finals: the graded experiment's own map and values (the CLI may override its map)."""
     vals: dict[tuple[str, str], list] = {}
+    seeds: dict[tuple[str, str], list] = {}
     for e in group:
         own = exp is not None and e["id"] == exp["id"]
         cmap = claim_map if own else (e.get("config") or {}).get("claim_map") or {}
@@ -485,7 +520,8 @@ def _pool_group(db, exp: dict | None, group: list[dict], claim_map: dict | None,
             if cid in exclude or values.get(name) is None:
                 continue
             vals.setdefault((name, cid), []).append(values[name])
-    return {cid: pool(v) for (name, cid), v in vals.items()}
+            seeds.setdefault((name, cid), []).append(seed_of(e.get("config")))
+    return {cid: pool(v, seeds[(name, cid)]) for (name, cid), v in vals.items()}
 
 
 def _comparable_groups(exp: dict, exps: list[dict]) -> dict[str, list[dict]]:
